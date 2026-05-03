@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect, type ReactNode } from 'react';
 import Header from '@/components/layout/Header';
 import BottomNav from '@/components/layout/BottomNav';
+import Footer from '@/components/legal/Footer';
+import CookieBanner from '@/components/legal/CookieBanner';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
@@ -37,7 +39,9 @@ export default function Providers({ children }: { children: ReactNode }) {
         <main className={`flex-1 ${showGlobalChrome ? 'pb-20' : ''}`}>
           {children}
         </main>
+        <Footer />
         {showGlobalChrome && <BottomNav />}
+        <CookieBanner />
       </QueryClientProvider>
     </LanguageProvider>
   );

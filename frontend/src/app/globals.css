@@ -61,3 +61,49 @@ body {
 .sos-pulse {
   animation: sos-pulse 2s infinite;
 }
+
+/* ─── Legal pages prose styles ─── */
+.legal-prose {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #1f2937;
+}
+.legal-prose h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 20px 0 8px;
+  color: #111827;
+}
+.legal-prose p { margin: 8px 0; }
+.legal-prose ul, .legal-prose ol { margin: 8px 0 8px 24px; }
+.legal-prose li { margin: 4px 0; }
+.legal-prose strong { color: #111827; font-weight: 700; }
+.legal-prose .legal-meta {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 18px;
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 10px;
+}
+.legal-prose .legal-warning {
+  background: #fef3c7;
+  border-left: 4px solid #d97706;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+.legal-prose .legal-warning p { margin: 4px 0; }
+.legal-prose .legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin: 10px 0;
+}
+.legal-prose .legal-table th,
+.legal-prose .legal-table td {
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+.legal-prose .legal-table th { background: #f9fafb; font-weight: 700; }
+

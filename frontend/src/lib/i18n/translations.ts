@@ -142,6 +142,19 @@ const zh: Dict = {
   'profile.menu.chatbot': '智能客服',
   'profile.menu.inspection': '監理站/驗車廠',
   'profile.logout': '登出',
+
+  // ===== Footer / Legal =====
+  'footer.personalData': '個人資料蒐集告知',
+  'footer.privacy': '隱私權政策',
+  'footer.cookie': 'Cookie 政策',
+  'footer.minor': '未成年保護',
+  'footer.disclaimer': '使用警語',
+  'footer.copyright': '© 2026 車險智能服務平台　·　本平台僅為輔助工具，不取代專業諮詢',
+
+  // ===== Cookie Banner =====
+  'cookie.banner.text': '本平台使用必要 Cookie 維持登入狀態與偏好設定，繼續使用即視為同意。',
+  'cookie.banner.more': '了解更多',
+  'cookie.banner.accept': '我同意',
 };
 
 const en: Dict = {
@@ -280,6 +293,19 @@ const en: Dict = {
   'profile.menu.chatbot': 'Chatbot',
   'profile.menu.inspection': 'Inspection Stations',
   'profile.logout': 'Sign Out',
+
+  // ===== Footer / Legal =====
+  'footer.personalData': 'Personal Data',
+  'footer.privacy': 'Privacy',
+  'footer.cookie': 'Cookies',
+  'footer.minor': 'Minors',
+  'footer.disclaimer': 'Disclaimer',
+  'footer.copyright': '© 2026 Car Insurance Platform · This platform is an auxiliary tool and does not replace professional advice',
+
+  // ===== Cookie Banner =====
+  'cookie.banner.text': 'We use essential cookies to maintain your login and preferences. By continuing you accept this.',
+  'cookie.banner.more': 'Learn more',
+  'cookie.banner.accept': 'I Accept',
 };
 
 export const dictionaries: Record<Lang, Dict> = { zh, en };
