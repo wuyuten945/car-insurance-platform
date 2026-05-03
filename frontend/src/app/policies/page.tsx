@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FileText, ChevronRight, Loader2, Phone, Truck } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
+import { useT } from '@/lib/i18n/LanguageProvider';
 
 interface PolicyItem {
   item_name: string;
@@ -22,11 +23,11 @@ interface Policy {
   items: PolicyItem[];
 }
 
-const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  active: { label: '有效', color: 'bg-green-100 text-green-700' },
-  expired: { label: '已到期', color: 'bg-gray-100 text-gray-500' },
-  cancelled: { label: '已取消', color: 'bg-red-100 text-red-600' },
-  pending: { label: '待生效', color: 'bg-yellow-100 text-yellow-700' },
+const STATUS_COLOR: Record<string, string> = {
+  active: 'bg-green-100 text-green-700',
+  expired: 'bg-gray-100 text-gray-500',
+  cancelled: 'bg-red-100 text-red-600',
+  pending: 'bg-yellow-100 text-yellow-700',
 };
 
 const INSURER_PHONES: Record<string, string> = {
@@ -67,14 +68,22 @@ function hasTowInsurance(items: PolicyItem[]): boolean {
   );
 }
 
-const TABS = [
-  { key: 'all', label: '全部' },
-  { key: 'active', label: '有效' },
-  { key: 'expired', label: '已到期' },
-];
-
 export default function PoliciesPage() {
   const [activeTab, setActiveTab] = useState('all');
+  const { t } = useT();
+
+  const TABS = [
+    { key: 'all', label: t('policies.filter.all') },
+    { key: 'active', label: t('policies.filter.active') },
+    { key: 'expired', label: t('policies.filter.expired') },
+  ];
+
+  const STATUS_LABEL: Record<string, string> = {
+    active: t('policies.status.active'),
+    expired: t('policies.status.expired'),
+    cancelled: t('policies.status.cancelled'),
+    pending: t('policies.status.pending'),
+  };
 
   const { data: policies, isLoading } = useQuery({
     queryKey: ['policies'],
@@ -90,7 +99,7 @@ export default function PoliciesPage() {
 
   return (
     <div className="px-4 py-5">
-      <h1 className="text-xl font-bold text-gray-900 mb-4">我的保單</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-4">{t('policies.title')}</h1>
 
       {/* Tab Filters */}
       <div className="flex gap-2 mb-5">
@@ -116,12 +125,13 @@ export default function PoliciesPage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center py-20">
           <FileText className="h-16 w-16 text-gray-200 mb-3" />
-          <p className="text-sm text-gray-400">尚無保單資料</p>
+          <p className="text-sm text-gray-400">{t('policies.empty')}</p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((policy) => {
-            const statusInfo = STATUS_MAP[policy.status] ?? { label: policy.status, color: 'bg-gray-100 text-gray-600' };
+            const statusColor = STATUS_COLOR[policy.status] ?? 'bg-gray-100 text-gray-600';
+            const statusLabel = STATUS_LABEL[policy.status] ?? policy.status;
             return (
               <Link
                 key={policy.id}
@@ -132,8 +142,8 @@ export default function PoliciesPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-gray-900">{policy.vehicle_plate ? `[${policy.vehicle_plate}] ` : ''}{policy.insurer_name}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusInfo.color}`}>
-                        {statusInfo.label}
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor}`}>
+                        {statusLabel}
                       </span>
                     </div>
                     <p className="text-xs text-gray-400 mt-1">{policy.policy_number}</p>
@@ -143,11 +153,11 @@ export default function PoliciesPage() {
                       </span>
                       {hasTowInsurance(policy.items || []) ? (
                         <span className="inline-flex items-center gap-0.5 rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-600">
-                          <Truck className="h-3 w-3" /> 含拖吊
+                          <Truck className="h-3 w-3" /> {t('policies.hasTowing')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-0.5 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
-                          <Truck className="h-3 w-3" /> 無拖吊
+                          <Truck className="h-3 w-3" /> {t('policies.noTowing')}
                         </span>
                       )}
                     </div>
@@ -155,7 +165,7 @@ export default function PoliciesPage() {
                       <span
                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${getInsurerPhone(policy.insurer_name)}`; }}
                          className="inline-flex items-center gap-1 mt-1.5 text-[11px] text-primary-500 cursor-pointer">
-                        <Phone className="h-3 w-3" /> 客服 {getInsurerPhone(policy.insurer_name)}
+                        <Phone className="h-3 w-3" /> {t('policies.customerService')} {getInsurerPhone(policy.insurer_name)}
                       </span>
                     )}
                   </div>

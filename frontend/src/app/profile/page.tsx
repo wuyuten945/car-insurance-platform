@@ -10,26 +10,33 @@ import { User, LogOut, Loader2, Save, Car, Bell, MessageCircle, MapPin } from 'l
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
+import { useT } from '@/lib/i18n/LanguageProvider';
 
-const profileSchema = z.object({
-  name: z.string().min(1, '請填寫姓名'),
-  email: z.string().email('請輸入有效的電子信箱').or(z.literal('')),
-  emergency_contact_name: z.string().optional(),
-  emergency_contact_phone: z.string().optional(),
-});
-
-type ProfileForm = z.infer<typeof profileSchema>;
-
-const MENU_ITEMS = [
-  { href: '/vehicles', icon: Car, label: '我的車輛 / 行照管理' },
-  { href: '/notifications', icon: Bell, label: '通知中心' },
-  { href: '/chatbot', icon: MessageCircle, label: '智能客服' },
-  { href: '/inspection', icon: MapPin, label: '監理站/驗車廠' },
-];
+type ProfileForm = {
+  name: string;
+  email: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+};
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loadUser, logout, isAuthenticated } = useAuthStore();
+  const { t } = useT();
+
+  const profileSchema = z.object({
+    name: z.string().min(1, t('profile.errors.nameRequired')),
+    email: z.string().email(t('profile.errors.invalidEmail')).or(z.literal('')),
+    emergency_contact_name: z.string().optional(),
+    emergency_contact_phone: z.string().optional(),
+  });
+
+  const MENU_ITEMS = [
+    { href: '/vehicles', icon: Car, label: t('profile.menu.vehicles') },
+    { href: '/notifications', icon: Bell, label: t('profile.menu.notifications') },
+    { href: '/chatbot', icon: MessageCircle, label: t('profile.menu.chatbot') },
+    { href: '/inspection', icon: MapPin, label: t('profile.menu.inspection') },
+  ];
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -92,7 +99,7 @@ export default function ProfilePage() {
           <User className="h-8 w-8 text-primary-500" />
         </div>
         <div>
-          <p className="text-lg font-bold text-gray-900">{user?.name ?? '未設定姓名'}</p>
+          <p className="text-lg font-bold text-gray-900">{user?.name ?? t('profile.notSetName')}</p>
           <p className="text-sm text-gray-500">{user?.phone}</p>
         </div>
       </div>
@@ -116,40 +123,40 @@ export default function ProfilePage() {
 
       {/* Profile Edit Form */}
       <section className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
-        <h2 className="text-base font-bold text-gray-900 mb-4">個人資料</h2>
+        <h2 className="text-base font-bold text-gray-900 mb-4">{t('profile.section.title')}</h2>
 
         {mutation.isSuccess && (
           <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-600">
-            資料已更新成功
+            {t('profile.savedSuccess')}
           </div>
         )}
 
         {mutation.isError && (
           <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
-            更新失敗，請稍後再試
+            {t('profile.saveFailed')}
           </div>
         )}
 
         <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
           <div>
-            <label className={labelClass}>姓名</label>
+            <label className={labelClass}>{t('profile.field.name')}</label>
             <input type="text" {...register('name')} className={inputClass} />
             {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
           </div>
 
           <div>
-            <label className={labelClass}>電子信箱</label>
+            <label className={labelClass}>{t('profile.field.email')}</label>
             <input type="email" placeholder="example@email.com" {...register('email')} className={inputClass} />
             {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className={labelClass}>緊急聯絡人姓名</label>
+            <label className={labelClass}>{t('profile.field.emergencyName')}</label>
             <input type="text" {...register('emergency_contact_name')} className={inputClass} />
           </div>
 
           <div>
-            <label className={labelClass}>緊急聯絡人電話</label>
+            <label className={labelClass}>{t('profile.field.emergencyPhone')}</label>
             <input type="tel" inputMode="numeric" {...register('emergency_contact_phone')} className={inputClass} />
           </div>
 
@@ -159,7 +166,7 @@ export default function ProfilePage() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 py-3 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:opacity-50"
           >
             {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            儲存變更
+            {t('profile.saveChanges')}
           </button>
         </form>
       </section>
@@ -169,7 +176,7 @@ export default function ProfilePage() {
         onClick={handleLogout}
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 transition"
       >
-        <LogOut className="h-4 w-4" /> 登出
+        <LogOut className="h-4 w-4" /> {t('profile.logout')}
       </button>
     </div>
   );

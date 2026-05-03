@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
+import { useT } from '@/lib/i18n/LanguageProvider';
 
 interface Vehicle {
   id: string;
@@ -53,6 +54,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 export default function VehiclesPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
+  const { t } = useT();
 
   useEffect(() => {
     if (!isAuthenticated) router.replace('/login');
@@ -75,7 +77,7 @@ export default function VehiclesPage() {
         <Link href="/profile" className="p-1">
           <ChevronLeft className="h-5 w-5 text-gray-600" />
         </Link>
-        <h1 className="text-lg font-bold text-gray-900">我的車輛</h1>
+        <h1 className="text-lg font-bold text-gray-900">{t('vehicles.title')}</h1>
       </div>
 
       {isLoading ? (
@@ -85,7 +87,7 @@ export default function VehiclesPage() {
       ) : !vehicles?.length ? (
         <div className="text-center py-12">
           <Car className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-400">尚無車輛資料</p>
+          <p className="text-gray-400">{t('vehicles.empty')}</p>
         </div>
       ) : (
         vehicles.map((v) => <VehicleCard key={v.id} vehicle={v} />)
@@ -98,6 +100,15 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showStatus, setShowStatus] = useState(false);
+  const { t } = useT();
+
+  const STATUS_LABEL: Record<string, string> = {
+    ok: t('vehicles.statusOk'),
+    upcoming: t('vehicles.statusUpcoming'),
+    urgent: t('vehicles.statusUrgent'),
+    overdue: t('vehicles.statusOverdue'),
+    unknown: t('vehicles.statusUnknown'),
+  };
 
   const { data: inspectionStatus, isLoading: statusLoading } = useQuery({
     queryKey: ['inspection-status', vehicle.id],
@@ -165,12 +176,12 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
               <h3 className="font-bold text-gray-900">{vehicle.plate_number}</h3>
               {vehicle.is_primary && (
                 <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-500">
-                  主要
+                  {t('vehicles.primary')}
                 </span>
               )}
             </div>
             <p className="text-xs text-gray-500">
-              {[vehicle.brand, vehicle.model, vehicle.year ? `${vehicle.year}年` : null]
+              {[vehicle.brand, vehicle.model, vehicle.year ? `${vehicle.year}${t('common.year')}` : null]
                 .filter(Boolean)
                 .join(' ')}
               {vehicle.color ? ` | ${vehicle.color}` : ''}
@@ -181,15 +192,15 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
         {/* Registration info */}
         <div className="grid grid-cols-2 gap-2 text-xs mb-3">
           <div className="rounded-lg bg-gray-50 p-2.5">
-            <p className="text-gray-400 mb-0.5">行照到期</p>
+            <p className="text-gray-400 mb-0.5">{t('vehicles.regExpiry')}</p>
             <p className="font-semibold text-gray-700">
-              {vehicle.registration_expiry || '未設定'}
+              {vehicle.registration_expiry || t('vehicles.notSet')}
             </p>
           </div>
           <div className="rounded-lg bg-gray-50 p-2.5">
-            <p className="text-gray-400 mb-0.5">上次驗車</p>
+            <p className="text-gray-400 mb-0.5">{t('vehicles.lastInspect')}</p>
             <p className="font-semibold text-gray-700">
-              {vehicle.last_inspection_date || '無紀錄'}
+              {vehicle.last_inspection_date || t('vehicles.noRecord')}
             </p>
           </div>
         </div>
@@ -197,18 +208,18 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
         {/* Registration image */}
         {vehicle.registration_image_url ? (
           <div className="mb-3">
-            <p className="text-xs text-gray-400 mb-1.5">行照圖片</p>
+            <p className="text-xs text-gray-400 mb-1.5">{t('vehicles.regImage')}</p>
             <div className="relative rounded-lg overflow-hidden border border-gray-200">
               <img
                 src={`http://localhost:8000${vehicle.registration_image_url}`}
-                alt="行照"
+                alt={t('vehicles.regImageAlt')}
                 className="w-full h-40 object-cover"
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-white/90 px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm"
               >
-                <Camera className="h-3.5 w-3.5" /> 重新上傳
+                <Camera className="h-3.5 w-3.5" /> {t('vehicles.reupload')}
               </button>
             </div>
           </div>
@@ -223,13 +234,13 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
             ) : (
               <Upload className="h-5 w-5" />
             )}
-            {uploadMutation.isPending ? '上傳中...' : '上傳行照圖片'}
+            {uploadMutation.isPending ? t('vehicles.uploading') : t('vehicles.uploadRegImage')}
           </button>
         )}
 
         {uploadMutation.isSuccess && (
           <div className="mb-3 rounded-lg bg-green-50 p-2.5 text-xs text-green-600">
-            行照已上傳成功
+            {t('vehicles.uploadOk')}
           </div>
         )}
 
@@ -250,9 +261,9 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
         >
           <span className="flex items-center gap-1.5">
             <Shield className="h-4 w-4" />
-            驗車狀態檢查
+            {t('vehicles.statusCheck')}
           </span>
-          <span className="text-xs text-gray-400">{showStatus ? '收起' : '展開'}</span>
+          <span className="text-xs text-gray-400">{showStatus ? t('vehicles.collapse') : t('vehicles.expand')}</span>
         </button>
 
         {showStatus && (
@@ -268,13 +279,13 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
                   <statusConfig.icon className={`h-5 w-5 ${statusConfig.color}`} />
                   <div>
                     <p className={`text-sm font-semibold ${statusConfig.color}`}>
-                      驗車狀態：{statusConfig.label}
+                      {t('vehicles.statusLabel', { status: STATUS_LABEL[inspectionStatus.inspection_status] || statusConfig.label })}
                     </p>
                     {inspectionStatus.days_to_inspection != null && (
                       <p className="text-xs text-gray-500 mt-0.5">
                         {inspectionStatus.days_to_inspection > 0
-                          ? `距離到期還有 ${inspectionStatus.days_to_inspection} 天`
-                          : `已逾期 ${Math.abs(inspectionStatus.days_to_inspection)} 天`}
+                          ? t('vehicles.daysToExpiry', { days: inspectionStatus.days_to_inspection })
+                          : t('vehicles.overdueDays', { days: Math.abs(inspectionStatus.days_to_inspection) })}
                       </p>
                     )}
                   </div>
@@ -295,11 +306,11 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
                     <p className={`text-sm font-semibold ${
                       inspectionStatus.has_compulsory_insurance ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      強制險：{inspectionStatus.has_compulsory_insurance ? '有效' : '無效 / 未投保'}
+                      {t('vehicles.compulsoryStatus', { status: inspectionStatus.has_compulsory_insurance ? t('vehicles.compulsoryActive') : t('vehicles.compulsoryInactive') })}
                     </p>
                     {inspectionStatus.compulsory_expiry && (
                       <p className="text-xs text-gray-500 mt-0.5">
-                        到期日：{inspectionStatus.compulsory_expiry}
+                        {t('vehicles.expireDate', { date: inspectionStatus.compulsory_expiry })}
                       </p>
                     )}
                   </div>
@@ -314,7 +325,7 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
                   <p className={`text-sm font-semibold ${
                     inspectionStatus.can_inspect ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {inspectionStatus.can_inspect ? '可辦理驗車' : '無法辦理驗車'}
+                    {inspectionStatus.can_inspect ? t('vehicles.canInspect') : t('vehicles.cannotInspect')}
                   </p>
                 </div>
 
