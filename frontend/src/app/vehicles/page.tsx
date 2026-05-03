@@ -130,14 +130,36 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
     ? STATUS_CONFIG[inspectionStatus.inspection_status] || STATUS_CONFIG.unknown
     : null;
 
+  // 品牌對應的車輛圖（目前只有 BMW i3，其他品牌 fall back 到 icon）
+  const brandImage =
+    vehicle.brand === 'BMW' && vehicle.model === 'i3' ? '/bmw-i3.jpg' : null;
+
   return (
     <div className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+      {/* Vehicle hero image (有對應品牌圖時顯示) */}
+      {brandImage && (
+        <div className="relative w-full h-40 bg-gray-900">
+          <img
+            src={brandImage}
+            alt={`${vehicle.brand} ${vehicle.model}`}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute bottom-2 left-3 text-white">
+            <p className="text-[11px] opacity-80 font-medium tracking-wide">
+              {vehicle.brand} {vehicle.model} {vehicle.year}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Vehicle info header */}
       <div className="p-4">
         <div className="flex items-center gap-3 mb-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50">
-            <Car className="h-6 w-6 text-primary-500" />
-          </div>
+          {!brandImage && (
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50">
+              <Car className="h-6 w-6 text-primary-500" />
+            </div>
+          )}
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-gray-900">{vehicle.plate_number}</h3>
