@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from typing import List
+import json
 
 
 class Settings(BaseSettings):
@@ -9,18 +11,37 @@ class Settings(BaseSettings):
     # JWT
     JWT_SECRET_KEY: str = "dev-secret-key-change-in-production"
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480  # 8 小時（後台操作不用頻繁重登）
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     # OTP
     OTP_EXPIRE_SECONDS: int = 300
     OTP_LENGTH: int = 6
 
-    # CORS — 同時允許 localhost 與 127.0.0.1（瀏覽器視為不同 origin）
+    # CORS — 接受 JSON array 或逗號分隔字串
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return []
+            # JSON array：["url1","url2"]
+            if v.startswith("["):
+                try:
+                    return json.loads(v)
+                except Exception:
+                    pass
+            # 逗號分隔：url1,url2
+            return [s.strip() for s in v.split(",") if s.strip()]
+        return v
 
     # Storage
     UPLOAD_DIR: str = "./uploads"
