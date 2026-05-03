@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
 from typing import List
 import json
 
@@ -18,30 +17,21 @@ class Settings(BaseSettings):
     OTP_EXPIRE_SECONDS: int = 300
     OTP_LENGTH: int = 6
 
-    # CORS — 接受 JSON array 或逗號分隔字串
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
+    # CORS — 用字串避免 pydantic-settings 嘗試 JSON 解析失敗
+    # 支援格式：JSON array `["url1","url2"]` 或逗號分隔 `url1,url2`
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v):
-        if isinstance(v, list):
-            return v
-        if isinstance(v, str):
-            v = v.strip()
-            if not v:
-                return []
-            # JSON array：["url1","url2"]
-            if v.startswith("["):
-                try:
-                    return json.loads(v)
-                except Exception:
-                    pass
-            # 逗號分隔：url1,url2
-            return [s.strip() for s in v.split(",") if s.strip()]
-        return v
+    @property
+    def cors_origins_list(self) -> List[str]:
+        v = (self.CORS_ORIGINS or "").strip()
+        if not v:
+            return []
+        if v.startswith("["):
+            try:
+                return json.loads(v)
+            except Exception:
+                pass
+        return [s.strip() for s in v.split(",") if s.strip()]
 
     # Storage
     UPLOAD_DIR: str = "./uploads"
@@ -72,6 +62,10 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = "noreply@car-insurance.com"
+
+    # Resend HTTP API（Render Free 層擋 SMTP，改走 HTTPS）
+    RESEND_API_KEY: str = ""
+    RESEND_FROM: str = "onboarding@resend.dev"  # 預設 sandbox，正式用要綁網域
 
     # App
     APP_NAME: str = "車險智能服務平台"
