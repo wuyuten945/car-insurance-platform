@@ -11,6 +11,7 @@ const zh: Dict = {
   'header.title': '車險智能平台',
   'header.notifications': '通知',
   'header.langToggle': 'EN',
+  'header.logout': '登出',
 
   // ===== Bottom Nav =====
   'nav.home': '首頁',
@@ -148,6 +149,7 @@ const en: Dict = {
   'header.title': 'Car Insurance Platform',
   'header.notifications': 'Notifications',
   'header.langToggle': '中',
+  'header.logout': 'Sign Out',
 
   // ===== Bottom Nav =====
   'nav.home': 'Home',

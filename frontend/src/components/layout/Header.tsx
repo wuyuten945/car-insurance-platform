@@ -1,14 +1,23 @@
 'use client';
 
-import { Bell, Shield, Languages } from 'lucide-react';
+import { Bell, Shield, Languages, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api-client';
 import { useT } from '@/lib/i18n/LanguageProvider';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function Header() {
   const [unreadCount, setUnreadCount] = useState(0);
   const { t, toggleLang, lang } = useT();
+  const { logout, isAuthenticated } = useAuthStore();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -50,6 +59,16 @@ export default function Header() {
               </span>
             )}
           </Link>
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label={t('header.logout')}
+              className="p-2 hover:bg-white/10 rounded-full transition"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
     </header>
