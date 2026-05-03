@@ -11,14 +11,7 @@ import {
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
-
-const QUICK_ACTIONS = [
-  { href: '/emergency', icon: AlertTriangle, label: '緊急救援', color: 'bg-emergency-red', textColor: 'text-white' },
-  { href: '/policies', icon: FileText, label: '我的保單', color: 'bg-primary-500', textColor: 'text-white' },
-  { href: '/claims', icon: ClipboardList, label: '理賠服務', color: 'bg-accent-500', textColor: 'text-white' },
-  { href: '/chatbot', icon: MessageCircle, label: '智能客服', color: 'bg-primary-700', textColor: 'text-white' },
-  { href: '/inspection', icon: MapPin, label: '驗車查詢', color: 'bg-teal-500', textColor: 'text-white' },
-];
+import { useT } from '@/lib/i18n/LanguageProvider';
 
 interface PinnedVehicle {
   id: string;
@@ -44,6 +37,15 @@ interface PinnedVehicle {
 export default function DashboardPage() {
   const router = useRouter();
   const { isAuthenticated, user, loadUser } = useAuthStore();
+  const { t } = useT();
+
+  const QUICK_ACTIONS = [
+    { href: '/emergency', icon: AlertTriangle, label: t('dash.quickAction.emergency'), color: 'bg-emergency-red', textColor: 'text-white' },
+    { href: '/policies', icon: FileText, label: t('dash.quickAction.policies'), color: 'bg-primary-500', textColor: 'text-white' },
+    { href: '/claims', icon: ClipboardList, label: t('dash.quickAction.claims'), color: 'bg-accent-500', textColor: 'text-white' },
+    { href: '/chatbot', icon: MessageCircle, label: t('dash.quickAction.chatbot'), color: 'bg-primary-700', textColor: 'text-white' },
+    { href: '/inspection', icon: MapPin, label: t('dash.quickAction.inspection'), color: 'bg-teal-500', textColor: 'text-white' },
+  ];
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -71,9 +73,9 @@ export default function DashboardPage() {
       {/* Greeting */}
       <div>
         <h1 className="text-xl font-bold text-gray-900">
-          {user?.name ? `${user.name}，您好！` : '您好！'}
+          {user?.name ? t('dash.greetingNamed', { name: user.name }) : t('dash.greetingAnon')}
         </h1>
-        <p className="text-sm text-gray-500 mt-1">歡迎使用車險智能服務平台</p>
+        <p className="text-sm text-gray-500 mt-1">{t('dash.welcome')}</p>
       </div>
 
       {/* Quick Actions */}
@@ -95,16 +97,16 @@ export default function DashboardPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold text-gray-900 flex items-center gap-1.5">
-            <Shield className="h-4 w-4 text-primary-500" /> 保單
+            <Shield className="h-4 w-4 text-primary-500" /> {t('dash.section.policies')}
           </h2>
           <Link href="/policies" className="text-sm text-primary-500 flex items-center gap-0.5">
-            查看全部 <ChevronRight className="h-4 w-4" />
+            {t('dash.viewAll')} <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
         {pinned.length === 0 ? (
           <div className="rounded-xl bg-white p-6 text-center shadow-sm border border-gray-100">
             <FileText className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">尚無保單資料</p>
+            <p className="text-sm text-gray-400">{t('dash.noPolicy')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -124,22 +126,22 @@ export default function DashboardPage() {
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         comp.days <= 30 ? 'bg-red-50 text-red-600' : comp.days <= 60 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'
                       }`}>
-                        強制險 ✓ 剩 {comp.days} 天到期
+                        {t('dash.compulsoryHas', { days: comp.days })}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
-                        強制險 ✕ 未投保
+                        {t('dash.compulsoryNone')}
                       </span>
                     )}
                     {vol.has ? (
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         vol.days <= 30 ? 'bg-red-50 text-red-600' : vol.days <= 60 ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
                       }`}>
-                        任意險 ✓ 剩 {vol.days} 天到期
+                        {t('dash.voluntaryHas', { days: vol.days })}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500">
-                        任意險 ✕ 未投保
+                        {t('dash.voluntaryNone')}
                       </span>
                     )}
                   </div>
@@ -161,16 +163,16 @@ export default function DashboardPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold text-gray-900 flex items-center gap-1.5">
-            <Calendar className="h-4 w-4 text-orange-500" /> 驗車
+            <Calendar className="h-4 w-4 text-orange-500" /> {t('dash.section.inspection')}
           </h2>
           <Link href="/inspection" className="text-sm text-primary-500 flex items-center gap-0.5">
-            查詢驗車廠 <ChevronRight className="h-4 w-4" />
+            {t('dash.findStation')} <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
         {pinned.length === 0 ? (
           <div className="rounded-xl bg-white p-6 text-center shadow-sm border border-gray-100">
             <Car className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">尚無車輛資料</p>
+            <p className="text-sm text-gray-400">{t('dash.noVehicle')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -190,9 +192,9 @@ export default function DashboardPage() {
                           insp.days_left <= 30 ? 'bg-orange-100 text-orange-700' :
                           'bg-gray-100 text-gray-600'
                         }`}>
-                          {insp.days_left < 0 ? `逾期 ${Math.abs(insp.days_left)} 天` :
-                           insp.days_left === 0 ? '今日到期' :
-                           `倒數 ${insp.days_left} 天`}
+                          {insp.days_left < 0 ? t('dash.inspectOverdue', { days: Math.abs(insp.days_left) }) :
+                           insp.days_left === 0 ? t('dash.inspectToday') :
+                           t('dash.inspectCountdown', { days: insp.days_left })}
                         </span>
                       )}
                     </div>
@@ -205,11 +207,11 @@ export default function DashboardPage() {
                   <div className="mt-2 flex items-center justify-between text-[11px]">
                     <span className="text-gray-500">
                       {insp.window_start && insp.window_end
-                        ? `可檢驗 ${insp.window_start} ~ ${insp.window_end}`
-                        : '未設定驗車日期'}
+                        ? t('dash.inspectWindow', { start: insp.window_start, end: insp.window_end })
+                        : t('dash.inspectNoDate')}
                     </span>
                     <span className={`font-medium ${comp.has ? 'text-green-600' : 'text-red-500'}`}>
-                      強制險：{comp.has ? '有' : '無'}
+                      {t('dash.compulsoryShort', { status: comp.has ? t('dash.statusYes') : t('dash.statusNo') })}
                     </span>
                   </div>
                 </div>

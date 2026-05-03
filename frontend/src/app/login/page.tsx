@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, KeyRound, ArrowRight, Loader2, Mail } from 'lucide-react';
+import { Shield, KeyRound, ArrowRight, Loader2, Mail, Languages } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api-client';
+import { useT } from '@/lib/i18n/LanguageProvider';
 
 export default function LoginPage() {
   const router = useRouter();
   const { sendOTP, verifyOTP } = useAuthStore();
+  const { t, lang, toggleLang } = useT();
 
   const [step, setStep] = useState<'input' | 'otp'>('input');
   const [email, setEmail] = useState('');
@@ -30,7 +32,7 @@ export default function LoginPage() {
 
   const handleSendOTP = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('請輸入正確的 Email');
+      setError(t('login.invalidEmail'));
       return;
     }
     setError('');
@@ -41,14 +43,14 @@ export default function LoginPage() {
       setStep('otp');
       startCountdown(60);
     } catch {
-      setError('傳送驗證碼失敗，請稍後再試');
+      setError(t('login.sendFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleVerifyOTP = async () => {
-    if (otp.length < 4) { setError('請輸入完整的驗證碼'); return; }
+    if (otp.length < 4) { setError(t('login.codeIncomplete')); return; }
     setError('');
     setLoading(true);
     try {
@@ -77,32 +79,43 @@ export default function LoginPage() {
       if (result.otp) setDevOtp(result.otp);
       startCountdown(60);
     } catch {
-      setError('重新傳送失敗');
+      setError(t('login.resendFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-primary-500 to-primary-700">
+    <div className="relative flex min-h-screen flex-col bg-gradient-to-b from-primary-500 to-primary-700">
+      {/* Language toggle (top-right) */}
+      <button
+        type="button"
+        onClick={toggleLang}
+        aria-label="Toggle language"
+        className="absolute top-4 right-4 z-10 flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-xs font-bold text-white hover:bg-white/30 transition"
+      >
+        <Languages className="h-3.5 w-3.5" />
+        {lang === 'zh' ? 'EN' : '中'}
+      </button>
+
       {/* Top section */}
       <div className="flex flex-1 flex-col items-center justify-center px-6 pt-12 pb-8 text-white">
         <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/20 backdrop-blur-sm mb-6">
           <Shield className="h-10 w-10 text-white" />
         </div>
-        <h1 className="text-2xl font-bold">車險智能服務平台</h1>
-        <p className="mt-2 text-sm text-white/70">保單管理、理賠追蹤、緊急救援</p>
+        <h1 className="text-2xl font-bold">{t('login.appTitle')}</h1>
+        <p className="mt-2 text-sm text-white/70">{t('login.appSubtitle')}</p>
       </div>
 
       {/* Form card */}
       <div className="rounded-t-3xl bg-white px-6 pt-8 pb-10 shadow-2xl">
         <h2 className="text-lg font-bold text-gray-900 mb-1">
-          {step === 'input' ? '登入' : '輸入驗證碼'}
+          {step === 'input' ? t('login.signIn') : t('login.enterCode')}
         </h2>
         <p className="text-sm text-gray-500 mb-6">
           {step === 'input'
-            ? '請輸入 Email 取得驗證碼'
-            : `驗證碼已發送至 ${email}`}
+            ? t('login.enterEmailHint')
+            : t('login.codeSentTo', { email })}
         </p>
 
         {error && (
@@ -111,7 +124,7 @@ export default function LoginPage() {
 
         {devOtp && step === 'otp' && (
           <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-700">
-            <span className="font-medium">開發模式：</span>驗證碼為 <span className="font-bold">{devOtp}</span>
+            <span className="font-medium">{t('login.devOtp')}</span> <span className="font-bold">{devOtp}</span>
           </div>
         )}
 
@@ -120,7 +133,7 @@ export default function LoginPage() {
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
-                type="email" placeholder="your@email.com"
+                type="email" placeholder={t('login.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendOTP()}
@@ -134,7 +147,7 @@ export default function LoginPage() {
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 py-3.5 text-base font-semibold text-white transition hover:bg-primary-700 disabled:opacity-50 cursor-pointer"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
-              取得驗證碼
+              {t('login.getCode')}
             </button>
           </div>
         ) : (
@@ -142,7 +155,7 @@ export default function LoginPage() {
             <div className="relative">
               <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
-                type="text" inputMode="numeric" placeholder="請輸入驗證碼" maxLength={6}
+                type="text" inputMode="numeric" placeholder={t('login.codePlaceholder')} maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pl-11 pr-4 text-base tracking-[0.5em] text-center outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
@@ -155,21 +168,21 @@ export default function LoginPage() {
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 py-3.5 text-base font-semibold text-white transition hover:bg-primary-700 disabled:opacity-50"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-              驗證登入
+              {t('login.verifyLogin')}
             </button>
             <div className="flex items-center justify-between">
               <button
                 onClick={() => { setStep('input'); setOtp(''); setError(''); setDevOtp(null); }}
                 className="text-sm text-gray-500"
               >
-                更換 Email
+                {t('login.changeEmail')}
               </button>
               <button
                 onClick={handleResend}
                 disabled={countdown > 0 || loading}
                 className="text-sm text-primary-500 disabled:text-gray-400"
               >
-                {countdown > 0 ? `重新傳送 (${countdown}s)` : '重新傳送'}
+                {countdown > 0 ? t('login.resendIn', { s: countdown }) : t('login.resend')}
               </button>
             </div>
           </div>

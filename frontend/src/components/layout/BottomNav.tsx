@@ -3,17 +3,19 @@
 import { Home, FileText, AlertTriangle, ClipboardList, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-const NAV_ITEMS = [
-  { href: '/', icon: Home, label: '首頁' },
-  { href: '/policies', icon: FileText, label: '保單' },
-  { href: '/emergency', icon: AlertTriangle, label: '緊急救援', isCenter: true },
-  { href: '/claims', icon: ClipboardList, label: '理賠' },
-  { href: '/profile', icon: Menu, label: '更多' },
-];
+import { useT } from '@/lib/i18n/LanguageProvider';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { t } = useT();
+
+  const NAV_ITEMS = [
+    { href: '/', icon: Home, label: t('nav.home') },
+    { href: '/policies', icon: FileText, label: t('nav.policies') },
+    { href: '/emergency', icon: AlertTriangle, label: t('dash.quickAction.emergency'), isCenter: true },
+    { href: '/claims', icon: ClipboardList, label: t('nav.claims') },
+    { href: '/profile', icon: Menu, label: t('nav.profile') },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)]">

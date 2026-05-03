@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import BottomNav from '@/components/layout/BottomNav';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
+import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
 
 export default function Providers({ children }: { children: ReactNode }) {
   // 客戶端初始化認證狀態（避免 hydration mismatch）
@@ -30,12 +31,14 @@ export default function Providers({ children }: { children: ReactNode }) {
   const showGlobalChrome = !isLoginPage;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {showGlobalChrome && !hasOwnHeader && <Header />}
-      <main className={`flex-1 ${showGlobalChrome ? 'pb-20' : ''}`}>
-        {children}
-      </main>
-      {showGlobalChrome && <BottomNav />}
-    </QueryClientProvider>
+    <LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        {showGlobalChrome && !hasOwnHeader && <Header />}
+        <main className={`flex-1 ${showGlobalChrome ? 'pb-20' : ''}`}>
+          {children}
+        </main>
+        {showGlobalChrome && <BottomNav />}
+      </QueryClientProvider>
+    </LanguageProvider>
   );
 }
