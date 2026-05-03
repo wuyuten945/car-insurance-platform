@@ -45,8 +45,8 @@ async def seed():
         # ========== 車輛 ==========
         vehicle1 = UserVehicle(
             id="vehicle-001", user_id=user.id, plate_number="ABC-1234",
-            brand="Toyota", model="Corolla Cross", year=2023, color="白色",
-            vin="JTDKN3DU5A0000001", engine_cc=1800, is_primary=True,
+            brand="BMW", model="i3", year=2016, color="白色／黑色",
+            vin="WBY1Z210706000000", engine_cc=0, is_primary=True,
         )
         vehicle2 = UserVehicle(
             id="vehicle-002", user_id=user.id, plate_number="XYZ-5678",

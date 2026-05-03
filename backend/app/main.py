@@ -30,6 +30,23 @@ async def lifespan(app: FastAPI):
     # 建立上傳目錄
     Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
 
+    # Render Free 層 ephemeral filesystem：DB 空時自動 seed（demo 用）
+    try:
+        import os
+        if os.environ.get("AUTO_SEED", "0") == "1":
+            from sqlalchemy import select
+            from app.database import AsyncSessionLocal
+            from app.models.user import User
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(select(User).limit(1))
+                if result.scalar_one_or_none() is None:
+                    logger.info("DB 為空，執行 seed_data...")
+                    import subprocess, sys
+                    subprocess.run([sys.executable, "seed_data.py"], check=False)
+                    logger.info("seed_data 完成")
+    except Exception as e:
+        logger.warning(f"auto-seed skipped: {e}")
+
     # 啟動排程：每日 09:00 檢查保單到期通知
     scheduler.add_job(
         check_policy_expiry,
