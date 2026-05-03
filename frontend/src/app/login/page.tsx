@@ -37,9 +37,13 @@ export default function LoginPage() {
     }
     setError('');
     setLoading(true);
+    setDevOtp(null);  // 清掉前次殘留
     try {
       const result = await sendOTP(email);
-      if (result.otp) setDevOtp(result.otp);
+      // 只有 dev mode 且明確帶 otp 時才顯示；正式環境後端不回 otp
+      if (result.otp && process.env.NODE_ENV !== 'production') {
+        setDevOtp(result.otp);
+      }
       setStep('otp');
       startCountdown(60);
     } catch {
