@@ -55,7 +55,7 @@ async def google_login():
     """重導到 Google OAuth 授權頁"""
     if not settings.GOOGLE_CLIENT_ID:
         return APIResponse(success=False, message="Google OAuth 未設定")
-    redirect_uri = f"{settings.OAUTH_REDIRECT_BASE}/auth/callback/google"
+    redirect_uri = f"{settings.BACKEND_URL}/api/v1/oauth/google/callback"
     url = (
         "https://accounts.google.com/o/oauth2/v2/auth?"
         f"client_id={settings.GOOGLE_CLIENT_ID}"
@@ -71,7 +71,7 @@ async def google_login():
 async def google_callback(code: str = Query(...), db: AsyncSession = Depends(get_db)):
     """Google OAuth 回呼"""
     import httpx
-    redirect_uri = f"{settings.OAUTH_REDIRECT_BASE}/auth/callback/google"
+    redirect_uri = f"{settings.BACKEND_URL}/api/v1/oauth/google/callback"
 
     # Exchange code for token
     async with httpx.AsyncClient() as client:

@@ -46,7 +46,8 @@ class Settings(BaseSettings):
     APPLE_PRIVATE_KEY: str = ""      # .p8 file content
     FACEBOOK_CLIENT_ID: str = ""
     FACEBOOK_CLIENT_SECRET: str = ""
-    OAUTH_REDIRECT_BASE: str = "http://localhost:3000"
+    OAUTH_REDIRECT_BASE: str = "http://localhost:3000"  # 前端網址（OAuth 完成後導回此處）
+    BACKEND_URL: str = "http://localhost:8000"  # 後端網址（Google 回呼指向這裡）
 
     # AI / OCR
     ANTHROPIC_API_KEY: str = ""
