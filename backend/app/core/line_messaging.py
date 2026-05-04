@@ -85,6 +85,16 @@ class LineMessagingService:
         payload = {"messages": [{"type": "text", "text": text[:5000]}]}
         return await self._post(f"{LINE_API}/message/broadcast", payload)
 
+    async def reply_text(self, reply_token: str, text: str) -> bool:
+        """用 reply token 回覆訊息（不耗 push 配額，需在 1 分鐘內使用）"""
+        if not self.token or not reply_token:
+            return False
+        payload = {
+            "replyToken": reply_token,
+            "messages": [{"type": "text", "text": text[:5000]}],
+        }
+        return await self._post(f"{LINE_API}/message/reply", payload)
+
     async def get_quota(self) -> Optional[Dict[str, Any]]:
         """查詢推播額度餘額"""
         if not self.token:

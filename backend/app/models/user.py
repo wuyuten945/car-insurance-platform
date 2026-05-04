@@ -28,6 +28,8 @@ class User(TimestampMixin, Base):
     # LINE 整合
     line_user_id = Column(String(100), unique=True, nullable=True, index=True)  # LINE 平台識別碼
     line_notify_enabled = Column(Boolean, default=True)  # 是否啟用 LINE 推播
+    is_line_friend = Column(Boolean, default=False, nullable=False)  # 是否已加 OA 好友（沒加無法 push）
+    line_friend_at = Column(DateTime, nullable=True)  # 加好友時間
 
     # Relationships
     consents = relationship("UserConsent", back_populates="user", lazy="selectin")

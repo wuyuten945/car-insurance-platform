@@ -47,7 +47,8 @@ async def line_status(
     return APIResponse(data={
         "bound": bool(current_user.line_user_id),
         "notify_enabled": current_user.line_notify_enabled,
-        "official_id": settings.LINE_OFFICIAL_ID,  # 例如 @abc1234
+        "is_friend": bool(current_user.is_line_friend),  # 是否已加 OA 好友（沒加無法 push）
+        "official_id": settings.LINE_OFFICIAL_ID,
     })
 
 

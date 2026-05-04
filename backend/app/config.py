@@ -61,8 +61,9 @@ class Settings(BaseSettings):
     LINE_LOGIN_CHANNEL_ID: str = ""
     LINE_LOGIN_CHANNEL_SECRET: str = ""
 
-    # LINE Messaging API（推播）
+    # LINE Messaging API（推播 + webhook）
     LINE_MESSAGING_TOKEN: str = ""        # Channel Access Token (long-lived)
+    LINE_MESSAGING_SECRET: str = ""       # Channel Secret（用於驗證 webhook 簽章）
     LINE_OFFICIAL_ID: str = ""            # 官方帳號 LINE ID（如 @abc1234）給用戶加好友用
 
     # SMTP Email

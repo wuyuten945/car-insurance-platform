@@ -211,7 +211,7 @@ function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
             <p className="text-xs text-gray-400 mb-1.5">{t('vehicles.regImage')}</p>
             <div className="relative rounded-lg overflow-hidden border border-gray-200">
               <img
-                src={`http://localhost:8000${vehicle.registration_image_url}`}
+                src={`${process.env.NEXT_PUBLIC_API_URL || ''}${vehicle.registration_image_url}`}
                 alt={t('vehicles.regImageAlt')}
                 className="w-full h-40 object-cover"
               />
