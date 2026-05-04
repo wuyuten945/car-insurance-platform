@@ -16,8 +16,8 @@ class Notification(TimestampMixin, Base):
     reference_type = Column(String(30))  # policy, claim, accident
     reference_id = Column(String(36))
     is_read = Column(Boolean, default=False)
-    read_at = Column(DateTime)
-    sent_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    read_at = Column(DateTime(timezone=True))
+    sent_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     channel = Column(String(20), default="in_app")  # push, sms, email, in_app
 
     user = relationship("User", back_populates="notifications")

@@ -35,11 +35,13 @@ class Base(DeclarativeBase):
 
 
 class TimestampMixin:
+    # timezone=True 讓 PostgreSQL 用 TIMESTAMPTZ，可接受 aware/naive datetime；
+    # SQLite 對 timezone=True 也相容（內部仍存 ISO 字串）。
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )
     updated_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,

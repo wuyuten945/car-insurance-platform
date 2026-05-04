@@ -17,8 +17,8 @@ class Claim(TimestampMixin, Base):
     claim_type = Column(String(30))  # own_damage, third_party, medical, comprehensive
     claimed_amount = Column(Numeric(14, 2))
     approved_amount = Column(Numeric(14, 2))
-    submitted_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    resolved_at = Column(DateTime)
+    submitted_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    resolved_at = Column(DateTime(timezone=True))
     notes = Column(Text)
 
     user = relationship("User", back_populates="claims")
@@ -42,7 +42,7 @@ class ClaimDocument(TimestampMixin, Base):
     file_url = Column(String(500), nullable=False)
     file_name = Column(String(255))
     file_size_bytes = Column(Integer)
-    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    uploaded_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     claim = relationship("Claim", back_populates="documents")
 
@@ -55,7 +55,7 @@ class ClaimProgress(TimestampMixin, Base):
     stage = Column(String(30), nullable=False)
     description = Column(Text)
     changed_by = Column(String(100))  # adjuster name or 'system'
-    changed_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    changed_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     claim = relationship("Claim", back_populates="progress_history")
 
@@ -75,7 +75,7 @@ class ClaimAdjuster(TimestampMixin, Base):
     service_hours = Column(String(100))
     backup_phone = Column(String(20))  # 0800 主線
     avg_response_minutes = Column(Integer)  # 過去30天平均回覆時間
-    assigned_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    assigned_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     is_active = Column(Boolean, default=True)
 
     claim = relationship("Claim", back_populates="adjuster")

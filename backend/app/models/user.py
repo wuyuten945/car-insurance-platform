@@ -13,23 +13,23 @@ class User(TimestampMixin, Base):
     name = Column(String(100))
     email = Column(String(255), unique=True, index=True)
     id_number_hash = Column(String(255))
-    birth_date = Column(DateTime)
+    birth_date = Column(DateTime(timezone=True))
     address = Column(String(500))
     registered_address = Column(String(500))
     emergency_contact_name = Column(String(100))
     emergency_contact_phone = Column(String(20))
     emergency_contact_relation = Column(String(50))
     license_number = Column(String(50))
-    license_expiry = Column(DateTime)
+    license_expiry = Column(DateTime(timezone=True))
     avatar_url = Column(String(500))
     is_active = Column(Boolean, default=True)
-    last_login_at = Column(DateTime)
+    last_login_at = Column(DateTime(timezone=True))
 
     # LINE 整合
     line_user_id = Column(String(100), unique=True, nullable=True, index=True)  # LINE 平台識別碼
     line_notify_enabled = Column(Boolean, default=True)  # 是否啟用 LINE 推播
     is_line_friend = Column(Boolean, default=False, nullable=False)  # 是否已加 OA 好友（沒加無法 push）
-    line_friend_at = Column(DateTime, nullable=True)  # 加好友時間
+    line_friend_at = Column(DateTime(timezone=True), nullable=True)  # 加好友時間
 
     # Relationships
     consents = relationship("UserConsent", back_populates="user", lazy="selectin")
@@ -47,8 +47,8 @@ class UserConsent(TimestampMixin, Base):
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     consent_type = Column(String(50), nullable=False)  # privacy_policy, marketing, location, push_notification
     is_granted = Column(Boolean, nullable=False)
-    granted_at = Column(DateTime)
-    revoked_at = Column(DateTime)
+    granted_at = Column(DateTime(timezone=True))
+    revoked_at = Column(DateTime(timezone=True))
     ip_address = Column(String(45))
     consent_version = Column(String(20))
 

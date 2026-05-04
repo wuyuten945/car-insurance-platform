@@ -10,8 +10,8 @@ class ChatbotSession(TimestampMixin, Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     status = Column(String(20), nullable=False, default="active")  # active, closed, transferred_to_human
-    started_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    ended_at = Column(DateTime)
+    started_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    ended_at = Column(DateTime(timezone=True))
     intent_summary = Column(String(200))
     satisfaction_rating = Column(Integer)  # 1-5
 

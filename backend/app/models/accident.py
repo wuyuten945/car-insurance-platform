@@ -12,8 +12,8 @@ class Accident(TimestampMixin, Base):
     vehicle_id = Column(String(36), ForeignKey("user_vehicles.id"))
     policy_id = Column(String(36), ForeignKey("policies.id"))
     status = Column(String(30), nullable=False, default="reported")  # reported, in_progress, claim_filed, resolved
-    occurred_at = Column(DateTime, nullable=False)
-    reported_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    occurred_at = Column(DateTime(timezone=True), nullable=False)
+    reported_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     latitude = Column(Float)
     longitude = Column(Float)
     address = Column(String(500))
@@ -55,7 +55,7 @@ class AccidentPhoto(TimestampMixin, Base):
     photo_type = Column(String(30))  # scene_overview, damage_close, license_plate, road_condition, document, cctv_location
     latitude = Column(Float)
     longitude = Column(Float)
-    taken_at = Column(DateTime)
+    taken_at = Column(DateTime(timezone=True))
     watermark_text = Column(String(200))
     file_size_bytes = Column(Integer)
 
