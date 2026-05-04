@@ -1,7 +1,8 @@
 'use client';
 
-import { Bell, Shield, Languages, LogOut } from 'lucide-react';
+import { Bell, Languages, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api-client';
@@ -38,7 +39,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-primary-500 text-white shadow-md">
       <div className="flex items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
-          <Shield className="h-7 w-7" />
+          <Image src="/logo.png" alt="BOPINAN" width={32} height={32} className="h-8 w-8 object-contain" priority />
           <span className="text-lg font-bold tracking-tight">{t('header.title')}</span>
         </Link>
         <div className="flex items-center gap-1">

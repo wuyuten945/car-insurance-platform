@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, KeyRound, ArrowRight, Loader2, Mail, Languages } from 'lucide-react';
+import { KeyRound, ArrowRight, Loader2, Mail, Languages } from 'lucide-react';
+import Image from 'next/image';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api-client';
 import { useT } from '@/lib/i18n/LanguageProvider';
@@ -104,8 +105,8 @@ export default function LoginPage() {
 
       {/* Top section */}
       <div className="flex flex-1 flex-col items-center justify-center px-6 pt-12 pb-8 text-white">
-        <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/20 backdrop-blur-sm mb-6">
-          <Shield className="h-10 w-10 text-white" />
+        <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white/20 backdrop-blur-sm mb-6 overflow-hidden">
+          <Image src="/logo.png" alt="BOPINAN" width={96} height={96} className="h-full w-full object-contain" priority />
         </div>
         <h1 className="text-2xl font-bold">{t('login.appTitle')}</h1>
         <p className="mt-2 text-sm text-white/70">{t('login.appSubtitle')}</p>
