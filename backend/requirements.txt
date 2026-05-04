@@ -6,6 +6,7 @@ alembic>=1.13
 pydantic>=2.9
 pydantic-settings>=2.5
 python-jose[cryptography]>=3.3
+PyJWT>=2.8
 passlib[bcrypt]>=1.7
 python-multipart>=0.0.9
 pillow>=10.4
