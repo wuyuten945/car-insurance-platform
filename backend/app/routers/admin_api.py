@@ -1204,3 +1204,59 @@ async def admin_ocr_policy_scan(
         },
         message="AI 辨識完成" if policy_created else (f"辨識完成但建立失敗" if has_ocr else "辨識失敗"),
     )
+
+
+# ═══════════════════════════════════════════════════
+# 理賠進度管理（觸發 LINE 推播）
+# ═══════════════════════════════════════════════════
+
+class ClaimProgressUpdate(BaseModel):
+    stage: str  # submitted/reviewing/investigating/negotiating/approved/paying/closed
+    description: str
+
+
+@router.post("/claims/{claim_id}/progress")
+async def update_claim_progress(
+    claim_id: str,
+    req: ClaimProgressUpdate,
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    更新理賠案件進度，自動推播 LINE 通知（若用戶已加好友且未關閉）。
+    Admin agent 只能改自己的客戶的案件。
+    """
+    from app.services.claim_service import ClaimService, CLAIM_STAGES
+
+    if req.stage not in CLAIM_STAGES:
+        raise BadRequestError(f"stage 必須為以下其中之一：{', '.join(CLAIM_STAGES)}")
+
+    res = await db.execute(select(Claim).where(Claim.id == claim_id))
+    claim = res.scalar_one_or_none()
+    if not claim:
+        raise NotFoundError("理賠案件不存在")
+
+    # 權限檢查：agent 只能改自己客戶的案件
+    accessible = await get_accessible_customer_ids(admin, db)
+    if accessible is not None and claim.user_id not in accessible:
+        raise ForbiddenError("無權限修改此案件")
+
+    svc = ClaimService(db)
+    updated = await svc.update_progress(
+        claim_id=claim_id,
+        new_stage=req.stage,
+        description=req.description,
+        changed_by=admin.username,
+    )
+    await log_action(db, admin, "update", "claim_progress", claim_id,
+                     detail=f"{req.stage}: {req.description[:50]}")
+    await db.commit()
+
+    # commit 成功後才推播，避免 rollback 後發出幽靈通知
+    await svc.notify_progress(updated, req.stage, req.description)
+
+    return APIResponse(data={
+        "claim_id": updated.id,
+        "claim_number": updated.claim_number,
+        "status": updated.status,
+    }, message="進度已更新並推播")

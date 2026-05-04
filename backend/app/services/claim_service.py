@@ -1,14 +1,23 @@
-from datetime import datetime, timezone
+import logging
 import random
 import string
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
 from fastapi import UploadFile
-from app.models.claim import Claim, ClaimDocument, ClaimProgress, ClaimAdjuster
-from app.schemas.claim import ClaimCreate
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.core.line_messaging import line_messaging
 from app.core.storage import storage
-from app.exceptions import NotFoundError
+from app.exceptions import BadRequestError, NotFoundError
+from app.models.claim import Claim, ClaimAdjuster, ClaimDocument, ClaimProgress
+from app.models.user import User
+from app.schemas.claim import ClaimCreate
+
+logger = logging.getLogger(__name__)
+TPE_TZ = ZoneInfo("Asia/Taipei")
 
 
 CLAIM_STAGES = [
@@ -29,6 +38,16 @@ STAGE_LABELS = {
     "approved": "理賠金額確認",
     "paying": "撥款作業",
     "closed": "案件結案",
+}
+
+STAGE_EMOJI = {
+    "submitted": "📝",
+    "reviewing": "📋",
+    "investigating": "🔍",
+    "negotiating": "⚖️",
+    "approved": "✅",
+    "paying": "💰",
+    "closed": "🎉",
 }
 
 
@@ -126,3 +145,85 @@ class ClaimService:
         self.db.add(doc)
         await self.db.flush()
         return doc
+
+    async def update_progress(
+        self,
+        claim_id: str,
+        new_stage: str,
+        description: str,
+        changed_by: str = "system",
+    ) -> Claim:
+        """
+        更新理賠案件進度：寫 Claim.status + 新增 ClaimProgress 紀錄。
+        **不**做 LINE 推播 — 由呼叫端 commit 成功後另外呼叫 notify_progress()，
+        避免 commit 失敗仍發出幽靈通知。
+        """
+        if new_stage not in CLAIM_STAGES:
+            raise BadRequestError(f"無效的進度階段：{new_stage}")
+
+        result = await self.db.execute(
+            select(Claim).options(selectinload(Claim.adjuster)).where(Claim.id == claim_id)
+        )
+        claim = result.scalar_one_or_none()
+        if not claim:
+            raise NotFoundError("理賠案件不存在")
+
+        claim.status = new_stage
+        if new_stage == "closed":
+            claim.resolved_at = datetime.now(timezone.utc)
+
+        progress = ClaimProgress(
+            claim_id=claim.id,
+            stage=new_stage,
+            description=description,
+            changed_by=changed_by,
+        )
+        self.db.add(progress)
+        await self.db.flush()
+        return claim
+
+    async def notify_progress(self, claim: Claim, stage: str, description: str) -> None:
+        """commit 後呼叫，做 LINE 推播。失敗只記 log 不拋例外。"""
+        await self._notify_line(claim, stage, description)
+
+    async def _notify_line(self, claim: Claim, stage: str, description: str) -> None:
+        """檢查用戶 LINE 通知意願，符合條件才推播。失敗不拋例外。"""
+        try:
+            user_res = await self.db.execute(select(User).where(User.id == claim.user_id))
+            user = user_res.scalar_one_or_none()
+            if not user:
+                return
+            if not user.line_user_id:
+                logger.info(f"[Claim Notify] {claim.claim_number} 用戶未綁定 LINE，略過")
+                return
+            if not user.is_line_friend:
+                logger.info(f"[Claim Notify] {claim.claim_number} 用戶未加 OA 好友，略過")
+                return
+            if not user.line_notify_enabled:
+                logger.info(f"[Claim Notify] {claim.claim_number} 用戶關閉通知，略過")
+                return
+
+            now_tpe = datetime.now(TPE_TZ).strftime("%m/%d %H:%M")
+            label = STAGE_LABELS.get(stage, stage)
+            emoji = STAGE_EMOJI.get(stage, "🛡")
+            adjuster_line = ""
+            if claim.adjuster and claim.adjuster.adjuster_name:
+                adjuster_line = f"\n專員：{claim.adjuster.adjuster_name}"
+
+            msg = (
+                f"🛡 BOPINAN 理賠進度更新\n\n"
+                f"案件編號：{claim.claim_number}\n"
+                f"最新狀態：{emoji} {label}\n"
+                f"時間：{now_tpe}{adjuster_line}\n\n"
+                f"📝 {description}\n\n"
+                f"查看完整進度：\n"
+                f"https://bopinan.ego-intl.com/claims/{claim.id}?openExternalBrowser=1"
+            )
+
+            sent = await line_messaging.send_text(user.line_user_id, msg)
+            if sent:
+                logger.info(f"[Claim Notify] {claim.claim_number} 推播成功 → {user.id}")
+            else:
+                logger.warning(f"[Claim Notify] {claim.claim_number} 推播失敗 → {user.id}")
+        except Exception as e:
+            logger.error(f"[Claim Notify] {claim.claim_number} 推播例外: {e}", exc_info=True)
