@@ -4,11 +4,20 @@ import api from '@/lib/api-client';
 
 interface User {
   id: string;
-  phone: string;
+  phone: string | null;
   name: string | null;
   email: string | null;
+  birth_date: string | null;
+  address: string | null;
+  registered_address: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
+  emergency_contact_relation: string | null;
+  license_number: string | null;
+  license_expiry: string | null;
+  avatar_url: string | null;
+  has_id_number: boolean;
+  is_profile_complete: boolean;
 }
 
 interface AuthState {
