@@ -1207,6 +1207,51 @@ async def admin_ocr_policy_scan(
 
 
 # ═══════════════════════════════════════════════════
+# 極簡 LINE 推播測試（不需要建 claim）
+# ═══════════════════════════════════════════════════
+
+@router.post("/line/test-push")
+async def test_line_push(
+    email: str = Query(..., description="收件用戶的 email（該用戶必須已綁定 LINE 並加 OA 好友）"),
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    一鍵測試 LINE 推播：填收件用戶的 email，秒推一則測試訊息。
+    用來驗證 LINE Messaging API 串接是否正常。
+    """
+    from app.core.line_messaging import line_messaging
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    res = await db.execute(select(User).where(User.email == email))
+    user = res.scalar_one_or_none()
+    if not user:
+        return APIResponse(success=False, message=f"找不到 email={email} 的用戶")
+    if not user.line_user_id:
+        return APIResponse(success=False, message="該用戶未綁定 LINE（需先用 LINE 登入過 BOPINAN）")
+    if not user.is_line_friend:
+        return APIResponse(success=False, message="該用戶未加 BOPINAN OA 好友")
+    if not user.line_notify_enabled:
+        return APIResponse(success=False, message="該用戶已關閉 LINE 通知")
+
+    now = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%m/%d %H:%M")
+    msg = (
+        f"🛡 BOPINAN 測試推播\n\n"
+        f"哈囉 {user.name or '客戶'}，這是 admin 觸發的測試訊息。\n"
+        f"如果您看到這則訊息，代表 BOPINAN ↔ LINE 推播管道暢通。\n\n"
+        f"時間：{now}\n"
+        f"觸發者：{admin.username}"
+    )
+    sent = await line_messaging.send_text(user.line_user_id, msg)
+    return APIResponse(
+        success=sent,
+        data={"sent_to": user.line_user_id[:10] + "...", "name": user.name},
+        message="推播成功，請看您手機 LINE" if sent else "推播失敗（看 Render log 找原因）",
+    )
+
+
+# ═══════════════════════════════════════════════════
 # 理賠案件列表 + 進度管理（觸發 LINE 推播）
 # ═══════════════════════════════════════════════════
 
