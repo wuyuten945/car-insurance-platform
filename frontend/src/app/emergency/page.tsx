@@ -54,7 +54,7 @@ const ACCIDENT_STEPS = [
   { step: 3, title: '現場記錄', desc: '請依下方指示拍攝並上傳照片', isUpload: true },
   { step: 4, title: '通知保險公司', desc: '撥打保險公司客服，告知事故狀況。' },
   { step: 5, title: '就醫檢查', desc: '即使無明顯外傷，也建議就醫檢查並保留診斷證明。' },
-  { step: 6, title: '線上報案', desc: '透過本平台提交理賠申請，上傳相關文件。' },
+  { step: 6, title: '申請暫傳（實際理賠依申請文件為主）', desc: '透過本平台先行暫傳事故資料，上傳相關文件。實際理賠仍依保險公司收到正式申請文件後審核為準。' },
 ];
 
 const PHOTO_SLOTS = [
