@@ -20,6 +20,7 @@ from app.tasks.inspection_expiry_notifier import check_inspection_expiry
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    force=True,  # 覆寫 uvicorn 已加的 handler，讓 app 內 logger.info 顯示
 )
 logger = logging.getLogger(__name__)
 
