@@ -17,6 +17,10 @@ from app.routers import auth, customers, policies, renewal, accidents, claims, c
 from app.tasks.policy_expiry_notifier import check_policy_expiry
 from app.tasks.inspection_expiry_notifier import check_inspection_expiry
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 # APScheduler 實例
