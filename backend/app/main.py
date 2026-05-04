@@ -52,6 +52,35 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"auto-seed skipped: {e}")
 
+    # Bootstrap admin：env 設了 BOOTSTRAP_ADMIN_USERNAME + BOOTSTRAP_ADMIN_PASSWORD
+    # 且該帳號不存在 → 自動建立 super_admin。Render ephemeral DB 重啟後也會重建。
+    try:
+        import os
+        bootstrap_user = os.environ.get("BOOTSTRAP_ADMIN_USERNAME", "").strip()
+        bootstrap_pwd = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "")
+        if bootstrap_user and bootstrap_pwd:
+            from sqlalchemy import select
+            from app.database import AsyncSessionLocal
+            from app.models.admin_user import AdminUser
+            from app.core.admin_auth import hash_password
+            async with AsyncSessionLocal() as db:
+                exists = await db.execute(select(AdminUser).where(AdminUser.username == bootstrap_user))
+                if exists.scalar_one_or_none() is None:
+                    admin = AdminUser(
+                        username=bootstrap_user,
+                        password_hash=hash_password(bootstrap_pwd),
+                        display_name=bootstrap_user,
+                        role="super_admin",
+                        is_active=True,
+                    )
+                    db.add(admin)
+                    await db.commit()
+                    logger.info(f"[Bootstrap] 建立 super_admin: {bootstrap_user}")
+                else:
+                    logger.info(f"[Bootstrap] admin 已存在: {bootstrap_user}（略過）")
+    except Exception as e:
+        logger.warning(f"bootstrap admin 失敗: {e}")
+
     # 啟動排程：每日 09:00 檢查保單到期通知
     scheduler.add_job(
         check_policy_expiry,
