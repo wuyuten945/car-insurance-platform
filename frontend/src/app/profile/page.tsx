@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -121,6 +121,9 @@ export default function ProfilePage() {
         })}
       </div>
 
+      {/* LINE binding section */}
+      <LineBindingSection />
+
       {/* Profile Edit Form */}
       <section className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
         <h2 className="text-base font-bold text-gray-900 mb-4">{t('profile.section.title')}</h2>
@@ -179,5 +182,87 @@ export default function ProfilePage() {
         <LogOut className="h-4 w-4" /> {t('profile.logout')}
       </button>
     </div>
+  );
+}
+
+function LineBindingSection() {
+  const { t } = useT();
+  const [status, setStatus] = useState<{ bound: boolean; notify_enabled: boolean; official_id: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/api/v1/customers/line/status')
+      .then(r => setStatus(r.data.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const toggleNotify = async (enabled: boolean) => {
+    try {
+      await api.patch(`/api/v1/customers/line/notify?enabled=${enabled}`);
+      setStatus(prev => prev ? { ...prev, notify_enabled: enabled } : prev);
+    } catch { /* ignore */ }
+  };
+
+  const unbind = async () => {
+    if (!confirm(`${t('profile.line.unbind')}?`)) return;
+    try {
+      await api.delete('/api/v1/customers/line/unbind');
+      setStatus(prev => prev ? { ...prev, bound: false } : prev);
+    } catch { /* ignore */ }
+  };
+
+  const bind = () => {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+    window.location.href = `${apiBase}/api/v1/oauth/line/login`;
+  };
+
+  if (loading || !status) return null;
+
+  return (
+    <section className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
+      <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+        <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[#06C755] text-white text-xs font-bold">L</span>
+        {t('profile.line.section')}
+      </h2>
+      <div className="flex items-center justify-between mb-3 text-sm">
+        <span className="text-gray-700">{t('profile.line.bound')}：</span>
+        <span className={status.bound ? 'text-green-600 font-semibold' : 'text-gray-400'}>
+          {status.bound ? `✓ ${t('profile.line.bound')}` : t('profile.line.notBound')}
+        </span>
+      </div>
+
+      {status.bound ? (
+        <>
+          <label className="flex items-center justify-between mb-3 text-sm">
+            <span className="text-gray-700">{t('profile.line.notify')}：</span>
+            <button
+              onClick={() => toggleNotify(!status.notify_enabled)}
+              className={`relative w-11 h-6 rounded-full transition ${status.notify_enabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
+            >
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition ${status.notify_enabled ? 'left-5' : 'left-0.5'}`} />
+            </button>
+          </label>
+          {status.official_id && (
+            <p className="text-xs text-gray-500 mb-3">
+              {t('profile.line.addFriend')} <strong className="text-gray-700">{status.official_id}</strong>
+            </p>
+          )}
+          <button
+            onClick={unbind}
+            className="w-full text-sm font-semibold text-red-500 border border-red-200 rounded-lg py-2 hover:bg-red-50 transition"
+          >
+            {t('profile.line.unbind')}
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={bind}
+          className="w-full bg-[#06C755] hover:bg-[#05B14C] text-white font-semibold rounded-lg py-2.5 text-sm transition"
+        >
+          {t('profile.line.bind')}
+        </button>
+      )}
+    </section>
   );
 }

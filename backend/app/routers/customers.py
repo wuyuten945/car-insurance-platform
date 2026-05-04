@@ -38,6 +38,43 @@ async def update_profile(
     return APIResponse(data=UserOut.model_validate(user), message="資料已更新")
 
 
+@router.get("/line/status", response_model=APIResponse)
+async def line_status(
+    current_user: User = Depends(get_current_user),
+):
+    """取得目前 LINE 綁定狀態 + 官方帳號 ID（給前端顯示「加好友」連結）"""
+    from app.config import settings
+    return APIResponse(data={
+        "bound": bool(current_user.line_user_id),
+        "notify_enabled": current_user.line_notify_enabled,
+        "official_id": settings.LINE_OFFICIAL_ID,  # 例如 @abc1234
+    })
+
+
+@router.patch("/line/notify", response_model=APIResponse)
+async def toggle_line_notify(
+    enabled: bool,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """開關 LINE 推播通知"""
+    current_user.line_notify_enabled = enabled
+    await db.commit()
+    return APIResponse(data={"notify_enabled": enabled},
+                       message="LINE 通知已" + ("開啟" if enabled else "關閉"))
+
+
+@router.delete("/line/unbind", response_model=APIResponse)
+async def unbind_line(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """解除 LINE 綁定"""
+    current_user.line_user_id = None
+    await db.commit()
+    return APIResponse(message="已解除 LINE 綁定")
+
+
 def _mask_phone(phone: str) -> str:
     """0952156100 → 0952-XXX-100（中段隱藏）"""
     if not phone or len(phone) < 7:

@@ -54,8 +54,16 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""  # Google Gemini（免費，https://aistudio.google.com/apikey）
     GOOGLE_APPLICATION_CREDENTIALS: str = ""  # Google Vision 服務帳戶 JSON 路徑
 
-    # LINE Notify
+    # LINE Notify (legacy, 已停用)
     LINE_CHANNEL_ACCESS_TOKEN: str = ""
+
+    # LINE Login（OAuth）
+    LINE_LOGIN_CHANNEL_ID: str = ""
+    LINE_LOGIN_CHANNEL_SECRET: str = ""
+
+    # LINE Messaging API（推播）
+    LINE_MESSAGING_TOKEN: str = ""        # Channel Access Token (long-lived)
+    LINE_OFFICIAL_ID: str = ""            # 官方帳號 LINE ID（如 @abc1234）給用戶加好友用
 
     # SMTP Email
     SMTP_HOST: str = ""

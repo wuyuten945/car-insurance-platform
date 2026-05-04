@@ -1,5 +1,5 @@
 """
-OAuth 社交登入 — Google / Apple / Facebook
+OAuth 社交登入 — Google / Apple / Facebook / LINE
 """
 import logging
 from datetime import datetime, timezone
@@ -226,6 +226,121 @@ async def facebook_callback(code: str = Query(...), db: AsyncSession = Depends(g
 
 
 # ════════════════════════════════════════════════════════════════
+# LINE Login
+# ════════════════════════════════════════════════════════════════
+
+@router.get("/line/login")
+async def line_login():
+    """重導到 LINE Login 授權頁"""
+    if not settings.LINE_LOGIN_CHANNEL_ID:
+        return APIResponse(success=False, message="LINE Login 未設定")
+    redirect_uri = f"{settings.BACKEND_URL}/api/v1/oauth/line/callback"
+    # state 用簡單字串（正式環境應加 CSRF 防護）
+    url = (
+        "https://access.line.me/oauth2/v2.1/authorize?"
+        "response_type=code"
+        f"&client_id={settings.LINE_LOGIN_CHANNEL_ID}"
+        f"&redirect_uri={redirect_uri}"
+        "&state=login"
+        "&scope=profile%20openid%20email"
+    )
+    return RedirectResponse(url)
+
+
+@router.get("/line/callback")
+async def line_callback(code: str = Query(...), db: AsyncSession = Depends(get_db)):
+    """LINE OAuth 回呼"""
+    import httpx
+    import jwt as pyjwt
+    redirect_uri = f"{settings.BACKEND_URL}/api/v1/oauth/line/callback"
+
+    async with httpx.AsyncClient() as client:
+        # Step 1: code → access_token + id_token
+        token_resp = await client.post(
+            "https://api.line.me/oauth2/v2.1/token",
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect_uri,
+                "client_id": settings.LINE_LOGIN_CHANNEL_ID,
+                "client_secret": settings.LINE_LOGIN_CHANNEL_SECRET,
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        tokens = token_resp.json()
+        if "access_token" not in tokens:
+            logger.error(f"LINE token exchange failed: {tokens}")
+            return RedirectResponse(f"{settings.OAUTH_REDIRECT_BASE}/login?error=line_token")
+
+        # Step 2: 解 id_token 拿 email + sub (LINE userId)
+        id_token = tokens.get("id_token", "")
+        line_user_id = ""
+        email = ""
+        name = ""
+        if id_token:
+            decoded = pyjwt.decode(id_token, options={"verify_signature": False})
+            line_user_id = decoded.get("sub", "")
+            email = decoded.get("email", "")
+            name = decoded.get("name", "")
+
+        # 若 id_token 沒有 email，再呼叫 profile API 拿基本資料
+        if not name or not line_user_id:
+            try:
+                profile_resp = await client.get(
+                    "https://api.line.me/v2/profile",
+                    headers={"Authorization": f"Bearer {tokens['access_token']}"},
+                )
+                p = profile_resp.json()
+                line_user_id = line_user_id or p.get("userId", "")
+                name = name or p.get("displayName", "")
+            except Exception as e:
+                logger.warning(f"LINE profile fetch failed: {e}")
+
+    if not line_user_id:
+        return RedirectResponse(f"{settings.OAUTH_REDIRECT_BASE}/login?error=line_no_id")
+
+    # 用 LINE userId 找已綁定用戶；找不到再 fallback 到 email
+    found = None
+    if line_user_id:
+        result = await db.execute(select(User).where(User.line_user_id == line_user_id))
+        found = result.scalar_one_or_none()
+    if not found and email:
+        result = await db.execute(select(User).where(User.email == email))
+        found = result.scalar_one_or_none()
+
+    if not found:
+        # 新用戶
+        found = User(
+            email=email or None,
+            name=name or "LINE User",
+            line_user_id=line_user_id,
+        )
+        db.add(found)
+        await db.flush()
+        logger.info(f"LINE 新用戶: {found.id} (LINE: {line_user_id[:8]}…)")
+    else:
+        # 已存在用戶，補綁定 LINE userId（若尚未綁定）
+        if not found.line_user_id:
+            found.line_user_id = line_user_id
+        if name and not found.name:
+            found.name = name
+        if email and not found.email:
+            found.email = email
+
+    found.last_login_at = datetime.now(timezone.utc)
+
+    access_token = create_access_token(found.id)
+    refresh_token = create_refresh_token(found.id)
+
+    return RedirectResponse(
+        f"{settings.OAUTH_REDIRECT_BASE}/auth/callback/success"
+        f"?access_token={access_token}"
+        f"&refresh_token={refresh_token}"
+        f"&name={found.name or ''}"
+    )
+
+
+# ════════════════════════════════════════════════════════════════
 # 可用的 OAuth 提供者查詢
 # ════════════════════════════════════════════════════════════════
 
@@ -239,4 +354,6 @@ async def list_providers():
         providers.append({"name": "apple", "label": "Apple", "url": "/api/v1/oauth/apple/login"})
     if settings.FACEBOOK_CLIENT_ID:
         providers.append({"name": "facebook", "label": "Facebook", "url": "/api/v1/oauth/facebook/login"})
+    if settings.LINE_LOGIN_CHANNEL_ID:
+        providers.append({"name": "line", "label": "LINE", "url": "/api/v1/oauth/line/login"})
     return APIResponse(data=providers)

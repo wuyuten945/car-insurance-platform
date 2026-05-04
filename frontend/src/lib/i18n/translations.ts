@@ -142,6 +142,15 @@ const zh: Dict = {
   'profile.menu.chatbot': '智能客服',
   'profile.menu.inspection': '監理站/驗車廠',
   'profile.logout': '登出',
+  'profile.line.section': 'LINE 通知',
+  'profile.line.bound': '已綁定',
+  'profile.line.notBound': '尚未綁定',
+  'profile.line.bind': '綁定 LINE',
+  'profile.line.unbind': '解除綁定',
+  'profile.line.notify': 'LINE 推播通知',
+  'profile.line.addFriend': '加官方帳號為好友才會收到推播：',
+  'profile.line.notifyOn': '已開啟',
+  'profile.line.notifyOff': '已關閉',
 
   // ===== Footer / Legal =====
   'footer.personalData': '個人資料蒐集告知',
@@ -293,6 +302,15 @@ const en: Dict = {
   'profile.menu.chatbot': 'Chatbot',
   'profile.menu.inspection': 'Inspection Stations',
   'profile.logout': 'Sign Out',
+  'profile.line.section': 'LINE Notifications',
+  'profile.line.bound': 'Bound',
+  'profile.line.notBound': 'Not bound',
+  'profile.line.bind': 'Bind LINE',
+  'profile.line.unbind': 'Unbind',
+  'profile.line.notify': 'LINE push notifications',
+  'profile.line.addFriend': 'Add the official account to receive notifications:',
+  'profile.line.notifyOn': 'Enabled',
+  'profile.line.notifyOff': 'Disabled',
 
   // ===== Footer / Legal =====
   'footer.personalData': 'Personal Data',

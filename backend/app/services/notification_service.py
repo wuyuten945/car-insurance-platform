@@ -1,9 +1,14 @@
+import logging
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, update
 from app.models.notification import Notification
+from app.models.user import User
 from app.core.push import push_service
+from app.core.line_messaging import line_messaging
 from app.exceptions import NotFoundError
+
+logger = logging.getLogger(__name__)
 
 
 class NotificationService:
@@ -39,6 +44,16 @@ class NotificationService:
                 body=body,
                 data={"type": notification_type, "ref_type": reference_type, "ref_id": reference_id},
             )
+
+        # 同時推 LINE（若使用者有綁定 LINE 且啟用通知）
+        try:
+            user_result = await self.db.execute(select(User).where(User.id == user_id))
+            user = user_result.scalar_one_or_none()
+            if user and user.line_user_id and user.line_notify_enabled:
+                line_text = f"【{title}】\n{body}"
+                await line_messaging.send_text(user.line_user_id, line_text)
+        except Exception as e:
+            logger.warning(f"LINE 推播失敗（忽略不影響通知）: {e}")
 
         return notification
 
