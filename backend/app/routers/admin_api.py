@@ -1207,8 +1207,65 @@ async def admin_ocr_policy_scan(
 
 
 # ═══════════════════════════════════════════════════
-# 理賠進度管理（觸發 LINE 推播）
+# 理賠案件列表 + 進度管理（觸發 LINE 推播）
 # ═══════════════════════════════════════════════════
+
+@router.get("/all/claims")
+async def get_all_claims(
+    status: str | None = Query(None, description="可選：filter by status"),
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    列出可存取的全部理賠案件（含客戶資訊 + LINE 推播資格）。
+    line_can_push=true 代表呼叫 progress endpoint 會觸發 LINE 推播給該客戶。
+    """
+    from app.models.claim import ClaimAdjuster
+    from app.services.claim_service import STAGE_LABELS
+
+    accessible = await get_accessible_customer_ids(admin, db)
+    query = (
+        select(Claim)
+        .options(selectinload(Claim.user), selectinload(Claim.adjuster))
+    )
+    if accessible is not None:
+        query = query.where(Claim.user_id.in_(accessible))
+    if status:
+        query = query.where(Claim.status == status)
+    query = query.order_by(Claim.submitted_at.desc())
+
+    result = await db.execute(query)
+    rows = []
+    for c in result.scalars().all():
+        u = c.user
+        line_can_push = bool(
+            u and u.line_user_id and u.is_line_friend and u.line_notify_enabled
+        )
+        rows.append({
+            "id": c.id,
+            "claim_number": c.claim_number,
+            "status": c.status,
+            "status_label": STAGE_LABELS.get(c.status, c.status),
+            "claim_type": c.claim_type,
+            "claimed_amount": float(c.claimed_amount) if c.claimed_amount else None,
+            "approved_amount": float(c.approved_amount) if c.approved_amount else None,
+            "submitted_at": c.submitted_at.isoformat() if c.submitted_at else None,
+            "resolved_at": c.resolved_at.isoformat() if c.resolved_at else None,
+            "user_id": c.user_id,
+            "customer_name": u.name if u else None,
+            "customer_email": u.email if u else None,
+            "customer_phone": u.phone if u else None,
+            "line_can_push": line_can_push,
+            "line_bound": bool(u and u.line_user_id),
+            "is_line_friend": bool(u and u.is_line_friend),
+            "line_notify_enabled": bool(u and u.line_notify_enabled),
+            "adjuster_name": c.adjuster.adjuster_name if c.adjuster else None,
+            "policy_id": c.policy_id,
+            "notes": (c.notes or "")[:200],
+        })
+    await log_action(db, admin, "view", "all_claims", detail=f"{len(rows)} 筆")
+    return APIResponse(data=rows)
+
 
 class ClaimProgressUpdate(BaseModel):
     stage: str  # submitted/reviewing/investigating/negotiating/approved/paying/closed
