@@ -123,3 +123,20 @@ class LineMessagingService:
 
 
 line_messaging = LineMessagingService()
+
+
+def can_push_to(user) -> bool:
+    """三條件齊備才推播：line_user_id + is_line_friend + line_notify_enabled。"""
+    return bool(
+        user
+        and user.line_user_id
+        and getattr(user, "is_line_friend", False)
+        and getattr(user, "line_notify_enabled", True)
+    )
+
+
+async def push_to_user(user, text: str) -> bool:
+    """安全推播：條件不符靜默跳過，符合才推。"""
+    if not can_push_to(user):
+        return False
+    return await line_messaging.send_text(user.line_user_id, text)

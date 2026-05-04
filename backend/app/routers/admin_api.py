@@ -1207,6 +1207,68 @@ async def admin_ocr_policy_scan(
 
 
 # ═══════════════════════════════════════════════════
+# 業務員手動推播 LINE 訊息給客戶（業務員主動關懷）
+# ═══════════════════════════════════════════════════
+
+class PushToCustomerRequest(BaseModel):
+    customer_id: str
+    message: str  # 純文字，最多 5000 字
+    title: str | None = None  # 可選標題（會以 emoji+標題開頭）
+
+
+@router.post("/line/push-to-customer")
+async def push_to_customer(
+    req: PushToCustomerRequest,
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    業務員主動推播訊息給指定客戶（會檢查客戶是否符合推播條件）。
+    - agent 只能推播給自己分配的客戶
+    - super_admin 可推播給任何客戶
+    - 會自動加上 BOPINAN 品牌前綴
+    """
+    from app.core.line_messaging import line_messaging, can_push_to
+
+    if not req.message or len(req.message.strip()) == 0:
+        raise BadRequestError("訊息內容不可為空")
+    if len(req.message) > 4500:
+        raise BadRequestError("訊息超過 4500 字（LINE 限制 5000）")
+
+    # 權限檢查
+    accessible = await get_accessible_customer_ids(admin, db)
+    if accessible is not None and req.customer_id not in accessible:
+        raise ForbiddenError("無權限推播給此客戶")
+
+    res = await db.execute(select(User).where(User.id == req.customer_id))
+    user = res.scalar_one_or_none()
+    if not user:
+        raise NotFoundError("客戶不存在")
+
+    if not can_push_to(user):
+        reason = "未綁定 LINE" if not user.line_user_id else (
+            "未加 BOPINAN OA 好友" if not user.is_line_friend else "已關閉 LINE 通知"
+        )
+        return APIResponse(success=False, message=f"無法推播：{reason}")
+
+    if req.title:
+        full_msg = f"🛡 BOPINAN {req.title}\n\n{req.message}\n\n— {admin.display_name or admin.username}"
+    else:
+        full_msg = f"🛡 BOPINAN\n\n{req.message}\n\n— {admin.display_name or admin.username}"
+
+    sent = await line_messaging.send_text(user.line_user_id, full_msg)
+    await log_action(db, admin, "push", "line_message", req.customer_id,
+                     detail=req.message[:100])
+    await db.commit()
+
+    return APIResponse(
+        success=sent,
+        data={"customer_name": user.name, "message_preview": req.message[:50]},
+        message="推播成功" if sent else "推播失敗（看 Render log）",
+    )
+
+
+# ═══════════════════════════════════════════════════
 # 極簡 LINE 推播測試（不需要建 claim）
 # ═══════════════════════════════════════════════════
 

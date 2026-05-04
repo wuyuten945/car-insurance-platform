@@ -23,7 +23,9 @@ from app.models.policy import Policy, PolicyItem
 from app.models.notification import Notification
 from app.core.sms import sms_gateway
 from app.core.email import email_service
-from app.core.line import line_service
+from app.core.line_messaging import push_to_user
+
+PLATFORM_BASE = "https://bopinan.ego-intl.com"
 
 logger = logging.getLogger(__name__)
 
@@ -244,7 +246,9 @@ async def _send_inspection_notification(
         await sms_gateway.send(user.phone, sms_msg)
     if user.email:
         await email_service.send(user.email, email_subject, email_body)
-    await line_service.send(user.id, f"{title}\n\n{body}")
+    pushed = await push_to_user(user, f"🛡 BOPINAN {title}\n\n{body}")
+    if not pushed:
+        logger.info(f"[排程] LINE 跳過（未綁/未加好友/已關通知）: {user.id}")
 
     comp_status = "OK" if compulsory["valid_for_inspection"] else (
         f"不足({compulsory['days_remaining']}天)" if compulsory["has_compulsory"] else "無")
@@ -292,7 +296,7 @@ def _build_inspection_email(user_name: str, vehicle, days_left: int, level: str,
         <tr><td style="padding:8px;color:#666">強制險</td>{comp_html}</tr>
       </table>
       {"<p style='color:#D32F2F;font-weight:bold'>強制險有效期不足 30 天，請先續保再驗車。</p>" if not compulsory["valid_for_inspection"] else ""}
-      <a href="https://localhost:3000/inspection"
+      <a href="https://bopinan.ego-intl.com/inspection?openExternalBrowser=1"
          style="display:inline-block;background:{color};color:white;padding:12px 24px;
                 border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">
         查詢附近驗車廠</a>

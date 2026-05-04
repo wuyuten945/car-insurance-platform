@@ -20,7 +20,9 @@ from app.models.notification import Notification
 from app.models.user import User
 from app.core.sms import sms_gateway
 from app.core.email import email_service
-from app.core.line import line_service
+from app.core.line_messaging import push_to_user
+
+PLATFORM_BASE = "https://bopinan.ego-intl.com"
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +123,7 @@ async def _send_expiry_notification(
 
     countdown = f"（倒數 {days_left} 天）" if days_left > 0 else "（今日到期）"
 
+    renewal_url = f"{PLATFORM_BASE}/renewal?policy_id={policy.id}&openExternalBrowser=1"
     if level == "urgent":
         title = f"[緊急] 保單倒數 {days_left} 天 - {policy.policy_number}"
         body = (
@@ -128,7 +131,7 @@ async def _send_expiry_notification(
             f"您的 {policy.insurer_name} 保單（{policy.policy_number}）"
             f"將於 {end_date_str} 到期{countdown}。\n"
             f"請儘速完成續保，避免車輛處於無保障狀態。\n"
-            f"前往續保比價：https://localhost:3000/renewal?policy_id={policy.id}"
+            f"前往續保比價：{renewal_url}"
         )
         sms_msg = (
             f"[車險平台]保單{policy.policy_number} "
@@ -142,7 +145,7 @@ async def _send_expiry_notification(
             f"您的 {policy.insurer_name} 保單（{policy.policy_number}）"
             f"將於 {end_date_str} 到期{countdown}。\n"
             f"建議您提早比較續保方案，確保最佳保障與費率。\n"
-            f"前往續保比價：https://localhost:3000/renewal?policy_id={policy.id}"
+            f"前往續保比價：{renewal_url}"
         )
         sms_msg = (
             f"[車險平台]保單{policy.policy_number} "
@@ -177,10 +180,13 @@ async def _send_expiry_notification(
         await email_service.send(user.email, email_subject, email_body)
         logger.info(f"[排程] Email 已發送: {user.email} - {policy.policy_number}")
 
-    # 4. LINE 通知
-    line_msg = f"{title}\n\n{body}"
-    await line_service.send(user.id, line_msg)
-    logger.info(f"[排程] LINE 已發送: {user.id} - {policy.policy_number}")
+    # 4. LINE Messaging API 推播（須加好友 + 未關通知）
+    line_msg = f"🛡 BOPINAN {title}\n\n{body}"
+    pushed = await push_to_user(user, line_msg)
+    if pushed:
+        logger.info(f"[排程] LINE 已推送: {user.id} - {policy.policy_number}")
+    else:
+        logger.info(f"[排程] LINE 跳過（未綁/未加好友/已關通知）: {user.id}")
 
     # 更新保單狀態為 expiring
     if level == "urgent" and policy.status == "active":
@@ -224,7 +230,7 @@ def _build_email_html(user_name: str, policy: Policy, days_left: int, level: str
                     <td style="padding: 8px; font-weight: bold; color: {color};">{days_left} 天</td>
                 </tr>
             </table>
-            <a href="https://localhost:3000/renewal?policy_id={policy.id}"
+            <a href="https://bopinan.ego-intl.com/renewal?policy_id={policy.id}&openExternalBrowser=1"
                style="display: inline-block; background: {color}; color: white; padding: 12px 24px;
                       border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 8px;">
                 立即續保比價
