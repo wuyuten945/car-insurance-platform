@@ -7,10 +7,24 @@ import uuid
 from app.config import settings
 
 
+def _normalize_db_url(url: str) -> str:
+    """
+    Render PostgreSQL Internal URL 格式為 'postgres://...'，需轉成 SQLAlchemy 認得的
+    'postgresql+asyncpg://...' 才能用 async engine 連線。SQLite 不變。
+    """
+    if url.startswith("postgres://"):
+        url = "postgresql+asyncpg://" + url[len("postgres://"):]
+    elif url.startswith("postgresql://") and "+asyncpg" not in url:
+        url = "postgresql+asyncpg://" + url[len("postgresql://"):]
+    return url
+
+
+_db_url = _normalize_db_url(settings.DATABASE_URL)
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    _db_url,
     echo=False,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
+    connect_args={"check_same_thread": False} if "sqlite" in _db_url else {},
 )
 
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
