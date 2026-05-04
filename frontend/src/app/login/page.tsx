@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { KeyRound, ArrowRight, Loader2, Mail, Languages } from 'lucide-react';
+import { KeyRound, ArrowRight, Loader2, Mail, Languages, AlertTriangle, Copy, Check } from 'lucide-react';
 import Image from 'next/image';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api-client';
@@ -20,6 +20,31 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(0);
+  const [inAppBrowser, setInAppBrowser] = useState<{ isInApp: boolean; appName: string }>({ isInApp: false, appName: '' });
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  // 偵測 LINE/FB/IG 等內建瀏覽器（Google OAuth 拒絕在 embedded webview 登入）
+  useEffect(() => {
+    const ua = navigator.userAgent || '';
+    let appName = '';
+    if (/Line\//i.test(ua)) appName = 'LINE';
+    else if (/FBAN|FBAV/i.test(ua)) appName = 'Facebook';
+    else if (/Instagram/i.test(ua)) appName = 'Instagram';
+    else if (/MicroMessenger/i.test(ua)) appName = '微信';
+    else if (/Bytedance|TikTok/i.test(ua)) appName = 'TikTok';
+    else if (/; wv\)/i.test(ua)) appName = 'App 內建瀏覽器';
+    setInAppBrowser({ isInApp: !!appName, appName });
+  }, []);
+
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    } catch {
+      // ignore (older browsers)
+    }
+  };
 
   const startCountdown = (seconds: number) => {
     setCountdown(seconds);
@@ -201,6 +226,36 @@ export default function LoginPage() {
               <span className="text-xs text-gray-400">或使用社交帳號登入</span>
               <div className="flex-1 border-t border-gray-200" />
             </div>
+
+            {inAppBrowser.isInApp && (
+              <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                <div className="flex gap-2">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 space-y-2">
+                    <p>
+                      偵測到您正使用 <b>{inAppBrowser.appName}</b> 內建瀏覽器，
+                      <b className="text-amber-900">Google 登入會被拒絕</b>。
+                    </p>
+                    <p>請改用 Safari 或 Chrome 開啟本頁面：</p>
+                    <ol className="list-decimal list-inside text-xs space-y-0.5 pl-1">
+                      <li>點右上角「<b>···</b>」或「<b>分享</b>」</li>
+                      <li>選「<b>用其他瀏覽器開啟</b>」或「<b>在 Safari/Chrome 中開啟</b>」</li>
+                    </ol>
+                    <button
+                      onClick={handleCopyUrl}
+                      className="inline-flex items-center gap-1 mt-1 rounded bg-amber-100 hover:bg-amber-200 px-2 py-1 text-xs font-medium text-amber-900 transition"
+                    >
+                      {urlCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {urlCopied ? '已複製，去瀏覽器貼上' : '複製本頁網址'}
+                    </button>
+                    <p className="text-xs text-amber-700 pt-1">
+                      或改用 <b>Email 驗證碼</b>/<b>LINE 登入</b>，這兩種在內建瀏覽器都可正常使用。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2.5">
               <button
                 onClick={() => {
