@@ -34,6 +34,11 @@ def _verify_signature(body: bytes, signature: str) -> bool:
     return hmac.compare_digest(expected, signature or "")
 
 
+# LINE 內點連結會被內建瀏覽器卡住 → Google OAuth 會被拒絕。
+# `?openExternalBrowser=1` 是 LINE 官方參數，會強制系統瀏覽器（Safari/Chrome）開啟。
+PLATFORM_URL = "https://bopinan.ego-intl.com?openExternalBrowser=1"
+LOGIN_URL = "https://bopinan.ego-intl.com/login?openExternalBrowser=1"
+
 WELCOME_BOUND = (
     "👋 {name}，歡迎加入 BOPINAN 車險服務！\n\n"
     "您將收到以下個人化通知：\n"
@@ -41,20 +46,20 @@ WELCOME_BOUND = (
     "📅 續保 / 驗車到期提醒\n"
     "💬 業務員主動關懷\n\n"
     "有任何保單、理賠相關問題，可直接傳訊息給我們，業務員會盡快回覆。\n"
-    "也可至 https://bopinan.ego-intl.com 查看完整服務。"
+    f"也可至 {PLATFORM_URL} 查看完整服務。"
 )
 
 WELCOME_UNBOUND = (
     "👋 歡迎加入 BOPINAN！\n\n"
     "為了能收到您的個人化通知（理賠進度、續保提醒等），\n"
-    "請先到 https://bopinan.ego-intl.com 用 LINE 登入綁定帳號。\n\n"
+    f"請先到 {LOGIN_URL} 用 LINE 登入綁定帳號。\n\n"
     "綁定完成後就會自動收到通知。"
 )
 
 ACK_MESSAGE = (
     "感謝您的訊息，我們已收到。\n"
     "業務員將儘快與您聯繫。\n\n"
-    "若需查詢即時資訊，請至 https://bopinan.ego-intl.com"
+    f"若需查詢即時資訊，請至 {PLATFORM_URL}"
 )
 
 
