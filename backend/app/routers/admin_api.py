@@ -1210,6 +1210,49 @@ async def admin_ocr_policy_scan(
 # 極簡 LINE 推播測試（不需要建 claim）
 # ═══════════════════════════════════════════════════
 
+@router.post("/line/test-push-first")
+async def test_line_push_first(
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    自動找第一個符合推播條件的用戶（line_user_id + is_line_friend + line_notify_enabled），
+    傳一則測試訊息。最快驗證 LINE 推播管道。
+    """
+    from app.core.line_messaging import line_messaging
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    res = await db.execute(
+        select(User).where(
+            User.line_user_id.isnot(None),
+            User.is_line_friend == True,  # noqa: E712
+            User.line_notify_enabled == True,  # noqa: E712
+        ).limit(1)
+    )
+    user = res.scalar_one_or_none()
+    if not user:
+        return APIResponse(
+            success=False,
+            message="DB 沒有任何符合條件的用戶（需 line_user_id + is_line_friend=True + line_notify_enabled=True）",
+        )
+
+    now = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%m/%d %H:%M")
+    msg = (
+        f"🛡 BOPINAN 測試推播\n\n"
+        f"哈囉 {user.name or '客戶'}，這是 admin 觸發的測試訊息。\n"
+        f"如果您看到這則訊息，代表 BOPINAN ↔ LINE 推播管道暢通。\n\n"
+        f"時間：{now}\n"
+        f"觸發者：{admin.username}"
+    )
+    sent = await line_messaging.send_text(user.line_user_id, msg)
+    return APIResponse(
+        success=sent,
+        data={"name": user.name, "user_id": user.id, "line_user_prefix": user.line_user_id[:10] + "..."},
+        message="推播成功，請看您手機 LINE" if sent else "推播失敗（看 Render log 找原因）",
+    )
+
+
 @router.post("/line/test-push")
 async def test_line_push(
     email: str = Query(..., description="收件用戶的 email（該用戶必須已綁定 LINE 並加 OA 好友）"),
