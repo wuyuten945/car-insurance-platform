@@ -156,6 +156,6 @@ async def export_claim_pdf(
     </div>
     {f'<p style="margin-top:12px"><b>備註：</b>{c.notes}</p>' if c.notes else ''}
     {progress_html}{docs_html}
-    <div class="footer">車險智能服務平台 | 列印日期：{datetime.now().strftime('%Y/%m/%d')}</div>
+    <div class="footer">BOPINAN | 列印日期：{datetime.now().strftime('%Y/%m/%d')}</div>
     <script>window.onload=function(){{window.print();}}</script></body></html>"""
     return HTMLResponse(content=html)

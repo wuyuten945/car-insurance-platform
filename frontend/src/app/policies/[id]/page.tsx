@@ -100,7 +100,7 @@ function exportPolicyPdf(policy: PolicyDetail, exclusions?: Exclusion[]) {
       <tbody>${itemsHtml}</tbody>
     </table>
     ${excHtml}
-    <div class="footer">車險智能服務平台 | 列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
+    <div class="footer">BOPINAN | 列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
     <script>window.onload=function(){window.print();}</script>
   </body></html>`;
 

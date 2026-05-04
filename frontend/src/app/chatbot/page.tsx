@@ -25,7 +25,7 @@ export default function ChatbotPage() {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: '您好！我是車險智能客服，請問有什麼可以幫您的嗎？' },
+    { role: 'assistant', content: '您好！我是 BOPINAN 智能客服，請問有什麼可以幫您的嗎？' },
   ]);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);

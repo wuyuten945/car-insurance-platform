@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: '車險智能服務平台',
+  title: 'BOPINAN',
   description: '您的車險管家 - 保單管理、理賠追蹤、緊急救援一站搞定',
 };
 

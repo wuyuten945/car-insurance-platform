@@ -274,7 +274,7 @@ def _build_inspection_email(user_name: str, vehicle, days_left: int, level: str,
     return f"""
     <html><body style="font-family:'Microsoft JhengHei',Arial,sans-serif;max-width:600px;margin:0 auto;">
     <div style="background:{color};color:white;padding:20px;border-radius:12px 12px 0 0;">
-      <h2 style="margin:0">車險智能服務平台</h2>
+      <h2 style="margin:0">BOPINAN</h2>
       <p style="margin:8px 0 0">驗車到期通知 - {countdown}</p>
     </div>
     <div style="padding:24px;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 12px 12px;">
@@ -297,5 +297,5 @@ def _build_inspection_email(user_name: str, vehicle, days_left: int, level: str,
                 border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">
         查詢附近驗車廠</a>
       <p style="color:#999;font-size:12px;margin-top:24px">
-        此為系統自動發送，請勿直接回覆。<br>車險智能服務平台 | 客服 0800-000-000</p>
+        此為系統自動發送，請勿直接回覆。<br>BOPINAN | 客服 0800-000-000</p>
     </div></body></html>"""

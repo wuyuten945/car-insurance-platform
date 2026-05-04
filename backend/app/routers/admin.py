@@ -14,7 +14,7 @@ ADMIN_HTML = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>車險智能平台 - 管理控制台</title>
+<title>BOPINAN - 管理控制台</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Microsoft JhengHei', Arial, sans-serif; background: #f5f7fa; color: #333; }
@@ -66,7 +66,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 </head>
 <body>
 <div class="header">
-  <h1>車險智能平台 — 管理控制台</h1>
+  <h1>BOPINAN — 管理控制台</h1>
   <small id="user-info"></small>
   <button class="btn danger" id="logout-btn" style="display:none;padding:4px 12px;font-size:12px;margin-left:10px" onclick="doLogout()">登出</button>
   <div id="customer-bar" style="display:none;margin-top:10px;padding:10px;background:rgba(255,255,255,0.15);border-radius:6px;font-size:13px">

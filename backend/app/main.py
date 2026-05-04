@@ -80,7 +80,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="車險智能服務平台 API - AI-Powered Car Insurance Service Platform",
+    description="BOPINAN API - AI-Powered Car Insurance Platform",
     lifespan=lifespan,
 )
 

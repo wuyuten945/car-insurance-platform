@@ -8,7 +8,7 @@ type Dict = Record<string, string>;
 
 const zh: Dict = {
   // ===== Header / Layout =====
-  'header.title': '車險智能平台',
+  'header.title': 'BOPINAN',
   'header.notifications': '通知',
   'header.langToggle': 'EN',
   'header.logout': '登出',
@@ -20,7 +20,7 @@ const zh: Dict = {
   'nav.profile': '我的',
 
   // ===== Login =====
-  'login.appTitle': '車險智能服務平台',
+  'login.appTitle': 'BOPINAN',
   'login.appSubtitle': '保單管理、理賠追蹤、緊急救援',
   'login.signIn': '登入',
   'login.enterCode': '輸入驗證碼',
@@ -43,7 +43,7 @@ const zh: Dict = {
   // ===== Dashboard =====
   'dash.greetingNamed': '{name}，您好！',
   'dash.greetingAnon': '您好！',
-  'dash.welcome': '歡迎使用車險智能服務平台',
+  'dash.welcome': '歡迎使用BOPINAN',
   'dash.quickAction.emergency': '緊急救援',
   'dash.quickAction.policies': '我的保單',
   'dash.quickAction.claims': '理賠服務',
@@ -158,7 +158,7 @@ const zh: Dict = {
   'footer.cookie': 'Cookie 政策',
   'footer.minor': '未成年保護',
   'footer.disclaimer': '使用警語',
-  'footer.copyright': '© 2026 車險智能服務平台　·　本平台僅為輔助工具，不取代專業諮詢',
+  'footer.copyright': '© 2026 BOPINAN　·　本平台僅為輔助工具，不取代專業諮詢',
 
   // ===== Cookie Banner =====
   'cookie.banner.text': '本平台使用必要 Cookie 維持登入狀態與偏好設定，繼續使用即視為同意。',
@@ -168,7 +168,7 @@ const zh: Dict = {
 
 const en: Dict = {
   // ===== Header / Layout =====
-  'header.title': 'Car Insurance Platform',
+  'header.title': 'BOPINAN',
   'header.notifications': 'Notifications',
   'header.langToggle': '中',
   'header.logout': 'Sign Out',
@@ -180,7 +180,7 @@ const en: Dict = {
   'nav.profile': 'Profile',
 
   // ===== Login =====
-  'login.appTitle': 'Car Insurance Platform',
+  'login.appTitle': 'BOPINAN',
   'login.appSubtitle': 'Policies · Claims · Emergency',
   'login.signIn': 'Sign In',
   'login.enterCode': 'Enter Code',
@@ -203,7 +203,7 @@ const en: Dict = {
   // ===== Dashboard =====
   'dash.greetingNamed': 'Hello, {name}!',
   'dash.greetingAnon': 'Hello!',
-  'dash.welcome': 'Welcome to the Car Insurance Platform',
+  'dash.welcome': 'Welcome to BOPINAN',
   'dash.quickAction.emergency': 'Emergency',
   'dash.quickAction.policies': 'Policies',
   'dash.quickAction.claims': 'Claims',
@@ -318,7 +318,7 @@ const en: Dict = {
   'footer.cookie': 'Cookies',
   'footer.minor': 'Minors',
   'footer.disclaimer': 'Disclaimer',
-  'footer.copyright': '© 2026 Car Insurance Platform · This platform is an auxiliary tool and does not replace professional advice',
+  'footer.copyright': '© 2026 BOPINAN · This platform is an auxiliary tool and does not replace professional advice',
 
   // ===== Cookie Banner =====
   'cookie.banner.text': 'We use essential cookies to maintain your login and preferences. By continuing you accept this.',

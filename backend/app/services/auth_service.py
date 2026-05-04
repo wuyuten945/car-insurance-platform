@@ -33,7 +33,7 @@ class AuthService:
 
         await email_service.send(
             email,
-            "【車險智能服務平台】登入驗證碼",
+            "【BOPINAN】登入驗證碼",
             f"<p>您的驗證碼為 <b style='font-size:24px;letter-spacing:4px'>{otp}</b></p>"
             f"<p>{settings.OTP_EXPIRE_SECONDS // 60} 分鐘內有效，請勿將驗證碼提供給他人。</p>",
         )

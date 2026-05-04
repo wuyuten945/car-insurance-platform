@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     RESEND_FROM: str = "onboarding@resend.dev"  # 預設 sandbox，正式用要綁網域
 
     # App
-    APP_NAME: str = "車險智能服務平台"
+    APP_NAME: str = "BOPINAN"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
 
