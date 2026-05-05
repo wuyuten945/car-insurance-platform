@@ -268,6 +268,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
         </div>
 
         <button class="btn success" style="margin-top:14px" onclick="saveEditedVehicle()" data-i18n="btn_save_vehicle">儲存車輛資料</button>
+        <button class="btn" style="margin-top:14px;margin-left:8px;background:#0288D1" onclick="addAnotherVehicleSameCustomer()" data-i18n="btn_add_another_vehicle">+ 新增此客戶另一輛車</button>
         <div id="ve-msg" class="msg"></div>
       </div>
     </div>
@@ -539,6 +540,7 @@ var I18N = {
     ph_customer_email_short: '設定後客戶可用此 Email 登入並看到此保單',
     reg_upload_direct_title: '行照圖片（直接上傳到此車輛）',
     btn_save_vehicle: '儲存車輛資料',
+    btn_add_another_vehicle: '+ 新增此客戶另一輛車',
     h_existing_vehicles: '現有車輛',
     th_customer: '客戶', th_plate: '車牌', th_type: '型式', th_brand: '品牌',
     th_model: '車型', th_year: '年份', th_color: '顏色', th_cc: '排氣量',
@@ -701,6 +703,7 @@ var I18N = {
     ph_customer_email_short: 'Setting an email lets the customer log in and see this policy',
     reg_upload_direct_title: 'Reg. Card Image (upload directly to this vehicle)',
     btn_save_vehicle: 'Save Vehicle',
+    btn_add_another_vehicle: '+ Add Another Vehicle for This Customer',
     h_existing_vehicles: 'Existing Vehicles',
     th_customer: 'Customer', th_plate: 'Plate', th_type: 'Type', th_brand: 'Make',
     th_model: 'Model', th_year: 'Year', th_color: 'Color', th_cc: 'cc',
@@ -1210,6 +1213,37 @@ var INSPECTION_RULES = {
   '曳引車': '每年驗車1次',
   '電動汽車': '出廠5年內免驗；5~10年每年驗車1次；超過10年每年驗車2次'
 };
+
+// 在編輯某輛車時，按「新增此客戶另一輛車」→ 切回上傳區、客戶 dropdown 預設此車主、清空狀態
+function addAnotherVehicleSameCustomer() {
+  var uid = window._editUserId;
+  if (!uid) {
+    showMsg('ve-msg','err', LANG === 'en' ? 'No customer context' : '找不到目前車輛的客戶');
+    return;
+  }
+  // 先確保「操作客戶」dropdown 選到此車主
+  var custSel = document.getElementById('cur-customer');
+  if (custSel) custSel.value = uid;
+  // 收起編輯表單、重置上傳區
+  document.getElementById('v-edit-form').style.display = 'none';
+  window._editVid = '';
+  window._editUserId = '';
+  document.getElementById('v-select').value = '__new__';
+  document.getElementById('v-file').value = '';
+  var nameSpan = document.getElementById('v-file-name');
+  if (nameSpan) nameSpan.textContent = t('msg_no_file');
+  var preview = document.getElementById('v-preview');
+  if (preview) preview.style.display = 'none';
+  var msg = document.getElementById('v-msg');
+  if (msg) { msg.textContent = ''; msg.className = 'msg'; }
+  // 滾到上傳行照區
+  var typeSelect = document.getElementById('v-type');
+  if (typeSelect) typeSelect.scrollIntoView({behavior:'smooth', block:'start'});
+  // 提示使用者下一步
+  showMsg('v-msg', 'ok',
+    LANG === 'en' ? 'Choose vehicle type and registration image to add another vehicle for this customer'
+                  : '請選擇車型、上傳行照，即可為同客戶新增另一輛車');
+}
 
 // v-select 切換 → 「+ 新增車輛」收起編輯表單，避免使用者誤把舊車輛資料當新增填入
 function onVSelectChange() {
