@@ -7,13 +7,16 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor: attach JWT
+// Request interceptor: attach JWT + Accept-Language
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // 依當前 UI 語言告訴 backend 要哪種語言的訊息
+    const lang = localStorage.getItem('app.lang');
+    config.headers['Accept-Language'] = lang === 'en' ? 'en' : 'zh-TW';
   }
   return config;
 });

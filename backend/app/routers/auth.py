@@ -11,6 +11,7 @@ from app.services.auth_service import AuthService
 from app.models.user import User
 from app.config import settings
 from app.core.cache import cache
+from app.core.i18n import t as i18n_t
 
 router = APIRouter()
 
@@ -25,7 +26,7 @@ async def send_otp(req: OTPSendRequest, request: Request, db: AsyncSession = Dep
     if settings.DEBUG:
         otp = await cache.get(f"otp:{req.email}")
         result["otp"] = otp
-    return APIResponse(data=result, message="驗證碼已發送")
+    return APIResponse(data=result, message=i18n_t("otp_sent"))
 
 
 @router.post("/otp/verify", response_model=APIResponse)
@@ -45,7 +46,7 @@ async def verify_otp(req: OTPVerifyRequest, db: AsyncSession = Depends(get_db)):
                 "interim_token": result["interim_token"],
                 "expires_in": result["expires_in"],
             },
-            message="OTP 通過，請輸入進階保護密碼",
+            message=i18n_t("pw_otp_step_done"),
         )
 
     return APIResponse(
@@ -58,7 +59,7 @@ async def verify_otp(req: OTPVerifyRequest, db: AsyncSession = Depends(get_db)):
                 expires_in=result["expires_in"],
             ),
         },
-        message="登入成功",
+        message=i18n_t("login_success"),
     )
 
 
@@ -77,7 +78,7 @@ async def verify_password(req: VerifyPasswordRequest, db: AsyncSession = Depends
                 expires_in=result["expires_in"],
             ),
         },
-        message="登入成功",
+        message=i18n_t("login_success"),
     )
 
 
@@ -90,7 +91,7 @@ async def set_advanced_password(
     """設定或變更進階保護密碼（已登入才可呼叫；改密碼需提供當前密碼）"""
     svc = AuthService(db)
     await svc.set_advanced_password(current_user.id, req.new_password, req.current_password)
-    return APIResponse(message="進階保護密碼已設定，下次登入需要驗證")
+    return APIResponse(message=i18n_t("pw_set_success"))
 
 
 @router.post("/password/remove", response_model=APIResponse)
@@ -102,7 +103,7 @@ async def remove_advanced_password(
     """移除進階保護密碼（須提供當前密碼）"""
     svc = AuthService(db)
     await svc.remove_advanced_password(current_user.id, req.current_password)
-    return APIResponse(message="進階保護密碼已移除")
+    return APIResponse(message=i18n_t("pw_remove_success"))
 
 
 @router.get("/password/status", response_model=APIResponse)
@@ -122,7 +123,7 @@ async def refresh_token(req: RefreshTokenRequest, db: AsyncSession = Depends(get
             refresh_token=result["refresh_token"],
             expires_in=result["expires_in"],
         ),
-        message="Token 已刷新",
+        message=i18n_t("token_refreshed"),
     )
 
 
@@ -132,4 +133,4 @@ async def logout(authorization: str = Header(...), db: AsyncSession = Depends(ge
     token = authorization.replace("Bearer ", "")
     svc = AuthService(db)
     await svc.logout(token)
-    return APIResponse(message="已登出")
+    return APIResponse(message=i18n_t("logout_success"))

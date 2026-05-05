@@ -138,6 +138,11 @@ async def add_request_id(request: Request, call_next):
     return response
 
 
+# i18n middleware（依 Accept-Language 切換錯誤訊息語言）
+from app.core.i18n import setup_i18n_middleware
+setup_i18n_middleware(app)
+
+
 # Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

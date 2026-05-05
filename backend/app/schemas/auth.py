@@ -1,13 +1,15 @@
 from pydantic import BaseModel, field_validator
 import re
 
+from app.core.i18n import t
+
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$")
 
 
 def _validate_email(v: str) -> str:
     v = (v or "").strip().lower()
     if not EMAIL_RE.match(v):
-        raise ValueError("請輸入有效的 Email 格式")
+        raise ValueError(t("email_format"))
     return v
 
 
@@ -26,7 +28,7 @@ class OTPSendRequest(BaseModel):
     @classmethod
     def validate_method(cls, v: str) -> str:
         if v != "email":
-            raise ValueError("僅支援 email 驗證；手機 OTP 已停用")
+            raise ValueError(t("method_email_only"))
         return v
 
 
@@ -43,7 +45,7 @@ class OTPVerifyRequest(BaseModel):
     @classmethod
     def validate_otp(cls, v: str) -> str:
         if not re.match(r"^\d{6}$", v):
-            raise ValueError("驗證碼必須為 6 位數字")
+            raise ValueError(t("otp_format"))
         return v
 
 
@@ -77,7 +79,7 @@ class SetPasswordRequest(BaseModel):
     @classmethod
     def _new_pw(cls, v: str) -> str:
         if not v or len(v) < 8:
-            raise ValueError("新密碼至少 8 字元")
+            raise ValueError(t("pw_too_short"))
         return v
 
 

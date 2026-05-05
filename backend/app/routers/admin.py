@@ -881,7 +881,7 @@ async function doAdminLogin() {
   var pass = document.getElementById('login-pass').value.trim();
   if (!user || !pass) { showMsg('login-msg','err',t('msg_pls_login_user')); return; }
   try {
-    var r = await fetch(CONSOLE_API+'/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:user,password:pass})});
+    var r = await fetch(CONSOLE_API+'/login', {method:'POST', headers:{'Content-Type':'application/json', 'Accept-Language': _acceptLang()}, body:JSON.stringify({username:user,password:pass})});
     var d = await r.json();
     if (d.success && d.data && d.data.token) {
       // ★ 持久化到 localStorage（按上一頁/重整/換分頁都不會掉）
@@ -963,7 +963,7 @@ async function doChangePassword() {
   try {
     var r = await fetch(CONSOLE_API+'/change-password', {
       method:'POST',
-      headers: {'Authorization':'Bearer '+ADMIN_TOKEN, 'Content-Type':'application/json'},
+      headers: {'Authorization':'Bearer '+ADMIN_TOKEN, 'Content-Type':'application/json', 'Accept-Language': _acceptLang()},
       body: JSON.stringify({current_password: cur, new_password: nw}),
     });
     var d = await r.json();
@@ -1000,13 +1000,16 @@ function doLogout() {
   document.title = document.title.replace(/^⚠[^-]*- /, '');
 }
 
+function _acceptLang() {
+  return (LANG === 'en') ? 'en' : 'zh-TW';
+}
 function authHeaders(json) {
-  var h = {'Authorization':'Bearer '+TOKEN};
+  var h = {'Authorization':'Bearer '+TOKEN, 'Accept-Language': _acceptLang()};
   if (json) h['Content-Type'] = 'application/json';
   return h;
 }
 function consoleHeaders(json) {
-  var h = {'Authorization':'Bearer '+ADMIN_TOKEN};
+  var h = {'Authorization':'Bearer '+ADMIN_TOKEN, 'Accept-Language': _acceptLang()};
   if (json) h['Content-Type'] = 'application/json';
   return h;
 }

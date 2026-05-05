@@ -23,6 +23,7 @@ from app.core.admin_auth import (
 from app.schemas.common import APIResponse
 from app.schemas.user import VehicleCreate, VehicleUpdate, VehicleOut
 from app.services.user_service import UserService
+from app.core.i18n import t as i18n_t
 from app.exceptions import BadRequestError, NotFoundError, ForbiddenError
 
 
@@ -78,18 +79,18 @@ async def admin_login(req: AdminLoginRequest, request: Request, db: AsyncSession
     if not admin or not verify_password(req.password, admin.password_hash):
         if admin:
             admin.login_fail_count = str(int(admin.login_fail_count or "0") + 1)
-        return APIResponse(success=False, message="帳號或密碼錯誤")
+        return APIResponse(success=False, message=i18n_t("admin_invalid_credentials"))
 
     if not admin.is_active:
-        return APIResponse(success=False, message="帳號已停用")
+        return APIResponse(success=False, message=i18n_t("admin_disabled"))
 
     # IP 白名單檢查
     client_ip = request.client.host if request.client else ""
     if admin.ip_whitelist:
         allowed = [ip.strip() for ip in admin.ip_whitelist.split(",") if ip.strip()]
         if allowed and client_ip not in allowed:
-            await log_action(db, admin, "login_blocked", detail=f"IP {client_ip} 不在白名單", ip=client_ip)
-            return APIResponse(success=False, message=f"IP {client_ip} 不在允許清單中")
+            await log_action(db, admin, "login_blocked", detail=f"IP {client_ip} not allowed", ip=client_ip)
+            return APIResponse(success=False, message=i18n_t("admin_ip_not_allowed", ip=client_ip))
 
     admin.last_login_at = datetime.now(timezone.utc)
     admin.login_fail_count = "0"
@@ -142,17 +143,17 @@ async def change_password(
     """
     if not verify_password(req.current_password, admin.password_hash):
         # 不暴露具體哪步錯（避免 brute-force 細分）
-        raise BadRequestError("當前密碼錯誤")
+        raise BadRequestError(i18n_t("pw_current_wrong"))
     if not req.new_password or len(req.new_password) < 8:
-        raise BadRequestError("新密碼至少 8 字元")
+        raise BadRequestError(i18n_t("pw_too_short"))
     if req.new_password == req.current_password:
-        raise BadRequestError("新密碼不可與當前密碼相同")
+        raise BadRequestError(i18n_t("pw_same_as_current"))
 
     admin.password_hash = hash_password(req.new_password)
     # 重置失敗計數
     admin.login_fail_count = "0"
     await log_action(db, admin, "update", "self_password", admin.id, "變更自己密碼")
-    return APIResponse(message="密碼已變更，下次登入請使用新密碼")
+    return APIResponse(message=i18n_t("pw_change_success"))
 
 
 # ═══════════════════════════════════════════════════
@@ -177,11 +178,11 @@ async def create_agent(
     """新增業務員或管理員（super_admin 才能建 super_admin）"""
     existing = await db.execute(select(AdminUser).where(AdminUser.username == req.username))
     if existing.scalar_one_or_none():
-        raise BadRequestError(f"帳號 {req.username} 已存在")
+        raise BadRequestError(i18n_t("admin_username_exists", username=req.username))
 
     role = req.role.strip() if req.role else "agent"
     if role not in ("agent", "super_admin"):
-        raise BadRequestError(f"無效的 role：{role}")
+        raise BadRequestError(i18n_t("pw_invalid_role", role=role))
 
     agent = AdminUser(
         username=req.username,
@@ -249,7 +250,7 @@ async def update_agent(
     result = await db.execute(select(AdminUser).where(AdminUser.id == agent_id))
     agent = result.scalar_one_or_none()
     if not agent:
-        raise NotFoundError("業務員不存在")
+        raise NotFoundError(i18n_t("admin_not_found"))
 
     changes = []
     if req.display_name is not None:
@@ -266,7 +267,7 @@ async def update_agent(
         agent.ip_whitelist = req.ip_whitelist; changes.append("IP白名單")
     if req.role is not None:
         if req.role not in ("agent", "super_admin"):
-            raise BadRequestError(f"無效的 role：{req.role}")
+            raise BadRequestError(i18n_t("pw_invalid_role", role=req.role))
         agent.role = req.role; changes.append(f"角色={req.role}")
 
     await log_action(db, admin, "update", "agent", agent_id, f"更新: {','.join(changes)}")

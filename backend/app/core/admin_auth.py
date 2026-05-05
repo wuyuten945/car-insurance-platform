@@ -43,11 +43,12 @@ async def get_current_admin(
 ) -> AdminUser:
     """取得當前管理員（支援 JWT 和 API Key）"""
 
+    from app.core.i18n import t as _t
     if authorization.startswith("Bearer "):
         token = authorization[7:]
         payload = decode_token(token)
         if not payload or payload.get("type") != "admin":
-            raise UnauthorizedError("無效的管理員 Token")
+            raise UnauthorizedError(_t("token_invalid"))
         admin_id = payload.get("sub")
         result = await db.execute(select(AdminUser).where(AdminUser.id == admin_id))
         admin = result.scalar_one_or_none()
@@ -58,12 +59,12 @@ async def get_current_admin(
         admin = result.scalar_one_or_none()
 
     else:
-        raise UnauthorizedError("無效的授權格式（Bearer 或 ApiKey）")
+        raise UnauthorizedError(_t("auth_invalid_header"))
 
     if not admin:
-        raise UnauthorizedError("管理員不存在")
+        raise UnauthorizedError(_t("admin_not_found"))
     if not admin.is_active:
-        raise ForbiddenError("帳號已停用")
+        raise ForbiddenError(_t("admin_disabled"))
 
     return admin
 
@@ -71,7 +72,8 @@ async def get_current_admin(
 def require_super_admin(admin: AdminUser = Depends(get_current_admin)) -> AdminUser:
     """要求超級管理員權限"""
     if admin.role != "super_admin":
-        raise ForbiddenError("需要超級管理員權限")
+        from app.core.i18n import t as _t
+        raise ForbiddenError(_t("admin_super_required"))
     return admin
 
 

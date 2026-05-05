@@ -11,6 +11,7 @@ from app.core.security import (
     create_access_token, create_refresh_token, decode_token, blacklist_token,
 )
 from app.core.email import email_service
+from app.core.i18n import t
 from app.config import settings
 from app.exceptions import BadRequestError, UnauthorizedError, RateLimitError
 
@@ -60,15 +61,15 @@ class AuthService:
     async def send_otp(self, email: str, ip: str = "") -> dict:
         """發送 Email OTP。手機 OTP 已停用以避免 SMS 簡訊費用被惡意刷取。"""
         if not email:
-            raise BadRequestError("請提供 Email")
+            raise BadRequestError(t("email_required"))
 
         # per-email rate limit
         if not await check_otp_rate_limit(f"email:{email}"):
-            raise RateLimitError("OTP 發送過於頻繁，請稍後再試")
+            raise RateLimitError(t("otp_rate_email"))
 
         # per-IP rate limit（防止攻擊者輪流換 email 大量觸發）
         if ip and not await check_otp_rate_limit(f"ip:{ip}", per_minute=5, per_hour=50):
-            raise RateLimitError("此 IP 發送驗證碼過於頻繁，請稍後再試")
+            raise RateLimitError(t("otp_rate_ip"))
 
         otp = create_otp()
         await store_otp(email, otp)
@@ -80,14 +81,14 @@ class AuthService:
             f"<p>{settings.OTP_EXPIRE_SECONDS // 60} 分鐘內有效，請勿將驗證碼提供給他人。</p>",
         )
 
-        return {"message": "驗證碼已發送", "expires_in": settings.OTP_EXPIRE_SECONDS, "method": "email"}
+        return {"message": t("otp_sent"), "expires_in": settings.OTP_EXPIRE_SECONDS, "method": "email"}
 
     async def verify_otp_and_login(self, email: str, otp: str) -> dict:
         if not email:
-            raise BadRequestError("請提供 Email")
+            raise BadRequestError(t("email_required"))
 
         if not await verify_otp(email, otp):
-            raise BadRequestError("驗證碼錯誤或已過期")
+            raise BadRequestError(t("otp_invalid"))
 
         result = await self.db.execute(select(User).where(User.email == email))
         user = result.scalar_one_or_none()
@@ -122,16 +123,16 @@ class AuthService:
         """OTP 通過後的二因子驗證：用 interim_token + 密碼換正式 tokens"""
         user_id = _decode_interim_token(interim_token)
         if not user_id:
-            raise UnauthorizedError("驗證階段已過期，請重新登入")
+            raise UnauthorizedError(t("pw_session_expired"))
 
         result = await self.db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
         if not user or not user.is_active:
-            raise UnauthorizedError("使用者不存在或已停用")
+            raise UnauthorizedError(t("user_not_active"))
         if not user.password_hash:
-            raise BadRequestError("此帳號未啟用進階保護密碼")
+            raise BadRequestError(t("pw_not_enabled"))
         if not _verify_password(password, user.password_hash):
-            raise BadRequestError("密碼錯誤")
+            raise BadRequestError(t("pw_wrong"))
 
         user.last_login_at = datetime.now(timezone.utc)
         access_token = create_access_token(user.id)
@@ -154,12 +155,12 @@ class AuthService:
         result = await self.db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
         if not user:
-            raise UnauthorizedError("使用者不存在")
+            raise UnauthorizedError(t("user_not_found"))
         if user.password_hash:
             if not current_password or not _verify_password(current_password, user.password_hash):
-                raise BadRequestError("當前密碼錯誤")
+                raise BadRequestError(t("pw_current_wrong"))
             if new_password == current_password:
-                raise BadRequestError("新密碼不可與當前密碼相同")
+                raise BadRequestError(t("pw_same_as_current"))
         user.password_hash = _hash_password(new_password)
         await self.db.flush()
 
@@ -168,25 +169,25 @@ class AuthService:
         result = await self.db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
         if not user:
-            raise UnauthorizedError("使用者不存在")
+            raise UnauthorizedError(t("user_not_found"))
         if not user.password_hash:
-            raise BadRequestError("此帳號未啟用進階保護密碼")
+            raise BadRequestError(t("pw_not_enabled"))
         if not _verify_password(current_password, user.password_hash):
-            raise BadRequestError("當前密碼錯誤")
+            raise BadRequestError(t("pw_current_wrong"))
         user.password_hash = None
         await self.db.flush()
 
     async def refresh_tokens(self, refresh_token: str) -> dict:
         payload = decode_token(refresh_token)
         if not payload or payload.get("type") != "refresh":
-            raise UnauthorizedError("無效的 Refresh Token")
+            raise UnauthorizedError(t("refresh_invalid"))
 
         user_id = payload.get("sub")
         result = await self.db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
 
         if not user or not user.is_active:
-            raise UnauthorizedError("使用者不存在或已停用")
+            raise UnauthorizedError(t("user_not_active"))
 
         new_access = create_access_token(user.id)
         new_refresh = create_refresh_token(user.id)
