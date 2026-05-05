@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   User, LogOut, Loader2, Save, Car, Bell, MessageCircle, MapPin,
-  Mail, Phone, Calendar, IdCard, Home, FileText, Heart,
+  Mail, Phone, Calendar, IdCard, Home, FileText, Heart, Lock, ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
@@ -161,6 +161,9 @@ export default function ProfilePage() {
 
       {/* LINE binding section */}
       <LineBindingSection />
+
+      {/* 進階保護密碼 */}
+      <AdvancedPasswordSection />
 
       {/* Profile Edit Form */}
       <section className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
@@ -340,6 +343,151 @@ export default function ProfilePage() {
         <LogOut className="h-4 w-4" /> {t('profile.logout')}
       </button>
     </div>
+  );
+}
+
+function AdvancedPasswordSection() {
+  const { t } = useT();
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [modal, setModal] = useState<'' | 'enable' | 'change'>('');
+  const [cur, setCur] = useState('');
+  const [nw, setNw] = useState('');
+  const [cf, setCf] = useState('');
+  const [err, setErr] = useState('');
+  const [ok, setOk] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const refresh = async () => {
+    try {
+      const r = await api.get('/api/v1/auth/password/status');
+      setEnabled(!!r.data.data?.enabled);
+    } catch { /* ignore */ }
+  };
+  useEffect(() => { refresh(); }, []);
+
+  const reset = () => { setCur(''); setNw(''); setCf(''); setErr(''); setOk(''); };
+
+  const submit = async () => {
+    setErr(''); setOk('');
+    if (modal === 'change' && !cur) { setErr(t('pw.errRequired')); return; }
+    if (!nw || !cf) { setErr(t('pw.errRequired')); return; }
+    if (nw.length < 8) { setErr(t('pw.errShort')); return; }
+    if (nw !== cf) { setErr(t('pw.errMismatch')); return; }
+    if (modal === 'change' && nw === cur) { setErr(t('pw.errSame')); return; }
+    setBusy(true);
+    try {
+      await api.post('/api/v1/auth/password/set', {
+        new_password: nw,
+        ...(modal === 'change' ? { current_password: cur } : {}),
+      });
+      setOk(modal === 'enable' ? t('pw.successEnabled') : t('pw.successChanged'));
+      setEnabled(true);
+      setTimeout(() => { setModal(''); reset(); }, 1500);
+    } catch (e: unknown) {
+      const er = e as { response?: { data?: { message?: string; detail?: string } } };
+      setErr(er.response?.data?.message || er.response?.data?.detail || 'Error');
+    } finally { setBusy(false); }
+  };
+
+  const removeProtection = async () => {
+    if (!confirm(t('pw.confirmRemove'))) return;
+    const pw = prompt(t('pw.fieldCurrent'));
+    if (!pw) return;
+    try {
+      await api.post('/api/v1/auth/password/remove', { current_password: pw });
+      alert(t('pw.successRemoved'));
+      setEnabled(false);
+    } catch (e: unknown) {
+      const er = e as { response?: { data?: { message?: string; detail?: string } } };
+      alert(er.response?.data?.message || er.response?.data?.detail || 'Error');
+    }
+  };
+
+  if (enabled === null) return null;
+
+  return (
+    <section className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
+      <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
+        <ShieldCheck className="h-4 w-4 text-primary-500" />
+        {t('pw.section')}
+      </h2>
+      <p className="text-xs text-gray-500 mb-3">{t('pw.subtitle')}</p>
+      <div className="flex items-center justify-between mb-3 text-sm">
+        <span className={enabled ? 'text-green-600 font-semibold' : 'text-gray-400'}>
+          {enabled ? t('pw.statusEnabled') : t('pw.statusDisabled')}
+        </span>
+      </div>
+      {enabled ? (
+        <p className="text-xs text-gray-500 mb-3">{t('pw.benefit')}</p>
+      ) : (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">{t('pw.benefit')}</p>
+      )}
+      <div className="flex gap-2 flex-wrap">
+        {enabled ? (
+          <>
+            <button
+              onClick={() => { reset(); setModal('change'); }}
+              className="flex-1 rounded-lg bg-primary-500 text-white py-2 text-sm font-semibold"
+            >
+              {t('pw.btnChange')}
+            </button>
+            <button
+              onClick={removeProtection}
+              className="rounded-lg border border-red-200 text-red-500 py-2 px-4 text-sm font-semibold"
+            >
+              {t('pw.btnRemove')}
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => { reset(); setModal('enable'); }}
+            className="w-full rounded-lg bg-primary-500 text-white py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
+          >
+            <Lock className="h-4 w-4" /> {t('pw.btnEnable')}
+          </button>
+        )}
+      </div>
+
+      {/* Modal */}
+      {modal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4" onClick={() => !busy && setModal('')}>
+          <div className="bg-white rounded-xl p-5 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold mb-3">
+              {modal === 'enable' ? t('pw.modalEnable') : t('pw.modalChange')}
+            </h3>
+            {err && <div className="mb-3 rounded-lg bg-red-50 p-2 text-xs text-red-600">{err}</div>}
+            {ok && <div className="mb-3 rounded-lg bg-green-50 p-2 text-xs text-green-600">{ok}</div>}
+            {modal === 'change' && (
+              <div className="mb-3">
+                <label className="block text-xs text-gray-600 mb-1">{t('pw.fieldCurrent')}</label>
+                <input type="password" value={cur} onChange={(e) => setCur(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm" />
+              </div>
+            )}
+            <div className="mb-3">
+              <label className="block text-xs text-gray-600 mb-1">{t('pw.fieldNew')}</label>
+              <input type="password" value={nw} onChange={(e) => setNw(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-xs text-gray-600 mb-1">{t('pw.fieldConfirm')}</label>
+              <input type="password" value={cf} onChange={(e) => setCf(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm" />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setModal('')} disabled={busy}
+                className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-semibold text-gray-600">
+                {t('pw.btnCancel')}
+              </button>
+              <button onClick={submit} disabled={busy}
+                className="flex-1 rounded-lg bg-primary-500 text-white py-2 text-sm font-semibold disabled:opacity-50">
+                {busy ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : t('pw.btnSubmit')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 

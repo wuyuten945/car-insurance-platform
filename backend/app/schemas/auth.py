@@ -60,3 +60,27 @@ class RefreshTokenRequest(BaseModel):
 
 class LogoutRequest(BaseModel):
     pass
+
+
+class VerifyPasswordRequest(BaseModel):
+    """OTP 通過後的二因子密碼驗證"""
+    interim_token: str
+    password: str
+
+
+class SetPasswordRequest(BaseModel):
+    """設定/變更進階保護密碼。第一次設不需 current_password；之後變更需要"""
+    new_password: str
+    current_password: str | None = None
+
+    @field_validator("new_password")
+    @classmethod
+    def _new_pw(cls, v: str) -> str:
+        if not v or len(v) < 8:
+            raise ValueError("新密碼至少 8 字元")
+        return v
+
+
+class RemovePasswordRequest(BaseModel):
+    """移除進階保護密碼（需驗證當前密碼）"""
+    current_password: str

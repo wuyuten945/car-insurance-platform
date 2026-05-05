@@ -31,6 +31,10 @@ class User(TimestampMixin, Base):
     is_line_friend = Column(Boolean, default=False, nullable=False)  # 是否已加 OA 好友（沒加無法 push）
     line_friend_at = Column(DateTime(timezone=True), nullable=True)  # 加好友時間
 
+    # 進階保護密碼（選填二因子）— 設了之後 OTP 通過還要再驗密碼
+    # null 表示未啟用，登入維持單因子 OTP；有值（hashed）→ OTP + password 雙因子
+    password_hash = Column(String(255), nullable=True)
+
     # Relationships
     consents = relationship("UserConsent", back_populates="user", lazy="selectin")
     vehicles = relationship("UserVehicle", back_populates="user", lazy="selectin")

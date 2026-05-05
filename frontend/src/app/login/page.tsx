@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { KeyRound, ArrowRight, Loader2, Mail, Languages, AlertTriangle, Copy, Check, ShieldCheck } from 'lucide-react';
+import { KeyRound, ArrowRight, Loader2, Mail, Languages, AlertTriangle, Copy, Check, ShieldCheck, Lock } from 'lucide-react';
 import Image from 'next/image';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api-client';
@@ -10,12 +10,14 @@ import { useT } from '@/lib/i18n/LanguageProvider';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { sendOTP, verifyOTP } = useAuthStore();
+  const { sendOTP, verifyOTP, verifyPassword } = useAuthStore();
   const { t, lang, toggleLang } = useT();
 
-  const [step, setStep] = useState<'input' | 'otp'>('input');
+  const [step, setStep] = useState<'input' | 'otp' | 'password'>('input');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
+  const [interimToken, setInterimToken] = useState('');
   const [devOtp, setDevOtp] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -84,8 +86,13 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await verifyOTP(email, otp);
-      // 檢查是否需要補資料引導
+      const result = await verifyOTP(email, otp);
+      if (result.step === 'password_required') {
+        setInterimToken(result.interim_token || '');
+        setStep('password');
+        return;
+      }
+      // 已直接登入（沒設進階密碼）
       try {
         const res = await api.get('/api/v1/customers/profile');
         const u = res.data.data;
@@ -94,7 +101,28 @@ export default function LoginPage() {
         router.replace('/');
       }
     } catch {
-      setError('驗證碼錯誤或已過期');
+      setError(t('login.otpFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyPassword = async () => {
+    if (!password) { setError(t('login.pwRequired')); return; }
+    setError('');
+    setLoading(true);
+    try {
+      await verifyPassword(interimToken, password);
+      try {
+        const res = await api.get('/api/v1/customers/profile');
+        const u = res.data.data;
+        router.replace(u?.is_profile_complete ? '/' : '/onboarding');
+      } catch {
+        router.replace('/');
+      }
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string; detail?: string } } };
+      setError(e.response?.data?.message || e.response?.data?.detail || t('login.pwFailed'));
     } finally {
       setLoading(false);
     }
@@ -155,12 +183,14 @@ export default function LoginPage() {
       {/* Form card */}
       <div className="rounded-t-3xl bg-white px-6 pt-8 pb-10 shadow-2xl">
         <h2 className="text-lg font-bold text-gray-900 mb-1">
-          {step === 'input' ? t('login.signIn') : t('login.enterCode')}
+          {step === 'input' ? t('login.signIn') : step === 'otp' ? t('login.enterCode') : t('login.enterPassword')}
         </h2>
         <p className="text-sm text-gray-500 mb-6">
           {step === 'input'
             ? t('login.enterEmailHint')
-            : t('login.codeSentTo', { email })}
+            : step === 'otp'
+            ? t('login.codeSentTo', { email })
+            : t('login.pwHint')}
         </p>
 
         {error && (
@@ -195,7 +225,7 @@ export default function LoginPage() {
               {t('login.getCode')}
             </button>
           </div>
-        ) : (
+        ) : step === 'otp' ? (
           <div className="space-y-4">
             <div className="relative">
               <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -230,6 +260,40 @@ export default function LoginPage() {
                 {countdown > 0 ? t('login.resendIn', { s: countdown }) : t('login.resend')}
               </button>
             </div>
+          </div>
+        ) : (
+          /* Step 3: 進階保護密碼 */
+          <div className="space-y-4">
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-700">
+              <ShieldCheck className="inline h-4 w-4 mr-1" />
+              {t('login.pwSecurityNote')}
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="password"
+                placeholder={t('login.pwPlaceholder')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pl-11 pr-4 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                autoFocus
+              />
+            </div>
+            <button
+              onClick={handleVerifyPassword}
+              disabled={loading || !password}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 py-3.5 text-base font-semibold text-white transition hover:bg-primary-700 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+              {t('login.verifyLogin')}
+            </button>
+            <button
+              onClick={() => { setStep('input'); setOtp(''); setPassword(''); setInterimToken(''); setError(''); setDevOtp(null); }}
+              className="text-sm text-gray-500"
+            >
+              {t('login.cancelLogin')}
+            </button>
           </div>
         )}
 

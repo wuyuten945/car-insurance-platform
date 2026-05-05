@@ -26,7 +26,11 @@ interface AuthState {
   isLoading: boolean;
   initAuth: () => void;
   sendOTP: (email: string) => Promise<{ otp?: string }>;
-  verifyOTP: (email: string, otp: string) => Promise<void>;
+  // 回傳:
+  //   { step: 'logged_in' } → 已登入
+  //   { step: 'password_required', interim_token } → 需要再輸密碼
+  verifyOTP: (email: string, otp: string) => Promise<{ step: 'logged_in' | 'password_required'; interim_token?: string }>;
+  verifyPassword: (interim_token: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
 }
@@ -49,6 +53,19 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   verifyOTP: async (email: string, otp: string) => {
     const res = await api.post('/api/v1/auth/otp/verify', { email, otp });
+    const data = res.data.data;
+    if (data?.step === 'password_required') {
+      return { step: 'password_required', interim_token: data.interim_token };
+    }
+    const { user, tokens } = data;
+    localStorage.setItem('access_token', tokens.access_token);
+    localStorage.setItem('refresh_token', tokens.refresh_token);
+    set({ user, isAuthenticated: true });
+    return { step: 'logged_in' };
+  },
+
+  verifyPassword: async (interim_token: string, password: string) => {
+    const res = await api.post('/api/v1/auth/verify-password', { interim_token, password });
     const { user, tokens } = res.data.data;
     localStorage.setItem('access_token', tokens.access_token);
     localStorage.setItem('refresh_token', tokens.refresh_token);
