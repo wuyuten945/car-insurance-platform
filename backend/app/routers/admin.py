@@ -68,12 +68,12 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 <div class="header">
   <h1 data-i18n="header_title">BOPINAN — 管理控制台</h1>
   <small id="user-info"></small>
-  <button id="lang-toggle-btn" type="button" onclick="toggleAdminLang()" style="background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">EN</button>
+  <button id="lang-toggle-btn" type="button" onclick="toggleAdminLang()" title="Toggle Language" style="background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">EN</button>
   <button class="btn danger" id="logout-btn" style="display:none;padding:4px 12px;font-size:12px;margin-left:10px" onclick="doLogout()" data-i18n="btn_logout">登出</button>
   <div id="customer-bar" style="display:none;margin-top:10px;padding:10px;background:rgba(255,255,255,0.15);border-radius:6px;font-size:13px">
-    <span style="margin-right:8px">操作客戶（新增車輛/保單時套用）：</span>
+    <span style="margin-right:8px" data-i18n="cur_customer_label">操作客戶（新增車輛/保單時套用）：</span>
     <select id="cur-customer" style="background:#fff;color:#000;padding:4px 8px;border-radius:4px;border:0;min-width:280px"></select>
-    <button class="btn" style="padding:4px 10px;font-size:11px;margin-left:8px;background:#0288D1" onclick="loadCustomerList()">重新整理客戶清單</button>
+    <button class="btn" style="padding:4px 10px;font-size:11px;margin-left:8px;background:#0288D1" onclick="loadCustomerList()" data-i18n="btn_refresh_customers">重新整理客戶清單</button>
     <span id="customer-bar-msg" style="margin-left:10px;color:#FFD54F;font-size:11px"></span>
   </div>
 </div>
@@ -126,12 +126,12 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   <!-- Tab: Vehicles -->
   <div id="tab-vehicles" class="tab-content active">
     <div class="card">
-      <h2>上傳行照（自動辨識）</h2>
-      <p style="color:#666;font-size:13px;margin-bottom:12px">選擇車輛型式後上傳行照圖片，系統將自動辨識所有車輛資料（含驗車到期日）。</p>
+      <h2 data-i18n="h_upload_reg">上傳行照（自動辨識）</h2>
+      <p style="color:#666;font-size:13px;margin-bottom:12px" data-i18n="upload_reg_hint">選擇車輛型式後上傳行照圖片，系統將自動辨識所有車輛資料（含驗車到期日）。</p>
 
       <div class="row">
         <div>
-          <label>車輛型式（監理分類）</label>
+          <label data-i18n="lbl_vehicle_type">車輛型式（監理分類）</label>
           <select id="v-type" onchange="onTypeChange()">
             <optgroup label="自用車輛">
               <option value="自用小客車">自用小客車</option>
@@ -164,43 +164,43 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           </select>
         </div>
         <div>
-          <label>現有車輛（更新）/ 新車</label>
+          <label data-i18n="lbl_existing_vehicle">現有車輛（更新）/ 新車</label>
           <select id="v-select">
-            <option value="__new__">+ 新增車輛</option>
+            <option value="__new__" data-i18n="opt_new_vehicle">+ 新增車輛</option>
           </select>
         </div>
       </div>
 
       <div id="v-inspection-rule" style="margin-top:10px;padding:10px;background:#E3F2FD;border-radius:8px;font-size:12px;color:#1565C0;display:none"></div>
 
-      <label style="margin-top:14px">行照圖片 (JPG/PNG)</label>
+      <label style="margin-top:14px" data-i18n="lbl_reg_image">行照圖片 (JPG/PNG)</label>
       <input type="file" id="v-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onFileChange()">
       <img id="v-preview" class="preview" style="display:none">
-      <button class="btn" id="v-upload-btn" onclick="uploadRegistration()">上傳行照</button>
-      <button class="btn success" id="v-ocr-btn" style="display:none" onclick="runOcr()">AI 辨識行照</button>
+      <button class="btn" id="v-upload-btn" onclick="uploadRegistration()" data-i18n="btn_upload_reg">上傳行照</button>
+      <button class="btn success" id="v-ocr-btn" style="display:none" onclick="runOcr()" data-i18n="btn_ocr_reg">AI 辨識行照</button>
       <div id="v-loading" style="display:none;margin-top:12px;color:#1565C0;font-size:14px">
         <span style="display:inline-block;animation:spin 1s linear infinite;margin-right:8px">&#9696;</span>
-        <span id="v-loading-text">上傳中...</span>
+        <span id="v-loading-text" data-i18n="msg_uploading">上傳中...</span>
       </div>
       <div id="v-msg" class="msg"></div>
 
       <!-- OCR / Edit Form (unified) -->
       <div id="v-edit-form" style="display:none;margin-top:16px">
-        <h3 id="v-edit-title" style="font-size:14px;color:#2E7D32;margin-bottom:10px">AI 辨識結果</h3>
-        <p style="font-size:11px;color:#888;margin-bottom:10px">點擊各欄位值可直接編輯修正</p>
+        <h3 id="v-edit-title" style="font-size:14px;color:#2E7D32;margin-bottom:10px" data-i18n="h_ocr_result">AI 辨識結果</h3>
+        <p style="font-size:11px;color:#888;margin-bottom:10px" data-i18n="ocr_hint_edit">點擊各欄位值可直接編輯修正</p>
         <table style="font-size:13px;width:100%"><tbody>
-          <tr><td style="width:130px;color:#666;padding:6px"><b>客戶姓名</b></td><td><input type="text" id="ve-customer-name" placeholder="此車輛所屬客戶（修改會更新客戶資料）" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%;background:#fffbea"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>客戶 Email</b></td><td><input type="email" id="ve-customer-email" placeholder="設定後客戶可用此 Email 登入並看到自己的車輛保單" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%;background:#e8f5e9"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>車牌號碼</b></td><td><input type="text" id="ve-plate" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>廠牌</b></td><td><input type="text" id="ve-brand" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>車型</b></td><td><input type="text" id="ve-model" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>出廠年份</b></td><td><input type="number" id="ve-year" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>顏色</b></td><td><input type="text" id="ve-color" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>排氣量 (cc)</b></td><td><input type="number" id="ve-cc" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>車身號碼</b></td><td><input type="text" id="ve-vin" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>發照日期</b></td><td><input type="date" id="ve-reg-date" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>驗車到期日</b></td><td><input type="date" id="ve-expiry" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b>燃料種類</b></td><td>
+          <tr><td style="width:130px;color:#666;padding:6px"><b data-i18n="lbl_customer_name">客戶姓名</b></td><td><input type="text" id="ve-customer-name" placeholder="此車輛所屬客戶（修改會更新客戶資料）" data-i18n-placeholder="ph_customer_name" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%;background:#fffbea"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_customer_email">客戶 Email</b></td><td><input type="email" id="ve-customer-email" placeholder="設定後客戶可用此 Email 登入並看到自己的車輛保單" data-i18n-placeholder="ph_customer_email" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%;background:#e8f5e9"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_plate">車牌號碼</b></td><td><input type="text" id="ve-plate" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_brand">廠牌</b></td><td><input type="text" id="ve-brand" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_model">車型</b></td><td><input type="text" id="ve-model" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_year">出廠年份</b></td><td><input type="number" id="ve-year" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_color">顏色</b></td><td><input type="text" id="ve-color" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_cc">排氣量 (cc)</b></td><td><input type="number" id="ve-cc" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_vin">車身號碼</b></td><td><input type="text" id="ve-vin" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_reg_date">發照日期</b></td><td><input type="date" id="ve-reg-date" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_expiry_date">驗車到期日</b></td><td><input type="date" id="ve-expiry" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_fuel">燃料種類</b></td><td>
             <select id="ve-fuel" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%">
               <option value="">--</option><option value="汽油">汽油</option><option value="柴油">柴油</option>
               <option value="油電混合">油電混合</option><option value="電動">電動</option><option value="LPG">LPG</option>
@@ -210,29 +210,29 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 
         <!-- 行照圖片直接上傳 -->
         <div style="margin-top:14px;padding:12px;background:#f5f7fa;border-radius:8px;border:1px solid #ddd">
-          <div style="font-size:13px;color:#1565C0;font-weight:bold;margin-bottom:8px">行照圖片（直接上傳到此車輛）</div>
+          <div style="font-size:13px;color:#1565C0;font-weight:bold;margin-bottom:8px" data-i18n="reg_upload_direct_title">行照圖片（直接上傳到此車輛）</div>
           <img id="ve-current-image" class="preview" style="display:none;max-width:200px;max-height:140px;margin-bottom:8px;border-radius:6px;border:1px solid #ccc">
           <input type="file" id="ve-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onEditFileChange()" style="font-size:12px">
           <img id="ve-file-preview" class="preview" style="display:none;max-width:200px;max-height:140px;margin:6px 0;border-radius:6px;border:1px solid #ccc">
           <div style="margin-top:6px">
-            <button class="btn" style="padding:6px 14px;font-size:12px;background:#1565C0;color:#fff" onclick="uploadRegistrationDirect()">上傳行照</button>
-            <button class="btn success" style="padding:6px 14px;font-size:12px;display:none" id="ve-ocr-btn" onclick="ocrRegistrationDirect()">AI 辨識自動填入</button>
+            <button class="btn" style="padding:6px 14px;font-size:12px;background:#1565C0;color:#fff" onclick="uploadRegistrationDirect()" data-i18n="btn_upload_reg">上傳行照</button>
+            <button class="btn success" style="padding:6px 14px;font-size:12px;display:none" id="ve-ocr-btn" onclick="ocrRegistrationDirect()" data-i18n="btn_ocr_autofill">AI 辨識自動填入</button>
           </div>
           <div id="ve-upload-loading" style="display:none;margin-top:6px;color:#1565C0;font-size:12px">
             <span style="display:inline-block;animation:spin 1s linear infinite;margin-right:6px">&#9696;</span>
-            <span id="ve-upload-text">處理中...</span>
+            <span id="ve-upload-text" data-i18n="msg_processing">處理中...</span>
           </div>
         </div>
 
-        <button class="btn success" style="margin-top:14px" onclick="saveEditedVehicle()">儲存車輛資料</button>
+        <button class="btn success" style="margin-top:14px" onclick="saveEditedVehicle()" data-i18n="btn_save_vehicle">儲存車輛資料</button>
         <div id="ve-msg" class="msg"></div>
       </div>
     </div>
     <div class="card">
-      <h2>現有車輛</h2>
+      <h2 data-i18n="h_existing_vehicles">現有車輛</h2>
       <!-- 隱藏的 file input：給 row 內「上傳/更換」按鈕共用 -->
       <input type="file" id="row-upload-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" style="display:none" onchange="onRowFileSelected()">
-      <table><thead><tr><th>客戶</th><th>車牌</th><th>型式</th><th>品牌</th><th>車型</th><th>年份</th><th>顏色</th><th>排氣量</th><th>行照到期</th><th>行照</th><th>操作</th></tr></thead>
+      <table><thead><tr><th data-i18n="th_customer">客戶</th><th data-i18n="th_plate">車牌</th><th data-i18n="th_type">型式</th><th data-i18n="th_brand">品牌</th><th data-i18n="th_model">車型</th><th data-i18n="th_year">年份</th><th data-i18n="th_color">顏色</th><th data-i18n="th_cc">排氣量</th><th data-i18n="th_reg_expiry">行照到期</th><th data-i18n="th_reg_image">行照</th><th data-i18n="th_action">操作</th></tr></thead>
       <tbody id="v-table"></tbody></table>
     </div>
   </div>
@@ -240,71 +240,71 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   <!-- Tab: Policies -->
   <div id="tab-policies" class="tab-content">
     <div class="card">
-      <h2>上傳保單（AI 辨識）</h2>
-      <p style="color:#666;font-size:13px;margin-bottom:12px">上傳保單圖片，系統自動辨識保險公司、保單號碼、起迄日、保障項目等，一鍵建立保單。</p>
-      <label>保單圖片 (JPG/PNG)</label>
+      <h2 data-i18n="h_upload_policy">上傳保單（AI 辨識）</h2>
+      <p style="color:#666;font-size:13px;margin-bottom:12px" data-i18n="upload_policy_hint">上傳保單圖片，系統自動辨識保險公司、保單號碼、起迄日、保障項目等，一鍵建立保單。</p>
+      <label data-i18n="lbl_policy_image">保單圖片 (JPG/PNG)</label>
       <input type="file" id="p-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onPolicyFileChange()">
       <img id="p-preview" class="preview" style="display:none">
-      <button class="btn" id="p-upload-btn" onclick="uploadPolicy()">上傳保單</button>
-      <button class="btn success" id="p-ocr-btn" style="display:none" onclick="runPolicyOcr()">AI 辨識保單</button>
+      <button class="btn" id="p-upload-btn" onclick="uploadPolicy()" data-i18n="btn_upload_policy">上傳保單</button>
+      <button class="btn success" id="p-ocr-btn" style="display:none" onclick="runPolicyOcr()" data-i18n="btn_ocr_policy">AI 辨識保單</button>
       <div id="p-upload-loading" style="display:none;margin-top:12px;color:#1565C0;font-size:14px">
         <span style="display:inline-block;animation:spin 1s linear infinite;margin-right:8px">&#9696;</span>
-        <span id="p-loading-text">上傳中...</span>
+        <span id="p-loading-text" data-i18n="msg_uploading">上傳中...</span>
       </div>
       <div id="p-upload-msg" class="msg"></div>
       <!-- OCR result for policy -->
       <div id="p-ocr-result" style="display:none;margin-top:16px">
-        <h3 style="font-size:14px;color:#2E7D32;margin-bottom:8px">辨識結果</h3>
+        <h3 style="font-size:14px;color:#2E7D32;margin-bottom:8px" data-i18n="h_ocr_result_short">辨識結果</h3>
         <table id="p-ocr-table" style="font-size:13px"><tbody></tbody></table>
       </div>
     </div>
     <div class="card">
-      <h2>手動新增保單</h2>
+      <h2 data-i18n="h_manual_policy">手動新增保單</h2>
       <div class="row">
         <div>
-          <label>保險公司</label>
-          <input type="text" id="p-insurer" placeholder="例：富邦產險">
+          <label data-i18n="lbl_insurer">保險公司</label>
+          <input type="text" id="p-insurer" placeholder="例：富邦產險" data-i18n-placeholder="ph_insurer">
         </div>
         <div>
-          <label>保單號碼</label>
-          <input type="text" id="p-number" placeholder="例：FBN-2026-001234">
+          <label data-i18n="lbl_policy_number">保單號碼</label>
+          <input type="text" id="p-number" placeholder="例：FBN-2026-001234" data-i18n-placeholder="ph_policy_number">
         </div>
       </div>
       <div class="row">
         <div>
-          <label>承保車輛</label>
-          <select id="p-vehicle"><option value="">不指定</option></select>
+          <label data-i18n="lbl_covered_vehicle">承保車輛</label>
+          <select id="p-vehicle"><option value="" data-i18n="opt_unspecified">不指定</option></select>
         </div>
         <div>
-          <label>狀態</label>
+          <label data-i18n="lbl_status">狀態</label>
           <select id="p-status">
-            <option value="active">有效</option>
-            <option value="expiring">即將到期</option>
-            <option value="expired">已到期</option>
+            <option value="active" data-i18n="opt_active">有效</option>
+            <option value="expiring" data-i18n="opt_expiring">即將到期</option>
+            <option value="expired" data-i18n="opt_expired">已到期</option>
           </select>
         </div>
       </div>
       <div class="row">
-        <div><label>起保日</label><input type="date" id="p-start"></div>
-        <div><label>到期日</label><input type="date" id="p-end"></div>
-        <div><label>總保費</label><input type="number" id="p-premium" placeholder="18500"></div>
+        <div><label data-i18n="lbl_start_date">起保日</label><input type="date" id="p-start"></div>
+        <div><label data-i18n="lbl_end_date">到期日</label><input type="date" id="p-end"></div>
+        <div><label data-i18n="lbl_premium">總保費</label><input type="number" id="p-premium" placeholder="18500"></div>
       </div>
       <div style="margin-top:16px">
-        <h3 style="font-size:14px;color:#666">保障項目</h3>
+        <h3 style="font-size:14px;color:#666" data-i18n="h_coverage_items">保障項目</h3>
         <div id="p-items"></div>
-        <button class="btn" style="background:#666;margin-top:8px" onclick="addItemRow()">+ 新增項目</button>
+        <button class="btn" style="background:#666;margin-top:8px" onclick="addItemRow()" data-i18n="btn_add_item">+ 新增項目</button>
       </div>
-      <button class="btn" onclick="createPolicy()">建立保單</button>
+      <button class="btn" onclick="createPolicy()" data-i18n="btn_create_policy">建立保單</button>
       <div id="p-msg" class="msg"></div>
     </div>
     <div class="card">
-      <h2>現有保單</h2>
-      <p style="font-size:12px;color:#666;margin-bottom:8px">💡 點擊任一保單列可選取，<b>雙擊</b>查看承保項目明細</p>
+      <h2 data-i18n="h_existing_policies">現有保單</h2>
+      <p style="font-size:12px;color:#666;margin-bottom:8px" data-i18n="policy_list_hint">💡 點擊任一保單列可選取，<b>雙擊</b>查看承保項目明細</p>
       <!-- 隱藏 file input：給 row 上傳保單按鈕共用 -->
       <input type="file" id="row-policy-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" style="display:none" onchange="onPolicyFileSelectedRow()">
       <table><thead><tr>
-        <th>客戶</th><th>車牌</th><th>保單號碼</th><th>保險公司</th><th>狀態</th>
-        <th>起保</th><th>到期</th><th>保費</th><th>項目</th><th>操作</th>
+        <th data-i18n="th_customer">客戶</th><th data-i18n="th_plate">車牌</th><th data-i18n="th_policy_number">保單號碼</th><th data-i18n="th_insurer">保險公司</th><th data-i18n="th_status">狀態</th>
+        <th data-i18n="th_start">起保</th><th data-i18n="th_end">到期</th><th data-i18n="th_premium">保費</th><th data-i18n="th_items">項目</th><th data-i18n="th_action">操作</th>
       </tr></thead>
       <tbody id="p-table"></tbody></table>
     </div>
@@ -312,27 +312,27 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     <!-- 保單編輯彈窗 -->
     <div id="p-edit-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
       <div style="background:#fff;padding:24px;border-radius:12px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto">
-        <h3 style="color:#1565C0;margin-bottom:14px">編輯保單</h3>
+        <h3 style="color:#1565C0;margin-bottom:14px" data-i18n="h_edit_policy">編輯保單</h3>
         <table style="width:100%"><tbody>
-          <tr><td style="width:90px;padding:6px;color:#666">要保人姓名</td><td><input type="text" id="pe-customer-name" placeholder="此保單所屬客戶（修改會轉移保單）" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#fffbea"></td></tr>
-          <tr><td style="padding:6px;color:#666">客戶 Email</td><td><input type="email" id="pe-customer-email" placeholder="設定後客戶可用此 Email 登入並看到此保單" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#e8f5e9"></td></tr>
-          <tr><td style="padding:6px;color:#666">保單號碼</td><td><input type="text" id="pe-number" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
-          <tr><td style="padding:6px;color:#666">保險公司</td><td><input type="text" id="pe-insurer" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
-          <tr><td style="padding:6px;color:#666">起保日</td><td><input type="date" id="pe-start" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
-          <tr><td style="padding:6px;color:#666">到期日</td><td><input type="date" id="pe-end" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
-          <tr><td style="padding:6px;color:#666">總保費</td><td><input type="number" id="pe-premium" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
-          <tr><td style="padding:6px;color:#666">狀態</td><td>
+          <tr><td style="width:90px;padding:6px;color:#666" data-i18n="lbl_policyholder">要保人姓名</td><td><input type="text" id="pe-customer-name" placeholder="此保單所屬客戶（修改會轉移保單）" data-i18n-placeholder="ph_policyholder" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#fffbea"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_customer_email">客戶 Email</td><td><input type="email" id="pe-customer-email" placeholder="設定後客戶可用此 Email 登入並看到此保單" data-i18n-placeholder="ph_customer_email_short" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#e8f5e9"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_policy_number">保單號碼</td><td><input type="text" id="pe-number" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_insurer">保險公司</td><td><input type="text" id="pe-insurer" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_start_date">起保日</td><td><input type="date" id="pe-start" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_end_date">到期日</td><td><input type="date" id="pe-end" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_premium">總保費</td><td><input type="number" id="pe-premium" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_status">狀態</td><td>
             <select id="pe-status" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
-              <option value="active">active 有效</option>
-              <option value="expiring">expiring 即將到期</option>
-              <option value="expired">expired 已到期</option>
-              <option value="cancelled">cancelled 已取消</option>
+              <option value="active">active</option>
+              <option value="expiring">expiring</option>
+              <option value="expired">expired</option>
+              <option value="cancelled">cancelled</option>
             </select>
           </td></tr>
         </tbody></table>
         <div style="margin-top:14px;text-align:right">
-          <button class="btn" style="background:#999;color:#fff" onclick="closePolicyEdit()">取消</button>
-          <button class="btn success" onclick="savePolicyEdit()">儲存</button>
+          <button class="btn" style="background:#999;color:#fff" onclick="closePolicyEdit()" data-i18n="btn_cancel">取消</button>
+          <button class="btn success" onclick="savePolicyEdit()" data-i18n="btn_save">儲存</button>
         </div>
         <div id="pe-msg" class="msg"></div>
       </div>
@@ -343,9 +343,9 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   <!-- Tab: Claims -->
   <div id="tab-claims" class="tab-content">
     <div class="card">
-      <h2>理賠申請管理</h2>
-      <p style="color:#666;font-size:13px;margin-bottom:12px">客戶送出的理賠申請</p>
-      <button class="btn" onclick="loadClaims()">載入理賠列表</button>
+      <h2 data-i18n="h_claims">理賠申請管理</h2>
+      <p style="color:#666;font-size:13px;margin-bottom:12px" data-i18n="claims_hint">客戶送出的理賠申請</p>
+      <button class="btn" onclick="loadClaims()" data-i18n="btn_load_claims">載入理賠列表</button>
       <div id="claims-list" style="margin-top:16px"></div>
     </div>
   </div>
@@ -353,16 +353,16 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   <!-- Tab: Accidents -->
   <div id="tab-accidents" class="tab-content">
     <div class="card">
-      <h2>事故照片管理</h2>
-      <p style="color:#666;font-size:13px;margin-bottom:12px">客戶透過緊急救援上傳的事故現場照片</p>
-      <button class="btn" onclick="loadAccidents()">載入事故列表</button>
+      <h2 data-i18n="h_accidents">事故照片管理</h2>
+      <p style="color:#666;font-size:13px;margin-bottom:12px" data-i18n="accidents_hint">客戶透過緊急救援上傳的事故現場照片</p>
+      <button class="btn" onclick="loadAccidents()" data-i18n="btn_load_accidents">載入事故列表</button>
       <div id="acc-list" style="margin-top:16px"></div>
     </div>
   </div>
 
   <div id="tab-overview" class="tab-content">
     <div class="card">
-      <h2>系統資料總覽</h2>
+      <h2 data-i18n="h_overview">系統資料總覽</h2>
       <div id="overview-content"></div>
     </div>
   </div>
@@ -370,16 +370,16 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   <!-- Console: Agents -->
   <div id="tab-agents" class="tab-content">
     <div class="card">
-      <h2>新增業務員</h2>
-      <div class="row"><div><label>帳號</label><input id="ag-user" placeholder="agent01"></div><div><label>密碼</label><div class="pw-wrap"><input id="ag-pass" type="password"><button type="button" class="pw-toggle" onclick="togglePw('ag-pass',this)">👁</button></div></div></div>
-      <div class="row"><div><label>顯示名稱</label><input id="ag-name"></div><div><label>Email</label><input id="ag-email"></div></div>
-      <div class="row"><div><label>電話</label><input id="ag-phone"></div><div><label>IP 白名單（逗號分隔，空=不限）</label><input id="ag-ip"></div></div>
-      <button class="btn" onclick="createAgent()">新增業務員</button>
+      <h2 data-i18n="h_add_agent">新增業務員</h2>
+      <div class="row"><div><label data-i18n="lbl_username">帳號</label><input id="ag-user" placeholder="agent01"></div><div><label data-i18n="lbl_password">密碼</label><div class="pw-wrap"><input id="ag-pass" type="password"><button type="button" class="pw-toggle" onclick="togglePw('ag-pass',this)">👁</button></div></div></div>
+      <div class="row"><div><label data-i18n="lbl_display_name">顯示名稱</label><input id="ag-name"></div><div><label>Email</label><input id="ag-email"></div></div>
+      <div class="row"><div><label data-i18n="lbl_phone">電話</label><input id="ag-phone"></div><div><label data-i18n="lbl_ip_whitelist">IP 白名單（逗號分隔，空=不限）</label><input id="ag-ip"></div></div>
+      <button class="btn" onclick="createAgent()" data-i18n="btn_add_agent">新增業務員</button>
       <div id="ag-msg" class="msg"></div>
     </div>
     <div class="card">
-      <h2>業務員列表</h2>
-      <table><thead><tr><th>帳號</th><th>名稱</th><th>狀態</th><th>客戶數</th><th>最後登入</th><th>操作</th></tr></thead>
+      <h2 data-i18n="h_agent_list">業務員列表</h2>
+      <table><thead><tr><th data-i18n="lbl_username">帳號</th><th data-i18n="th_name">名稱</th><th data-i18n="th_status">狀態</th><th data-i18n="th_customer_count">客戶數</th><th data-i18n="th_last_login">最後登入</th><th data-i18n="th_action">操作</th></tr></thead>
       <tbody id="agents-table"></tbody></table>
     </div>
   </div>
@@ -387,9 +387,9 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   <!-- Console: Assign -->
   <div id="tab-assign" class="tab-content">
     <div class="card">
-      <h2>分配客戶給業務員</h2>
-      <div class="row"><div><label>選擇業務員</label><select id="assign-agent"></select></div><div><label>選擇客戶</label><select id="assign-customer"></select></div></div>
-      <button class="btn success" onclick="assignCustomer()">分配</button>
+      <h2 data-i18n="h_assign_customer">分配客戶給業務員</h2>
+      <div class="row"><div><label data-i18n="lbl_choose_agent">選擇業務員</label><select id="assign-agent"></select></div><div><label data-i18n="lbl_choose_customer">選擇客戶</label><select id="assign-customer"></select></div></div>
+      <button class="btn success" onclick="assignCustomer()" data-i18n="btn_assign">分配</button>
       <div id="assign-msg" class="msg"></div>
     </div>
   </div>
@@ -397,9 +397,9 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   <!-- Console: Logs -->
   <div id="tab-logs" class="tab-content">
     <div class="card">
-      <h2>操作日誌</h2>
-      <button class="btn" onclick="loadLogs()" style="margin-bottom:8px">載入最新</button>
-      <table><thead><tr><th>時間</th><th>管理員</th><th>操作</th><th>目標</th><th>說明</th><th>IP</th></tr></thead>
+      <h2 data-i18n="h_audit_logs">操作日誌</h2>
+      <button class="btn" onclick="loadLogs()" style="margin-bottom:8px" data-i18n="btn_load_latest">載入最新</button>
+      <table><thead><tr><th data-i18n="th_time">時間</th><th data-i18n="th_admin">管理員</th><th data-i18n="th_action_col">操作</th><th data-i18n="th_target">目標</th><th data-i18n="th_detail">說明</th><th data-i18n="th_ip">IP</th></tr></thead>
       <tbody id="logs-table"></tbody></table>
     </div>
   </div>
@@ -452,6 +452,91 @@ var I18N = {
     qs_lbl_customer: '客戶: ',
     idle_warn_title: '⚠ 即將自動登出 - ',
     idle_logout_msg: '閒置超過 5 分鐘，已自動登出。',
+    // Customer bar
+    cur_customer_label: '操作客戶（新增車輛/保單時套用）：',
+    btn_refresh_customers: '重新整理客戶清單',
+    // Vehicles tab
+    h_upload_reg: '上傳行照（自動辨識）',
+    upload_reg_hint: '選擇車輛型式後上傳行照圖片，系統將自動辨識所有車輛資料（含驗車到期日）。',
+    lbl_vehicle_type: '車輛型式（監理分類）',
+    lbl_existing_vehicle: '現有車輛（更新）/ 新車',
+    opt_new_vehicle: '+ 新增車輛',
+    lbl_reg_image: '行照圖片 (JPG/PNG)',
+    btn_upload_reg: '上傳行照',
+    btn_ocr_reg: 'AI 辨識行照',
+    btn_ocr_autofill: 'AI 辨識自動填入',
+    msg_uploading: '上傳中...',
+    msg_processing: '處理中...',
+    h_ocr_result: 'AI 辨識結果',
+    h_ocr_result_short: '辨識結果',
+    ocr_hint_edit: '點擊各欄位值可直接編輯修正',
+    lbl_customer_name: '客戶姓名',
+    lbl_customer_email: '客戶 Email',
+    lbl_plate: '車牌號碼',
+    lbl_brand: '廠牌',
+    lbl_model: '車型',
+    lbl_year: '出廠年份',
+    lbl_color: '顏色',
+    lbl_cc: '排氣量 (cc)',
+    lbl_vin: '車身號碼',
+    lbl_reg_date: '發照日期',
+    lbl_expiry_date: '驗車到期日',
+    lbl_fuel: '燃料種類',
+    ph_customer_name: '此車輛所屬客戶（修改會更新客戶資料）',
+    ph_customer_email: '設定後客戶可用此 Email 登入並看到自己的車輛保單',
+    ph_customer_email_short: '設定後客戶可用此 Email 登入並看到此保單',
+    reg_upload_direct_title: '行照圖片（直接上傳到此車輛）',
+    btn_save_vehicle: '儲存車輛資料',
+    h_existing_vehicles: '現有車輛',
+    th_customer: '客戶', th_plate: '車牌', th_type: '型式', th_brand: '品牌',
+    th_model: '車型', th_year: '年份', th_color: '顏色', th_cc: '排氣量',
+    th_reg_expiry: '行照到期', th_reg_image: '行照', th_action: '操作',
+    // Policies tab
+    h_upload_policy: '上傳保單（AI 辨識）',
+    upload_policy_hint: '上傳保單圖片，系統自動辨識保險公司、保單號碼、起迄日、保障項目等，一鍵建立保單。',
+    lbl_policy_image: '保單圖片 (JPG/PNG)',
+    btn_upload_policy: '上傳保單',
+    btn_ocr_policy: 'AI 辨識保單',
+    h_manual_policy: '手動新增保單',
+    lbl_insurer: '保險公司',
+    ph_insurer: '例：富邦產險',
+    lbl_policy_number: '保單號碼',
+    ph_policy_number: '例：FBN-2026-001234',
+    lbl_covered_vehicle: '承保車輛',
+    opt_unspecified: '不指定',
+    lbl_status: '狀態',
+    opt_active: '有效', opt_expiring: '即將到期', opt_expired: '已到期',
+    lbl_start_date: '起保日', lbl_end_date: '到期日', lbl_premium: '總保費',
+    h_coverage_items: '保障項目',
+    btn_add_item: '+ 新增項目',
+    btn_create_policy: '建立保單',
+    h_existing_policies: '現有保單',
+    policy_list_hint: '💡 點擊任一保單列可選取，<b>雙擊</b>查看承保項目明細',
+    th_policy_number: '保單號碼', th_insurer: '保險公司', th_status: '狀態',
+    th_start: '起保', th_end: '到期', th_premium: '保費', th_items: '項目',
+    h_edit_policy: '編輯保單',
+    lbl_policyholder: '要保人姓名',
+    ph_policyholder: '此保單所屬客戶（修改會轉移保單）',
+    btn_cancel: '取消', btn_save: '儲存',
+    // Claims/Accidents/Overview/Agents/Assign/Logs
+    h_claims: '理賠申請管理', claims_hint: '客戶送出的理賠申請', btn_load_claims: '載入理賠列表',
+    h_accidents: '事故照片管理', accidents_hint: '客戶透過緊急救援上傳的事故現場照片', btn_load_accidents: '載入事故列表',
+    h_overview: '系統資料總覽',
+    h_add_agent: '新增業務員', btn_add_agent: '新增業務員',
+    lbl_display_name: '顯示名稱', lbl_phone: '電話',
+    lbl_ip_whitelist: 'IP 白名單（逗號分隔，空=不限）',
+    h_agent_list: '業務員列表',
+    th_name: '名稱', th_customer_count: '客戶數', th_last_login: '最後登入',
+    h_assign_customer: '分配客戶給業務員',
+    lbl_choose_agent: '選擇業務員', lbl_choose_customer: '選擇客戶', btn_assign: '分配',
+    h_audit_logs: '操作日誌', btn_load_latest: '載入最新',
+    th_time: '時間', th_admin: '管理員', th_action_col: '操作',
+    th_target: '目標', th_detail: '說明', th_ip: 'IP',
+    // Common JS messages（給 mlang 用，但保留 key 也方便日後用 t() 取）
+    msg_pls_login_user: '請輸入帳號和密碼',
+    msg_login_failed: '登入失敗',
+    msg_conn_failed: '連線失敗',
+    msg_no_permission: '您無此功能的權限',
   },
   en: {
     header_title: 'BOPINAN — Admin Console',
@@ -490,8 +575,90 @@ var I18N = {
     qs_lbl_customer: 'Customer: ',
     idle_warn_title: '⚠ Auto-logout soon - ',
     idle_logout_msg: 'Idle over 5 minutes, you have been logged out.',
+    cur_customer_label: 'Active customer (used for new vehicle / policy):',
+    btn_refresh_customers: 'Refresh',
+    h_upload_reg: 'Upload Reg. Card (auto-OCR)',
+    upload_reg_hint: 'Pick vehicle type then upload the registration card image; system will auto-recognize all fields including inspection due date.',
+    lbl_vehicle_type: 'Vehicle Type (DMV class)',
+    lbl_existing_vehicle: 'Existing vehicle (update) / New',
+    opt_new_vehicle: '+ New vehicle',
+    lbl_reg_image: 'Reg. Card Image (JPG/PNG)',
+    btn_upload_reg: 'Upload',
+    btn_ocr_reg: 'AI OCR',
+    btn_ocr_autofill: 'AI OCR Autofill',
+    msg_uploading: 'Uploading...',
+    msg_processing: 'Processing...',
+    h_ocr_result: 'AI OCR Result',
+    h_ocr_result_short: 'OCR Result',
+    ocr_hint_edit: 'Click any field value to edit',
+    lbl_customer_name: 'Customer Name',
+    lbl_customer_email: 'Customer Email',
+    lbl_plate: 'Plate Number',
+    lbl_brand: 'Make',
+    lbl_model: 'Model',
+    lbl_year: 'Year',
+    lbl_color: 'Color',
+    lbl_cc: 'Engine cc',
+    lbl_vin: 'VIN',
+    lbl_reg_date: 'Reg. Date',
+    lbl_expiry_date: 'Inspection Due',
+    lbl_fuel: 'Fuel Type',
+    ph_customer_name: 'Owner of this vehicle (will update customer data)',
+    ph_customer_email: 'Setting an email lets the customer log in and see their vehicles & policies',
+    ph_customer_email_short: 'Setting an email lets the customer log in and see this policy',
+    reg_upload_direct_title: 'Reg. Card Image (upload directly to this vehicle)',
+    btn_save_vehicle: 'Save Vehicle',
+    h_existing_vehicles: 'Existing Vehicles',
+    th_customer: 'Customer', th_plate: 'Plate', th_type: 'Type', th_brand: 'Make',
+    th_model: 'Model', th_year: 'Year', th_color: 'Color', th_cc: 'cc',
+    th_reg_expiry: 'Insp. Due', th_reg_image: 'Reg.', th_action: 'Actions',
+    h_upload_policy: 'Upload Policy (AI OCR)',
+    upload_policy_hint: 'Upload a policy image; system auto-recognizes insurer, policy #, dates, coverage items and creates a policy with one click.',
+    lbl_policy_image: 'Policy Image (JPG/PNG)',
+    btn_upload_policy: 'Upload Policy',
+    btn_ocr_policy: 'AI OCR Policy',
+    h_manual_policy: 'Manual New Policy',
+    lbl_insurer: 'Insurer',
+    ph_insurer: 'e.g., Fubon P&C',
+    lbl_policy_number: 'Policy #',
+    ph_policy_number: 'e.g., FBN-2026-001234',
+    lbl_covered_vehicle: 'Covered Vehicle',
+    opt_unspecified: 'Unspecified',
+    lbl_status: 'Status',
+    opt_active: 'Active', opt_expiring: 'Expiring', opt_expired: 'Expired',
+    lbl_start_date: 'Start', lbl_end_date: 'End', lbl_premium: 'Premium',
+    h_coverage_items: 'Coverage Items',
+    btn_add_item: '+ Add Item',
+    btn_create_policy: 'Create Policy',
+    h_existing_policies: 'Existing Policies',
+    policy_list_hint: '💡 Click row to select, <b>double-click</b> to view items',
+    th_policy_number: 'Policy #', th_insurer: 'Insurer', th_status: 'Status',
+    th_start: 'Start', th_end: 'End', th_premium: 'Premium', th_items: 'Items',
+    h_edit_policy: 'Edit Policy',
+    lbl_policyholder: 'Policyholder Name',
+    ph_policyholder: 'Owner of this policy (modifying will transfer)',
+    btn_cancel: 'Cancel', btn_save: 'Save',
+    h_claims: 'Claims', claims_hint: 'Customer-submitted claims', btn_load_claims: 'Load Claims',
+    h_accidents: 'Accident Photos', accidents_hint: 'Photos uploaded via emergency assistance', btn_load_accidents: 'Load Accidents',
+    h_overview: 'System Overview',
+    h_add_agent: 'New Agent', btn_add_agent: 'Add Agent',
+    lbl_display_name: 'Display Name', lbl_phone: 'Phone',
+    lbl_ip_whitelist: 'IP whitelist (comma-separated, empty = no limit)',
+    h_agent_list: 'Agent List',
+    th_name: 'Name', th_customer_count: '# Cust', th_last_login: 'Last Login',
+    h_assign_customer: 'Assign Customer to Agent',
+    lbl_choose_agent: 'Choose Agent', lbl_choose_customer: 'Choose Customer', btn_assign: 'Assign',
+    h_audit_logs: 'Audit Logs', btn_load_latest: 'Load Latest',
+    th_time: 'Time', th_admin: 'Admin', th_action_col: 'Action',
+    th_target: 'Target', th_detail: 'Detail', th_ip: 'IP',
+    msg_pls_login_user: 'Please enter username and password',
+    msg_login_failed: 'Login failed',
+    msg_conn_failed: 'Connection failed',
+    msg_no_permission: 'You do not have permission for this feature',
   }
 };
+// 給 JS 動態訊息的 inline bilingual helper（避免每個都加 i18n key）
+function mlang(zh, en) { return LANG === 'en' ? en : zh; }
 function t(key) { return (I18N[LANG] && I18N[LANG][key]) || I18N.zh[key] || key; }
 function applyAdminLang() {
   document.querySelectorAll('[data-i18n]').forEach(function(el) {
@@ -591,7 +758,7 @@ function _enterAdminUI(token, role, displayName) {
 async function doAdminLogin() {
   var user = document.getElementById('login-user').value.trim();
   var pass = document.getElementById('login-pass').value.trim();
-  if (!user || !pass) { showMsg('login-msg','err','請輸入帳號和密碼'); return; }
+  if (!user || !pass) { showMsg('login-msg','err',t('msg_pls_login_user')); return; }
   try {
     var r = await fetch(CONSOLE_API+'/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:user,password:pass})});
     var d = await r.json();
@@ -602,9 +769,9 @@ async function doAdminLogin() {
       localStorage.setItem(LS_NAME_KEY, d.data.admin.display_name || '');
       _enterAdminUI(d.data.token, d.data.admin.role, d.data.admin.display_name);
     } else {
-      showMsg('login-msg','err', d.message || '登入失敗');
+      showMsg('login-msg','err', d.message || t('msg_login_failed'));
     }
-  } catch(e) { showMsg('login-msg','err','連線失敗: '+e.message); }
+  } catch(e) { showMsg('login-msg','err', t('msg_conn_failed') + ': '+e.message); }
 }
 
 // 頁面載入時嘗試自動 restore login 狀態
@@ -710,7 +877,7 @@ function switchTab(name) {
   // 業務員權限檢查
   var adminOnly = ['vehicles','policies','claims','accidents','agents','assign','logs'];
   if (ADMIN_ROLE === 'agent' && adminOnly.indexOf(name) >= 0) {
-    showMsg('login-msg', 'err', '您無此功能的權限');
+    showMsg('login-msg', 'err', t('msg_no_permission'));
     return;
   }
   document.querySelectorAll('.tab-content').forEach(function(e) { e.classList.remove('active'); });
