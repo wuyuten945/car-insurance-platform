@@ -174,7 +174,11 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <div id="v-inspection-rule" style="margin-top:10px;padding:10px;background:#E3F2FD;border-radius:8px;font-size:12px;color:#1565C0;display:none"></div>
 
       <label style="margin-top:14px" data-i18n="lbl_reg_image">行照圖片 (JPG/PNG)</label>
-      <input type="file" id="v-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onFileChange()">
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="file" id="v-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onFileChange()" style="display:none">
+        <button type="button" class="btn" style="padding:6px 16px;font-size:12px;background:#0288D1" onclick="document.getElementById('v-file').click()" data-i18n="btn_choose_file">選擇檔案</button>
+        <span id="v-file-name" style="font-size:12px;color:#666" data-i18n="msg_no_file">未選擇任何檔案</span>
+      </div>
       <img id="v-preview" class="preview" style="display:none">
       <button class="btn" id="v-upload-btn" onclick="uploadRegistration()" data-i18n="btn_upload_reg">上傳行照</button>
       <button class="btn success" id="v-ocr-btn" style="display:none" onclick="runOcr()" data-i18n="btn_ocr_reg">AI 辨識行照</button>
@@ -212,7 +216,11 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
         <div style="margin-top:14px;padding:12px;background:#f5f7fa;border-radius:8px;border:1px solid #ddd">
           <div style="font-size:13px;color:#1565C0;font-weight:bold;margin-bottom:8px" data-i18n="reg_upload_direct_title">行照圖片（直接上傳到此車輛）</div>
           <img id="ve-current-image" class="preview" style="display:none;max-width:200px;max-height:140px;margin-bottom:8px;border-radius:6px;border:1px solid #ccc">
-          <input type="file" id="ve-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onEditFileChange()" style="font-size:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="file" id="ve-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onEditFileChange()" style="display:none">
+            <button type="button" class="btn" style="padding:5px 12px;font-size:11px;background:#0288D1" onclick="document.getElementById('ve-file').click()" data-i18n="btn_choose_file">選擇檔案</button>
+            <span id="ve-file-name" style="font-size:11px;color:#666" data-i18n="msg_no_file">未選擇任何檔案</span>
+          </div>
           <img id="ve-file-preview" class="preview" style="display:none;max-width:200px;max-height:140px;margin:6px 0;border-radius:6px;border:1px solid #ccc">
           <div style="margin-top:6px">
             <button class="btn" style="padding:6px 14px;font-size:12px;background:#1565C0;color:#fff" onclick="uploadRegistrationDirect()" data-i18n="btn_upload_reg">上傳行照</button>
@@ -243,7 +251,11 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <h2 data-i18n="h_upload_policy">上傳保單（AI 辨識）</h2>
       <p style="color:#666;font-size:13px;margin-bottom:12px" data-i18n="upload_policy_hint">上傳保單圖片，系統自動辨識保險公司、保單號碼、起迄日、保障項目等，一鍵建立保單。</p>
       <label data-i18n="lbl_policy_image">保單圖片 (JPG/PNG)</label>
-      <input type="file" id="p-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onPolicyFileChange()">
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="file" id="p-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onPolicyFileChange()" style="display:none">
+        <button type="button" class="btn" style="padding:6px 16px;font-size:12px;background:#0288D1" onclick="document.getElementById('p-file').click()" data-i18n="btn_choose_file">選擇檔案</button>
+        <span id="p-file-name" style="font-size:12px;color:#666" data-i18n="msg_no_file">未選擇任何檔案</span>
+      </div>
       <img id="p-preview" class="preview" style="display:none">
       <button class="btn" id="p-upload-btn" onclick="uploadPolicy()" data-i18n="btn_upload_policy">上傳保單</button>
       <button class="btn success" id="p-ocr-btn" style="display:none" onclick="runPolicyOcr()" data-i18n="btn_ocr_policy">AI 辨識保單</button>
@@ -560,6 +572,7 @@ var I18N = {
     ov_days_left: '剩餘天數', ov_days: '天',
     // Customer dropdown
     ph_choose: '請選擇', lbl_unnamed: '未命名',
+    btn_choose_file: '選擇檔案', msg_no_file: '未選擇任何檔案',
   },
   en: {
     header_title: 'BOPINAN — Admin Console',
@@ -697,6 +710,7 @@ var I18N = {
     ov_total_premium: 'Total Premium', ov_upcoming_30d: 'Expiring within 30 days',
     ov_days_left: 'Days Left', ov_days: 'day(s)',
     ph_choose: 'Choose', lbl_unnamed: 'Unnamed',
+    btn_choose_file: 'Choose File', msg_no_file: 'No file chosen',
   }
 };
 // 給 JS 動態訊息的 inline bilingual helper（避免每個都加 i18n key）
@@ -1164,6 +1178,8 @@ async function loadVehicles() {
 function onFileChange() {
   var fileInput = document.getElementById('v-file');
   var file = fileInput.files[0];
+  var nameEl = document.getElementById('v-file-name');
+  if (nameEl) nameEl.textContent = file ? file.name : t('msg_no_file');
   if (file) {
     var preview = document.getElementById('v-preview');
     if (file.type === 'application/pdf') {
@@ -1457,6 +1473,8 @@ async function saveEditedVehicle() {
 function onEditFileChange() {
   var f = document.getElementById('ve-file').files[0];
   var preview = document.getElementById('ve-file-preview');
+  var nameEl = document.getElementById('ve-file-name');
+  if (nameEl) nameEl.textContent = f ? f.name : t('msg_no_file');
   if (!f) { preview.style.display = 'none'; return; }
   if (f.type === 'application/pdf') {
     preview.style.display = 'none';
@@ -1612,6 +1630,8 @@ async function deleteVehicle(vid, plate) {
 // --- Policy Upload + OCR ---
 function onPolicyFileChange() {
   var file = document.getElementById('p-file').files[0];
+  var nameEl = document.getElementById('p-file-name');
+  if (nameEl) nameEl.textContent = file ? file.name : t('msg_no_file');
   if (file) {
     var preview = document.getElementById('p-preview');
     if (file.type === 'application/pdf') {
