@@ -231,7 +231,14 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_vin">車身號碼</b></td><td><input type="text" id="ve-vin" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_orig_reg_date">原發照日期</b></td><td><input type="date" id="ve-reg-date" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_reissue_date">換補照日期</b></td><td><input type="date" id="ve-reissue-date" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_expiry_date">驗車到期日</b></td><td><input type="date" id="ve-expiry" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_expiry_date">驗車到期日</b></td><td><input type="date" id="ve-expiry" oninput="updateInspectionWindow()" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_inspection_window">驗車期間</b><br><span style="font-size:10px;color:#999;font-weight:normal" data-i18n="hint_inspection_window">到期日前 30 天 ~ 後 30 天</span></td><td>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="date" id="ve-window-start" readonly style="background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:4px 8px;flex:1;color:#666">
+              <span style="color:#999">~</span>
+              <input type="date" id="ve-window-end" readonly style="background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:4px 8px;flex:1;color:#666">
+            </div>
+          </td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_fuel">燃料種類</b></td><td>
             <select id="ve-fuel" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%">
               <option value="">--</option><option value="汽油">汽油</option><option value="柴油">柴油</option>
@@ -519,6 +526,8 @@ var I18N = {
     lbl_year_month: '出廠年月',
     lbl_orig_reg_date: '原發照日期',
     lbl_reissue_date: '換補照日期',
+    lbl_inspection_window: '驗車期間',
+    hint_inspection_window: '到期日前 30 天 ~ 後 30 天',
     lbl_color: '顏色',
     lbl_cc: '排氣量 (cc)',
     lbl_vin: '車身號碼',
@@ -679,6 +688,8 @@ var I18N = {
     lbl_year_month: 'Manufacture Year/Month',
     lbl_orig_reg_date: 'Original Reg. Date',
     lbl_reissue_date: 'Re-issue Date',
+    lbl_inspection_window: 'Inspection Window',
+    hint_inspection_window: '30 days before ~ 30 days after due date',
     lbl_color: 'Color',
     lbl_cc: 'Engine cc',
     lbl_vin: 'VIN',
@@ -1427,6 +1438,7 @@ function _showEditForm(vid, veh, title) {
   document.getElementById('ve-reissue-date').value = veh.reissue_date || '';
   document.getElementById('ve-expiry').value = veh.registration_expiry || '';
   document.getElementById('ve-fuel').value = veh.fuel_type || '';
+  updateInspectionWindow();
   document.getElementById('v-edit-form').style.display = 'block';
   document.getElementById('v-edit-form').scrollIntoView({behavior:'smooth'});
 }
@@ -1441,6 +1453,26 @@ async function editVehicleFromList(vid) {
     if (!veh) { showMsg('v-msg','err','找不到車輛'); return; }
     _showEditForm(vid, veh, '編輯車輛 — ' + veh.plate_number + ' [' + (veh.customer_name||'?') + ']');
   } catch(e) { showMsg('v-msg','err','讀取失敗: ' + e.message); }
+}
+
+// 驗車期間 = 驗車到期日 ± 30 天（依監理規則：到期前 30 天可驗、逾期後 30 天內仍可驗）
+function updateInspectionWindow() {
+  var exp = document.getElementById('ve-expiry').value;
+  var ws = document.getElementById('ve-window-start');
+  var we = document.getElementById('ve-window-end');
+  if (!exp) { ws.value = ''; we.value = ''; return; }
+  var d = new Date(exp + 'T00:00:00');
+  if (isNaN(d.getTime())) { ws.value = ''; we.value = ''; return; }
+  function fmt(date) {
+    var y = date.getFullYear();
+    var m = String(date.getMonth() + 1).padStart(2, '0');
+    var dd = String(date.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + dd;
+  }
+  var start = new Date(d.getTime()); start.setDate(start.getDate() - 30);
+  var end = new Date(d.getTime()); end.setDate(end.getDate() + 30);
+  ws.value = fmt(start);
+  we.value = fmt(end);
 }
 
 async function saveEditedVehicle() {
@@ -1705,6 +1737,7 @@ async function ocrRegistrationDirect() {
       if (veh.reissue_date) document.getElementById('ve-reissue-date').value = veh.reissue_date;
       if (veh.registration_expiry) document.getElementById('ve-expiry').value = veh.registration_expiry;
       if (veh.fuel_type) document.getElementById('ve-fuel').value = veh.fuel_type;
+      updateInspectionWindow();
       loadVehicles();
     } else {
       showMsg('ve-msg','err','AI 辨識失敗或配額不足，請手動填寫');

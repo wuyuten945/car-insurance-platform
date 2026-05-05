@@ -525,6 +525,7 @@ async def get_all_vehicles(
             "brand": v.brand,
             "model": v.model,
             "year": v.year,
+            "manufacture_month": v.manufacture_month,
             "color": v.color,
             "vin": v.vin,
             "engine_cc": v.engine_cc,
@@ -533,6 +534,7 @@ async def get_all_vehicles(
             "is_primary": v.is_primary,
             "registration_image_url": v.registration_image_url,
             "registration_date": str(v.registration_date) if v.registration_date else None,
+            "reissue_date": str(v.reissue_date) if v.reissue_date else None,
             "registration_expiry": str(v.registration_expiry) if v.registration_expiry else None,
             "last_inspection_date": str(v.last_inspection_date) if v.last_inspection_date else None,
         })
@@ -700,6 +702,7 @@ async def get_customer_vehicles(
         "brand": v.brand,
         "model": v.model,
         "year": v.year,
+        "manufacture_month": v.manufacture_month,
         "color": v.color,
         "vin": v.vin,
         "engine_cc": v.engine_cc,
@@ -708,6 +711,7 @@ async def get_customer_vehicles(
         "is_primary": v.is_primary,
         "registration_image_url": v.registration_image_url,
         "registration_date": str(v.registration_date) if v.registration_date else None,
+        "reissue_date": str(v.reissue_date) if v.reissue_date else None,
         "registration_expiry": str(v.registration_expiry) if v.registration_expiry else None,
         "last_inspection_date": str(v.last_inspection_date) if v.last_inspection_date else None,
     } for v in result.scalars().all()]
