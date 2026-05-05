@@ -80,27 +80,44 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   </div>
 </div>
 
-<!-- 新增客戶 Modal -->
+<!-- 選擇 / 新增客戶 Modal（整合兩種流程，避免紅色警告打斷）-->
 <div id="create-customer-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:#fff;padding:24px;border-radius:12px;max-width:420px;width:90%">
-    <h3 style="color:#1565C0;margin-bottom:8px" data-i18n="cc_title">新增客戶</h3>
-    <p style="font-size:12px;color:#888;margin-bottom:14px" data-i18n="cc_hint">轉介紹的客戶尚未取得個資也沒關係，先用稱呼建立即可（如「王大哥」「陳小姐」）。電話與 Email 之後再補。</p>
-    <div style="margin-bottom:10px">
-      <label style="display:block;font-size:12px;color:#666;margin-bottom:4px" data-i18n="cc_name">客戶姓名 / 稱呼 <span style="color:#d32f2f">*</span></label>
-      <input type="text" id="cc-name" placeholder="例：王大哥 / 陳小姐 / 林美玲" data-i18n-placeholder="ph_cc_name" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
+  <div style="background:#fff;padding:24px;border-radius:12px;max-width:460px;width:92%">
+    <h3 id="cc-modal-title" style="color:#1565C0;margin-bottom:8px" data-i18n="cc_title">選擇 / 新增客戶</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:14px" data-i18n="cc_hint">先選一位現有客戶，或為轉介紹的新客戶建立稱呼（如「王大哥」「陳小姐」）。電話與 Email 之後再補。</p>
+
+    <!-- A. 選現有客戶 -->
+    <div style="background:#F5F7FA;border-radius:8px;padding:12px;margin-bottom:14px">
+      <label style="display:block;font-size:12px;color:#1565C0;font-weight:bold;margin-bottom:6px" data-i18n="cc_pick_existing">A. 選擇現有客戶</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="cc-pick" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:4px"></select>
+        <button class="btn success" style="padding:6px 14px;font-size:12px;white-space:nowrap" onclick="doPickExistingCustomer()" data-i18n="cc_pick_btn">選此客戶</button>
+      </div>
     </div>
-    <div style="margin-bottom:10px">
-      <label style="display:block;font-size:12px;color:#666;margin-bottom:4px" data-i18n="cc_phone">電話（選填）</label>
-      <input type="tel" id="cc-phone" placeholder="0912-345-678" data-i18n-placeholder="ph_cc_phone" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
+
+    <!-- B. 新增客戶 -->
+    <div style="background:#FFF8E1;border-radius:8px;padding:12px">
+      <label style="display:block;font-size:12px;color:#E65100;font-weight:bold;margin-bottom:6px" data-i18n="cc_create_new_section">B. 或新增客戶</label>
+      <div style="margin-bottom:8px">
+        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px" data-i18n="cc_name">客戶姓名 / 稱呼 <span style="color:#d32f2f">*</span></label>
+        <input type="text" id="cc-name" placeholder="例：王大哥 / 陳小姐 / 林美玲" data-i18n-placeholder="ph_cc_name" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px" data-i18n="cc_phone">電話（選填）</label>
+        <input type="tel" id="cc-phone" placeholder="0912-345-678" data-i18n-placeholder="ph_cc_phone" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px" data-i18n="cc_email">Email（選填）</label>
+        <input type="email" id="cc-email" placeholder="customer@example.com" data-i18n-placeholder="ph_cc_email" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px" onkeydown="if(event.key==='Enter')doCreateCustomer()">
+      </div>
+      <div style="text-align:right">
+        <button class="btn success" onclick="doCreateCustomer()" data-i18n="cc_submit">建立並選取</button>
+      </div>
     </div>
-    <div style="margin-bottom:14px">
-      <label style="display:block;font-size:12px;color:#666;margin-bottom:4px" data-i18n="cc_email">Email（選填）</label>
-      <input type="email" id="cc-email" placeholder="customer@example.com" data-i18n-placeholder="ph_cc_email" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px" onkeydown="if(event.key==='Enter')doCreateCustomer()">
-    </div>
-    <div id="cc-msg" class="msg"></div>
-    <div style="text-align:right">
+
+    <div id="cc-msg" class="msg" style="margin-top:10px"></div>
+    <div style="text-align:right;margin-top:6px">
       <button class="btn" style="background:#999;color:#fff" onclick="closeCreateCustomerModal()" data-i18n="btn_cancel">取消</button>
-      <button class="btn success" onclick="doCreateCustomer()" data-i18n="cc_submit">建立客戶</button>
     </div>
   </div>
 </div>
@@ -576,12 +593,15 @@ var I18N = {
     btn_add_new_vehicle_manual: '+ 新增車輛（手動）',
     btn_add_new_vehicle_ocr: '+ 新增車輛（上傳行照）',
     btn_new_customer: '+ 新增客戶',
-    cc_title: '新增客戶',
-    cc_hint: '轉介紹的客戶尚未取得個資也沒關係，先用稱呼建立即可（如「王大哥」「陳小姐」）。電話與 Email 之後再補。',
+    cc_title: '選擇 / 新增客戶',
+    cc_hint: '先選一位現有客戶，或為轉介紹的新客戶建立稱呼（如「王大哥」「陳小姐」）。電話與 Email 之後再補。',
+    cc_pick_existing: 'A. 選擇現有客戶',
+    cc_pick_btn: '選此客戶',
+    cc_create_new_section: 'B. 或新增客戶',
     cc_name: '客戶姓名 / 稱呼',
     cc_phone: '電話（選填）',
     cc_email: 'Email（選填）',
-    cc_submit: '建立客戶',
+    cc_submit: '建立並選取',
     ph_cc_name: '例：王大哥 / 陳小姐 / 林美玲',
     ph_cc_phone: '0912-345-678',
     ph_cc_email: 'customer@example.com',
@@ -755,12 +775,15 @@ var I18N = {
     btn_add_new_vehicle_manual: '+ Add Vehicle (Manual)',
     btn_add_new_vehicle_ocr: '+ Add Vehicle (Upload Reg.)',
     btn_new_customer: '+ New Customer',
-    cc_title: 'Create Customer',
-    cc_hint: 'No personal info yet (referral / pre-transfer)? Just use a friendly name like "Mr. Wang" or "Ms. Chen". Phone and email can be filled later.',
+    cc_title: 'Pick / New Customer',
+    cc_hint: 'Pick an existing customer, or create a new one — for referrals just use a friendly name like "Mr. Wang" or "Ms. Chen". Phone and email can be filled later.',
+    cc_pick_existing: 'A. Pick existing customer',
+    cc_pick_btn: 'Use this customer',
+    cc_create_new_section: 'B. Or create new',
     cc_name: 'Name / Reference',
     cc_phone: 'Phone (optional)',
     cc_email: 'Email (optional)',
-    cc_submit: 'Create',
+    cc_submit: 'Create & Use',
     ph_cc_name: 'e.g. Mr. Wang / Ms. Chen',
     ph_cc_phone: '0912-345-678',
     ph_cc_email: 'customer@example.com',
@@ -1277,18 +1300,51 @@ var INSPECTION_RULES = {
   '電動汽車': '出廠5年內免驗；5~10年每年驗車1次；超過10年每年驗車2次'
 };
 
-// === 新增客戶 modal ===
-function openCreateCustomerModal() {
+// === 選擇 / 新增客戶 modal ===
+// _pendingPickAction：選/建立成功後要執行的動作（讓「+ 新增車輛」按鈕無縫接上）
+window._pendingPickAction = null;
+
+function openCreateCustomerModal(pendingAction) {
   document.getElementById('cc-name').value = '';
   document.getElementById('cc-phone').value = '';
   document.getElementById('cc-email').value = '';
   var msg = document.getElementById('cc-msg');
   if (msg) { msg.textContent = ''; msg.className = 'msg'; }
+  // 填入「選擇現有客戶」dropdown
+  var src = document.getElementById('cur-customer');
+  var pick = document.getElementById('cc-pick');
+  if (src && pick) {
+    pick.innerHTML = src.innerHTML;  // 直接複製 cur-customer 的 options
+    pick.value = src.value || '';
+  }
+  window._pendingPickAction = (typeof pendingAction === 'function') ? pendingAction : null;
   document.getElementById('create-customer-modal').style.display = 'flex';
-  setTimeout(function(){ document.getElementById('cc-name').focus(); }, 50);
+  setTimeout(function(){
+    var p = document.getElementById('cc-pick');
+    if (p) p.focus();
+  }, 50);
 }
 function closeCreateCustomerModal() {
   document.getElementById('create-customer-modal').style.display = 'none';
+  window._pendingPickAction = null;
+}
+function _afterCustomerChosen(cid) {
+  var sel = document.getElementById('cur-customer');
+  if (sel) sel.value = cid;
+  closeCreateCustomerModal();
+  if (typeof window._pendingPickAction === 'function') {
+    var fn = window._pendingPickAction;
+    window._pendingPickAction = null;
+    setTimeout(fn, 50); // 等 modal 關閉動畫
+  }
+}
+function doPickExistingCustomer() {
+  var cid = document.getElementById('cc-pick').value;
+  if (!cid) {
+    showMsg('cc-msg','err', LANG==='en' ? 'Please select a customer' : '請從下拉選單選一位客戶');
+    return;
+  }
+  _afterCustomerChosen(cid);
 }
 async function doCreateCustomer() {
   var name = document.getElementById('cc-name').value.trim();
@@ -1308,14 +1364,11 @@ async function doCreateCustomer() {
       return;
     }
     var newId = d.data && d.data.id;
-    closeCreateCustomerModal();
     await loadCustomerList();
-    if (newId) {
-      var sel = document.getElementById('cur-customer');
-      sel.value = newId;
-    }
     document.getElementById('customer-bar-msg').textContent =
       (LANG==='en') ? ('Customer "' + name + '" created') : ('客戶「' + name + '」已建立');
+    if (newId) _afterCustomerChosen(newId);
+    else closeCreateCustomerModal();
   } catch(e) {
     showMsg('cc-msg','err', (LANG==='en' ? 'Network error: ' : '網路錯誤：') + e.message);
   }
@@ -1325,9 +1378,8 @@ async function doCreateCustomer() {
 function openManualVehicleForm() {
   var cid = currentCustomerId();
   if (!cid) {
-    var sel = document.getElementById('cur-customer');
-    if (sel) sel.scrollIntoView({behavior:'smooth', block:'center'});
-    showMsg('v-msg','err', t('msg_select_customer_first'));
+    // 沒選客戶 → 直接彈出「選擇 / 新增客戶」modal，選好後接續開表單
+    openCreateCustomerModal(function() { openManualVehicleForm(); });
     return;
   }
   var sel = document.getElementById('cur-customer');
@@ -1396,20 +1448,18 @@ function scrollToAddVehicle() {
   if (preview) preview.style.display = 'none';
   var msg = document.getElementById('v-msg');
   if (msg) { msg.textContent = ''; msg.className = 'msg'; }
+  // 沒選客戶 → 直接彈出「選擇 / 新增客戶」modal，選好後再次觸發本函式
+  var cid = currentCustomerId();
+  if (!cid) {
+    openCreateCustomerModal(function() { scrollToAddVehicle(); });
+    return;
+  }
   // 滾到上傳區
   var typeSelect = document.getElementById('v-type');
   if (typeSelect) typeSelect.scrollIntoView({behavior:'smooth', block:'start'});
-  // 提示客戶 dropdown
-  var cid = currentCustomerId();
-  if (!cid) {
-    showMsg('v-msg', 'err',
-      LANG === 'en' ? 'Please select a customer at the top first'
-                    : '請先在頁面頂部「操作客戶」選擇要新增車輛的對象');
-  } else {
-    showMsg('v-msg', 'ok',
-      LANG === 'en' ? 'Choose vehicle type and upload registration to create new vehicle'
-                    : '請選擇車輛型式並上傳行照即可新增車輛');
-  }
+  showMsg('v-msg', 'ok',
+    LANG === 'en' ? 'Choose vehicle type and upload registration to create new vehicle'
+                  : '請選擇車輛型式並上傳行照即可新增車輛');
 }
 
 // 在編輯某輛車時，按「新增此客戶另一輛車」→ 切回上傳區、客戶 dropdown 預設此車主、清空狀態
