@@ -416,6 +416,43 @@ var LS_TOKEN_KEY = 'admin_token_v1';
 var LS_ROLE_KEY = 'admin_role_v1';
 var LS_NAME_KEY = 'admin_name_v1';
 
+// --- 閒置自動登出（10 分鐘無動作） ---
+var IDLE_TIMEOUT_MS = 10 * 60 * 1000;  // 10 分鐘
+var IDLE_WARN_MS    = 9 * 60 * 1000;   // 第 9 分鐘提醒（剩 1 分鐘）
+var _idleTimer = null;
+var _idleWarnTimer = null;
+function _idleAutoLogout() {
+  if (!ADMIN_TOKEN) return;
+  alert('閒置超過 10 分鐘，已自動登出。');
+  doLogout();
+}
+function _idleWarnSoon() {
+  if (!ADMIN_TOKEN) return;
+  // 用非阻塞 toast 提醒（用 console + 標題列閃爍）
+  document.title = '⚠ 即將自動登出 - ' + (document.title || '管理後台');
+}
+function _resetIdleTimer() {
+  if (!ADMIN_TOKEN) return;
+  if (_idleTimer) clearTimeout(_idleTimer);
+  if (_idleWarnTimer) clearTimeout(_idleWarnTimer);
+  _idleTimer = setTimeout(_idleAutoLogout, IDLE_TIMEOUT_MS);
+  _idleWarnTimer = setTimeout(_idleWarnSoon, IDLE_WARN_MS);
+  // 還原標題（若已被警告過）
+  if (document.title.indexOf('⚠') === 0) {
+    document.title = document.title.replace(/^⚠ 即將自動登出 - /, '');
+  }
+}
+function _bindIdleEvents() {
+  var events = ['mousedown','mousemove','keydown','scroll','touchstart','click'];
+  events.forEach(function(ev) {
+    document.addEventListener(ev, _resetIdleTimer, {passive: true});
+  });
+}
+function _stopIdleTimer() {
+  if (_idleTimer) { clearTimeout(_idleTimer); _idleTimer = null; }
+  if (_idleWarnTimer) { clearTimeout(_idleWarnTimer); _idleWarnTimer = null; }
+}
+
 function _enterAdminUI(token, role, displayName) {
   // 共用：登入成功 / restore 時把 UI 切到「已登入」狀態
   ADMIN_TOKEN = token;
@@ -438,6 +475,9 @@ function _enterAdminUI(token, role, displayName) {
   document.getElementById('customer-bar').style.display = 'block';
   loadCustomerList();
   loadVehicles(); loadPolicies(); loadOverview();
+  // 啟動閒置自動登出計時
+  _bindIdleEvents();
+  _resetIdleTimer();
 }
 
 async function doAdminLogin() {
@@ -513,6 +553,11 @@ function doLogout() {
   document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
   document.getElementById('user-info').textContent = '';
+  // 停掉閒置計時 + 清空快速搜尋
+  _stopIdleTimer();
+  var qsBox = document.getElementById('qs-results'); if (qsBox) qsBox.innerHTML = '';
+  var qsIn = document.getElementById('qs-input'); if (qsIn) qsIn.value = '';
+  document.title = document.title.replace(/^⚠ 即將自動登出 - /, '');
 }
 
 function authHeaders(json) {
