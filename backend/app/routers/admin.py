@@ -96,6 +96,20 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 
 <!-- Admin Panel (hidden until login) -->
 <div id="admin-panel" class="container" style="display:none">
+
+  <!-- ★ 全域快速搜尋 -->
+  <div id="quick-search-bar" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:18px">🔍</span>
+      <input type="text" id="qs-input" placeholder="搜尋：客戶姓名 / 電話 / Email / 車牌 / 保單號 / 理賠號"
+             style="flex:1;border:1px solid #ddd;border-radius:6px;padding:8px 12px;font-size:14px"
+             onkeydown="if(event.key==='Enter')doQuickSearch()">
+      <button onclick="doQuickSearch()" style="background:#1976d2;color:#fff;border:0;border-radius:6px;padding:8px 18px;font-weight:600;cursor:pointer">搜尋</button>
+      <button onclick="clearQuickSearch()" style="background:#f5f5f5;color:#666;border:1px solid #ddd;border-radius:6px;padding:8px 12px;cursor:pointer">清除</button>
+    </div>
+    <div id="qs-results" style="margin-top:10px"></div>
+  </div>
+
   <div class="tabs">
     <button class="tab active" id="tab-btn-vehicles" onclick="switchTab('vehicles')">車輛 / 行照</button>
     <button class="tab" id="tab-btn-policies" onclick="switchTab('policies')">保單管理</button>
@@ -553,6 +567,116 @@ function switchTab(name) {
   if (name === 'agents') loadAgents();
   if (name === 'assign') loadAssignSelects();
   if (name === 'logs') loadLogs();
+}
+
+// --- 全域快速搜尋 ---
+function clearQuickSearch() {
+  document.getElementById('qs-input').value = '';
+  document.getElementById('qs-results').innerHTML = '';
+}
+
+async function doQuickSearch() {
+  var q = document.getElementById('qs-input').value.trim();
+  var box = document.getElementById('qs-results');
+  if (!q) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div style="color:#999;padding:8px">搜尋中…</div>';
+  try {
+    var resp = await fetch('/api/v1/admin-console/search?q=' + encodeURIComponent(q),
+      {headers: {'Authorization':'Bearer ' + ADMIN_TOKEN}});
+    var json = await resp.json();
+    if (!json.success) { box.innerHTML = '<div style="color:#d32f2f;padding:8px">搜尋失敗：' + (json.message||'') + '</div>'; return; }
+    var d = json.data || {};
+    var html = '';
+    var cust = d.customers || [], veh = d.vehicles || [], pol = d.policies || [], clm = d.claims || [];
+    var total = cust.length + veh.length + pol.length + clm.length;
+    if (total === 0) { box.innerHTML = '<div style="color:#666;padding:8px">查無資料</div>'; return; }
+
+    var rowStyle = 'padding:8px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px';
+    var tagStyle = 'display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600';
+
+    if (cust.length) {
+      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>客戶 ('+cust.length+')</b></div>';
+      cust.forEach(function(c) {
+        html += '<div style="'+rowStyle+'" onclick="qsGoCustomer(\\''+c.id+'\\')" >' +
+          '<span style="'+tagStyle+';background:#e3f2fd;color:#1565c0">客戶</span>' +
+          '<b>' + (c.name || '(無名)') + '</b>' +
+          '<span style="color:#666;font-size:13px">' + (c.email || '') + ' ' + (c.phone || '') + '</span>' +
+          '<span style="margin-left:auto;color:#1976d2;font-size:12px">查看 →</span></div>';
+      });
+    }
+    if (veh.length) {
+      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>車輛 ('+veh.length+')</b></div>';
+      veh.forEach(function(v) {
+        html += '<div style="'+rowStyle+'" onclick="qsGoVehicle(\\''+v.id+'\\',\\''+v.user_id+'\\')">' +
+          '<span style="'+tagStyle+';background:#fff3e0;color:#e65100">車輛</span>' +
+          '<b>' + (v.plate_number || '') + '</b>' +
+          '<span style="color:#666;font-size:13px">' + ((v.brand||'') + ' ' + (v.model||'')) + ' ('+(v.year||'')+')</span>' +
+          '<span style="color:#999;font-size:12px">客戶: ' + (v.user_name || '') + '</span>' +
+          '<span style="margin-left:auto;color:#1976d2;font-size:12px">查看 →</span></div>';
+      });
+    }
+    if (pol.length) {
+      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>保單 ('+pol.length+')</b></div>';
+      pol.forEach(function(p) {
+        html += '<div style="'+rowStyle+'" onclick="qsGoPolicy(\\''+p.id+'\\',\\''+p.user_id+'\\')">' +
+          '<span style="'+tagStyle+';background:#e8f5e9;color:#2e7d32">保單</span>' +
+          '<b>' + (p.policy_number || '') + '</b>' +
+          '<span style="color:#666;font-size:13px">' + (p.insurer_name || '') + '</span>' +
+          '<span style="color:#999;font-size:12px">' + (p.start_date||'') + ' ~ ' + (p.end_date||'') + ' / ' + (p.status||'') + '</span>' +
+          '<span style="color:#999;font-size:12px">客戶: ' + (p.user_name || '') + '</span>' +
+          '<span style="margin-left:auto;color:#1976d2;font-size:12px">查看 →</span></div>';
+      });
+    }
+    if (clm.length) {
+      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>理賠 ('+clm.length+')</b></div>';
+      clm.forEach(function(cl) {
+        html += '<div style="'+rowStyle+'" onclick="qsGoClaim(\\''+cl.id+'\\',\\''+cl.user_id+'\\')">' +
+          '<span style="'+tagStyle+';background:#fce4ec;color:#c2185b">理賠</span>' +
+          '<b>' + (cl.claim_number || '') + '</b>' +
+          '<span style="color:#666;font-size:13px">' + (cl.claim_type || '') + '</span>' +
+          '<span style="color:#999;font-size:12px">' + (cl.status || '') + '</span>' +
+          '<span style="color:#999;font-size:12px">客戶: ' + (cl.user_name || '') + '</span>' +
+          '<span style="margin-left:auto;color:#1976d2;font-size:12px">查看 →</span></div>';
+      });
+    }
+    html = '<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:6px;max-height:400px;overflow:auto">' + html + '</div>';
+    box.innerHTML = html;
+    // 加 hover 效果
+    box.querySelectorAll('div[onclick]').forEach(function(el) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('mouseenter', function() { el.style.background = '#f5f5f5'; });
+      el.addEventListener('mouseleave', function() { el.style.background = ''; });
+    });
+  } catch (e) {
+    box.innerHTML = '<div style="color:#d32f2f;padding:8px">搜尋錯誤：' + e + '</div>';
+  }
+}
+
+// 點搜尋結果 → 跳轉到對應 tab 並聚焦該客戶
+function qsGoCustomer(uid) {
+  switchTab('vehicles');  // 預設跳車輛 tab，因為車輛/保單都掛在客戶下
+  if (typeof loadVehiclesForUser === 'function') loadVehiclesForUser(uid);
+}
+function qsGoVehicle(vid, uid) {
+  switchTab('vehicles');
+  if (typeof loadVehiclesForUser === 'function') loadVehiclesForUser(uid);
+  // 嘗試 highlight 該 vehicle row
+  setTimeout(function() {
+    var row = document.querySelector('[data-vehicle-id="' + vid + '"]');
+    if (row) { row.scrollIntoView({block:'center'}); row.style.background = '#fff9c4'; }
+  }, 500);
+}
+function qsGoPolicy(pid, uid) {
+  switchTab('policies');
+  if (typeof loadPoliciesForUser === 'function') loadPoliciesForUser(uid);
+  setTimeout(function() {
+    var row = document.querySelector('[data-policy-id="' + pid + '"]');
+    if (row) { row.scrollIntoView({block:'center'}); row.style.background = '#fff9c4'; }
+  }, 500);
+}
+function qsGoClaim(cid, uid) {
+  switchTab('claims');
+  if (typeof loadClaimsForUser === 'function') loadClaimsForUser(uid);
 }
 
 // --- 車輛型式 → 驗車規定對照 ---

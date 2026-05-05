@@ -288,6 +288,100 @@ async def unassign_customer(
     return APIResponse(message="已取消分配")
 
 
+@router.get("/search")
+async def quick_search(
+    q: str = Query(..., min_length=1, description="關鍵字（姓名/電話/Email/車牌/保單號/理賠號）"),
+    limit: int = Query(20, ge=1, le=100),
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    全域快速搜尋（客戶 / 車輛 / 保單 / 理賠四類），權限會自動套用：
+      super_admin → 全部資料
+      agent → 只搜自己分配的客戶 + 該客戶名下的車輛/保單/理賠
+    """
+    keyword = q.strip()
+    if not keyword:
+        return APIResponse(data={"customers": [], "vehicles": [], "policies": [], "claims": []})
+
+    accessible = await get_accessible_customer_ids(admin, db)
+    like_kw = f"%{keyword}%"
+
+    # 1. 客戶（姓名 / 電話 / Email）
+    cust_q = select(User).where(
+        (User.name.ilike(like_kw)) | (User.phone.ilike(like_kw)) | (User.email.ilike(like_kw))
+    )
+    if accessible is not None:
+        cust_q = cust_q.where(User.id.in_(accessible))
+    cust_rows = (await db.execute(cust_q.limit(limit))).scalars().all()
+
+    # 2. 車輛（車牌 / 廠牌 / 型號）
+    veh_q = select(UserVehicle).options(selectinload(UserVehicle.user)).where(
+        (UserVehicle.plate_number.ilike(like_kw)) |
+        (UserVehicle.brand.ilike(like_kw)) |
+        (UserVehicle.model.ilike(like_kw))
+    )
+    if accessible is not None:
+        veh_q = veh_q.where(UserVehicle.user_id.in_(accessible))
+    veh_rows = (await db.execute(veh_q.limit(limit))).scalars().all()
+
+    # 3. 保單（保單號 / 保險公司）
+    pol_q = select(Policy).options(selectinload(Policy.user)).where(
+        (Policy.policy_number.ilike(like_kw)) | (Policy.insurer_name.ilike(like_kw))
+    )
+    if accessible is not None:
+        pol_q = pol_q.where(Policy.user_id.in_(accessible))
+    pol_rows = (await db.execute(pol_q.limit(limit))).scalars().all()
+
+    # 4. 理賠（案件號）
+    clm_q = select(Claim).options(selectinload(Claim.user)).where(
+        Claim.claim_number.ilike(like_kw)
+    )
+    if accessible is not None:
+        clm_q = clm_q.where(Claim.user_id.in_(accessible))
+    clm_rows = (await db.execute(clm_q.limit(limit))).scalars().all()
+
+    await log_action(db, admin, "search", "global", detail=f"q={keyword}")
+
+    return APIResponse(data={
+        "keyword": keyword,
+        "customers": [
+            {"id": c.id, "name": c.name, "phone": c.phone, "email": c.email}
+            for c in cust_rows
+        ],
+        "vehicles": [
+            {
+                "id": v.id, "plate_number": v.plate_number,
+                "brand": v.brand, "model": v.model, "year": v.year,
+                "user_id": v.user_id,
+                "user_name": v.user.name if v.user else None,
+            }
+            for v in veh_rows
+        ],
+        "policies": [
+            {
+                "id": p.id, "policy_number": p.policy_number,
+                "insurer_name": p.insurer_name, "status": p.status,
+                "start_date": str(p.start_date) if p.start_date else None,
+                "end_date": str(p.end_date) if p.end_date else None,
+                "user_id": p.user_id,
+                "user_name": p.user.name if p.user else None,
+            }
+            for p in pol_rows
+        ],
+        "claims": [
+            {
+                "id": cl.id, "claim_number": cl.claim_number,
+                "status": cl.status, "claim_type": cl.claim_type,
+                "submitted_at": cl.submitted_at.isoformat() if cl.submitted_at else None,
+                "user_id": cl.user_id,
+                "user_name": cl.user.name if cl.user else None,
+            }
+            for cl in clm_rows
+        ],
+    })
+
+
 @router.get("/customers")
 async def list_customers(
     admin: AdminUser = Depends(get_current_admin),
