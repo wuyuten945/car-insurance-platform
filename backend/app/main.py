@@ -28,6 +28,44 @@ logger = logging.getLogger(__name__)
 scheduler = AsyncIOScheduler()
 
 
+async def _ensure_columns():
+    """
+    Idempotent 補欄位（schema migration light）。
+    Base.metadata.create_all 不會 ALTER 現有表，因此新增 model 欄位後，
+    要在此 EXPECTED 列表加一行讓既有部署自動補。
+    SQLite 跟 PostgreSQL 都用 INFORMATION_SCHEMA / PRAGMA 偵測。
+    """
+    from sqlalchemy import text
+    from app.database import engine
+    EXPECTED = [
+        # (table, column, ddl_for_postgres)
+        ("users", "password_hash",   "VARCHAR(255)"),
+        ("users", "is_line_friend",  "BOOLEAN NOT NULL DEFAULT FALSE"),
+        ("users", "line_friend_at",  "TIMESTAMP WITH TIME ZONE"),
+    ]
+    is_sqlite = "sqlite" in str(engine.url)
+    try:
+        async with engine.begin() as conn:
+            for table, col, ddl in EXPECTED:
+                if is_sqlite:
+                    res = await conn.execute(text(f"PRAGMA table_info({table})"))
+                    cols = {row[1] for row in res.fetchall()}
+                    add_ddl = ddl.replace("BOOLEAN NOT NULL DEFAULT FALSE", "BOOLEAN NOT NULL DEFAULT 0") \
+                                 .replace("TIMESTAMP WITH TIME ZONE", "DATETIME")
+                else:
+                    res = await conn.execute(text(
+                        "SELECT column_name FROM information_schema.columns "
+                        "WHERE table_name = :t"
+                    ), {"t": table})
+                    cols = {row[0] for row in res.fetchall()}
+                    add_ddl = ddl
+                if col not in cols:
+                    await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {add_ddl}"))
+                    logger.info(f"[Schema] {table}.{col} 已補加")
+    except Exception as e:
+        logger.warning(f"[Schema] _ensure_columns 失敗: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
