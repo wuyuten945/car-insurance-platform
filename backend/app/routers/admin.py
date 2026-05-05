@@ -787,11 +787,11 @@ function applyAdminLang() {
   // 設 lang 屬性（影響瀏覽器原生元件：date input、file input 按鈕）
   document.documentElement.lang = (LANG === 'en') ? 'en' : 'zh-TW';
   // 觸發 dynamic 內容重新渲染
-  if (typeof loadCustomerList === 'function' && document.getElementById('admin-panel').style.display === 'block') {
-    loadCustomerList();
-  }
-  if (typeof loadOverview === 'function' && document.getElementById('admin-panel').style.display === 'block') {
-    loadOverview();
+  if (document.getElementById('admin-panel').style.display === 'block') {
+    if (typeof loadCustomerList === 'function') loadCustomerList();
+    if (typeof loadOverview === 'function') loadOverview();
+    if (typeof loadVehicles === 'function') loadVehicles();
+    if (typeof loadPolicies === 'function') loadPolicies();
   }
 }
 function toggleAdminLang() {
@@ -1215,8 +1215,8 @@ async function loadVehicles() {
     // Populate vehicle select (existing + new)
     var sel = document.getElementById('v-select');
     var psel = document.getElementById('p-vehicle');
-    var opts = '<option value="__new__">+ 新增車輛</option>';
-    var popts = '<option value="">不指定</option>';
+    var opts = '<option value="__new__">' + t('opt_new_vehicle') + '</option>';
+    var popts = '<option value="">' + t('opt_unspecified') + '</option>';
     for (var i = 0; i < vehicles.length; i++) {
       var v = vehicles[i];
       var owner = v.customer_name ? ' [' + v.customer_name + ']' : '';
