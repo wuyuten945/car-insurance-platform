@@ -275,7 +275,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <h2 data-i18n="h_existing_vehicles">現有車輛</h2>
       <!-- 隱藏的 file input：給 row 內「上傳/更換」按鈕共用 -->
       <input type="file" id="row-upload-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" style="display:none" onchange="onRowFileSelected()">
-      <table><thead><tr><th data-i18n="th_customer">客戶</th><th data-i18n="th_plate">車牌</th><th data-i18n="th_type">型式</th><th data-i18n="th_brand">品牌</th><th data-i18n="th_model">車型</th><th data-i18n="th_year">年份</th><th data-i18n="th_color">顏色</th><th data-i18n="th_cc">排氣量</th><th data-i18n="th_reg_expiry">行照到期</th><th data-i18n="th_reg_image">行照</th><th data-i18n="th_action">操作</th></tr></thead>
+      <table><thead><tr><th data-i18n="th_customer">客戶</th><th data-i18n="th_plate">車牌</th><th data-i18n="th_type">型式</th><th data-i18n="th_brand">品牌</th><th data-i18n="th_model">車型</th><th data-i18n="th_year">年份</th><th data-i18n="th_color">顏色</th><th data-i18n="th_cc">排氣量</th><th data-i18n="th_reg_expiry">行照到期</th><th data-i18n="th_inspection_window">驗車期間</th><th data-i18n="th_reg_image">行照</th><th data-i18n="th_action">操作</th></tr></thead>
       <tbody id="v-table"></tbody></table>
     </div>
   </div>
@@ -542,7 +542,7 @@ var I18N = {
     h_existing_vehicles: '現有車輛',
     th_customer: '客戶', th_plate: '車牌', th_type: '型式', th_brand: '品牌',
     th_model: '車型', th_year: '年份', th_color: '顏色', th_cc: '排氣量',
-    th_reg_expiry: '行照到期', th_reg_image: '行照', th_action: '操作',
+    th_reg_expiry: '行照到期', th_inspection_window: '驗車期間', th_reg_image: '行照', th_action: '操作',
     // Policies tab
     h_upload_policy: '上傳保單（AI 辨識）',
     upload_policy_hint: '上傳保單圖片，系統自動辨識保險公司、保單號碼、起迄日、保障項目等，一鍵建立保單。',
@@ -704,7 +704,7 @@ var I18N = {
     h_existing_vehicles: 'Existing Vehicles',
     th_customer: 'Customer', th_plate: 'Plate', th_type: 'Type', th_brand: 'Make',
     th_model: 'Model', th_year: 'Year', th_color: 'Color', th_cc: 'cc',
-    th_reg_expiry: 'Insp. Due', th_reg_image: 'Reg.', th_action: 'Actions',
+    th_reg_expiry: 'Insp. Due', th_inspection_window: 'Insp. Window', th_reg_image: 'Reg.', th_action: 'Actions',
     h_upload_policy: 'Upload Policy (AI OCR)',
     upload_policy_hint: 'Upload a policy image; system auto-recognizes insurer, policy #, dates, coverage items and creates a policy with one click.',
     lbl_policy_image: 'Policy Image (JPG/PNG)',
@@ -1345,6 +1345,27 @@ async function loadVehicles() {
       var ownerCell = v.customer_name
         ? '<b>' + v.customer_name + '</b>' + (v.customer_phone ? '<br><span style="font-size:11px;color:#666">' + v.customer_phone + '</span>' : '')
         : '<span style="color:#999">-</span>';
+      // 驗車期間 = 到期日 ±30 天 + 顏色標示（過期/即將到期）
+      var windowCell = '<span style="color:#999">-</span>';
+      if (v.registration_expiry) {
+        var expD = new Date(v.registration_expiry + 'T00:00:00');
+        if (!isNaN(expD.getTime())) {
+          var ws = new Date(expD.getTime()); ws.setDate(ws.getDate() - 30);
+          var we = new Date(expD.getTime()); we.setDate(we.getDate() + 30);
+          var nowD = new Date(); nowD.setHours(0,0,0,0);
+          var color = '#666';  // 預設
+          var note = '';
+          if (nowD >= ws && nowD <= we) {
+            color = '#E65100'; note = (LANG==='en'?' (now)':' (驗車中)');
+          } else if (nowD > we) {
+            color = '#D32F2F'; note = (LANG==='en'?' (overdue)':' (已逾期)');
+          } else if ((ws - nowD) / (24*3600*1000) <= 14) {
+            color = '#FF9800'; note = (LANG==='en'?' (soon)':' (即將開始)');
+          }
+          windowCell = '<span style="font-size:11px;color:' + color + '">'
+            + _fmtDate(ws) + '<br>~ ' + _fmtDate(we) + note + '</span>';
+        }
+      }
       rows += '<tr><td>' + ownerCell + '</td>'
         + '<td><b>' + v.plate_number + '</b></td>'
         + '<td><span style="font-size:11px">' + (v.vehicle_type||'-') + '</span></td>'
@@ -1353,7 +1374,8 @@ async function loadVehicles() {
         + '<td>' + (v.year||'-') + '</td>'
         + '<td>' + (v.color||'-') + '</td>'
         + '<td>' + (v.engine_cc ? v.engine_cc+'cc' : '-') + '</td>'
-        + '<td>' + (v.registration_expiry || '<span style="color:#999">未設定</span>') + '</td>'
+        + '<td>' + (v.registration_expiry || '<span style="color:#999">-</span>') + '</td>'
+        + '<td>' + windowCell + '</td>'
         + '<td>' + imgCell + '</td>'
         + '<td style="white-space:nowrap">'
         + '<button class="btn" style="padding:4px 10px;font-size:11px;margin:1px;background:#1565C0" onclick="editVehicleFromList(&quot;' + v.id + '&quot;)">編輯</button>'
