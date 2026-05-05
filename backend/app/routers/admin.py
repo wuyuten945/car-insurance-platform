@@ -133,33 +133,33 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
         <div>
           <label data-i18n="lbl_vehicle_type">車輛型式（監理分類）</label>
           <select id="v-type" onchange="onTypeChange()">
-            <optgroup label="自用車輛">
-              <option value="自用小客車">自用小客車</option>
-              <option value="自用小貨車">自用小貨車</option>
-              <option value="自用小客貨兩用車">自用小客貨兩用車</option>
-              <option value="自用大客車">自用大客車</option>
-              <option value="自用大貨車">自用大貨車</option>
-              <option value="自用特種車">自用特種車</option>
+            <optgroup label="自用車輛" data-i18n-label="vt_group_private">
+              <option value="自用小客車" data-i18n="vt_private_sedan">自用小客車</option>
+              <option value="自用小貨車" data-i18n="vt_private_light_truck">自用小貨車</option>
+              <option value="自用小客貨兩用車" data-i18n="vt_private_combo">自用小客貨兩用車</option>
+              <option value="自用大客車" data-i18n="vt_private_bus">自用大客車</option>
+              <option value="自用大貨車" data-i18n="vt_private_heavy_truck">自用大貨車</option>
+              <option value="自用特種車" data-i18n="vt_private_special">自用特種車</option>
             </optgroup>
-            <optgroup label="營業車輛">
-              <option value="營業小客車（計程車）">營業小客車（計程車）</option>
-              <option value="營業小貨車">營業小貨車</option>
-              <option value="營業大客車">營業大客車</option>
-              <option value="營業大貨車">營業大貨車</option>
-              <option value="營業遊覽車">營業遊覽車</option>
-              <option value="營業特種車">營業特種車</option>
+            <optgroup label="營業車輛" data-i18n-label="vt_group_commercial">
+              <option value="營業小客車（計程車）" data-i18n="vt_taxi">營業小客車（計程車）</option>
+              <option value="營業小貨車" data-i18n="vt_commercial_light_truck">營業小貨車</option>
+              <option value="營業大客車" data-i18n="vt_commercial_bus">營業大客車</option>
+              <option value="營業大貨車" data-i18n="vt_commercial_heavy_truck">營業大貨車</option>
+              <option value="營業遊覽車" data-i18n="vt_tour_bus">營業遊覽車</option>
+              <option value="營業特種車" data-i18n="vt_commercial_special">營業特種車</option>
             </optgroup>
-            <optgroup label="機車">
-              <option value="大型重型機車（550cc以上）">大型重型機車（550cc以上）</option>
-              <option value="普通重型機車（250cc以上）">普通重型機車（250cc以上）</option>
-              <option value="普通重型機車（50~250cc）">普通重型機車（50~250cc）</option>
-              <option value="普通輕型機車">普通輕型機車</option>
-              <option value="小型輕型機車（電動）">小型輕型機車（電動）</option>
+            <optgroup label="機車" data-i18n-label="vt_group_moto">
+              <option value="大型重型機車（550cc以上）" data-i18n="vt_moto_550">大型重型機車（550cc以上）</option>
+              <option value="普通重型機車（250cc以上）" data-i18n="vt_moto_250">普通重型機車（250cc以上）</option>
+              <option value="普通重型機車（50~250cc）" data-i18n="vt_moto_50_250">普通重型機車（50~250cc）</option>
+              <option value="普通輕型機車" data-i18n="vt_moto_light">普通輕型機車</option>
+              <option value="小型輕型機車（電動）" data-i18n="vt_moto_electric">小型輕型機車（電動）</option>
             </optgroup>
-            <optgroup label="其他">
-              <option value="拖車">拖車</option>
-              <option value="曳引車">曳引車</option>
-              <option value="電動汽車">電動汽車</option>
+            <optgroup label="其他" data-i18n-label="vt_group_other">
+              <option value="拖車" data-i18n="vt_trailer">拖車</option>
+              <option value="曳引車" data-i18n="vt_tractor">曳引車</option>
+              <option value="電動汽車" data-i18n="vt_ev">電動汽車</option>
             </optgroup>
           </select>
         </div>
@@ -537,6 +537,29 @@ var I18N = {
     msg_login_failed: '登入失敗',
     msg_conn_failed: '連線失敗',
     msg_no_permission: '您無此功能的權限',
+    msg_load_failed: '載入失敗',
+    // Vehicle types
+    vt_group_private: '自用車輛', vt_group_commercial: '營業車輛', vt_group_moto: '機車', vt_group_other: '其他',
+    vt_private_sedan: '自用小客車', vt_private_light_truck: '自用小貨車',
+    vt_private_combo: '自用小客貨兩用車', vt_private_bus: '自用大客車',
+    vt_private_heavy_truck: '自用大貨車', vt_private_special: '自用特種車',
+    vt_taxi: '營業小客車（計程車）', vt_commercial_light_truck: '營業小貨車',
+    vt_commercial_bus: '營業大客車', vt_commercial_heavy_truck: '營業大貨車',
+    vt_tour_bus: '營業遊覽車', vt_commercial_special: '營業特種車',
+    vt_moto_550: '大型重型機車（550cc以上）', vt_moto_250: '普通重型機車（250cc以上）',
+    vt_moto_50_250: '普通重型機車（50~250cc）', vt_moto_light: '普通輕型機車',
+    vt_moto_electric: '小型輕型機車（電動）',
+    vt_trailer: '拖車', vt_tractor: '曳引車', vt_ev: '電動汽車',
+    // Coverage items placeholders
+    ph_item_name: '項目名稱 (如：強制汽車責任保險)',
+    ph_coverage_limit: '保額', ph_deductible: '自負額', ph_premium: '保費',
+    // Overview labels
+    ov_customer_count: '客戶數', ov_vehicle_count: '車輛數', ov_policy_count: '保單總數',
+    ov_policy_active: '有效保單', ov_policy_expiring: '即將到期', ov_policy_expired: '已到期',
+    ov_total_premium: '累計保費', ov_upcoming_30d: '30 天內到期',
+    ov_days_left: '剩餘天數', ov_days: '天',
+    // Customer dropdown
+    ph_choose: '請選擇', lbl_unnamed: '未命名',
   },
   en: {
     header_title: 'BOPINAN — Admin Console',
@@ -655,6 +678,25 @@ var I18N = {
     msg_login_failed: 'Login failed',
     msg_conn_failed: 'Connection failed',
     msg_no_permission: 'You do not have permission for this feature',
+    msg_load_failed: 'Load failed',
+    vt_group_private: 'Private', vt_group_commercial: 'Commercial', vt_group_moto: 'Motorcycle', vt_group_other: 'Others',
+    vt_private_sedan: 'Private Sedan', vt_private_light_truck: 'Private Light Truck',
+    vt_private_combo: 'Private Combo Vehicle', vt_private_bus: 'Private Bus',
+    vt_private_heavy_truck: 'Private Heavy Truck', vt_private_special: 'Private Special',
+    vt_taxi: 'Taxi', vt_commercial_light_truck: 'Commercial Light Truck',
+    vt_commercial_bus: 'Commercial Bus', vt_commercial_heavy_truck: 'Commercial Heavy Truck',
+    vt_tour_bus: 'Tour Bus', vt_commercial_special: 'Commercial Special',
+    vt_moto_550: 'Heavy Motorcycle (550cc+)', vt_moto_250: 'Standard Motorcycle (250cc+)',
+    vt_moto_50_250: 'Standard Motorcycle (50-250cc)', vt_moto_light: 'Light Motorcycle',
+    vt_moto_electric: 'Electric Light Moto',
+    vt_trailer: 'Trailer', vt_tractor: 'Tractor Truck', vt_ev: 'Electric Vehicle',
+    ph_item_name: 'Item name (e.g., Compulsory liability)',
+    ph_coverage_limit: 'Coverage', ph_deductible: 'Deductible', ph_premium: 'Premium',
+    ov_customer_count: 'Customers', ov_vehicle_count: 'Vehicles', ov_policy_count: 'Total Policies',
+    ov_policy_active: 'Active', ov_policy_expiring: 'Expiring', ov_policy_expired: 'Expired',
+    ov_total_premium: 'Total Premium', ov_upcoming_30d: 'Expiring within 30 days',
+    ov_days_left: 'Days Left', ov_days: 'day(s)',
+    ph_choose: 'Choose', lbl_unnamed: 'Unnamed',
   }
 };
 // 給 JS 動態訊息的 inline bilingual helper（避免每個都加 i18n key）
@@ -669,10 +711,23 @@ function applyAdminLang() {
     var k = el.getAttribute('data-i18n-placeholder');
     el.placeholder = t(k);
   });
+  // optgroup label 屬性
+  document.querySelectorAll('[data-i18n-label]').forEach(function(el) {
+    var k = el.getAttribute('data-i18n-label');
+    el.label = t(k);
+  });
   // 切換按鈕顯示對立語言
   var btn = document.getElementById('lang-toggle-btn');
   if (btn) btn.textContent = (LANG === 'zh') ? 'EN' : '中';
-  document.documentElement.lang = LANG;
+  // 設 lang 屬性（影響瀏覽器原生元件：date input、file input 按鈕）
+  document.documentElement.lang = (LANG === 'en') ? 'en' : 'zh-TW';
+  // 觸發 dynamic 內容重新渲染
+  if (typeof loadCustomerList === 'function' && document.getElementById('admin-panel').style.display === 'block') {
+    loadCustomerList();
+  }
+  if (typeof loadOverview === 'function' && document.getElementById('admin-panel').style.display === 'block') {
+    loadOverview();
+  }
 }
 function toggleAdminLang() {
   LANG = (LANG === 'zh') ? 'en' : 'zh';
@@ -860,16 +915,18 @@ async function loadCustomerList() {
     var customers = d.data || [];
     var sel = document.getElementById('cur-customer');
     var prev = sel.value;
-    var html = '<option value="">— 請選擇 —</option>';
+    var html = '<option value="">— ' + t('ph_choose') + ' —</option>';
     for (var i = 0; i < customers.length; i++) {
       var c = customers[i];
-      var label = (c.name||'(未命名)') + (c.phone ? ' · '+c.phone : '') + (c.email ? ' · '+c.email : '');
+      var label = (c.name || ('(' + t('lbl_unnamed') + ')')) + (c.phone ? ' · '+c.phone : '') + (c.email ? ' · '+c.email : '');
       html += '<option value="'+c.id+'">'+label+'</option>';
     }
     sel.innerHTML = html;
     if (prev) sel.value = prev;
-    document.getElementById('customer-bar-msg').textContent = '共 '+customers.length+' 位客戶';
-  } catch(e) { document.getElementById('customer-bar-msg').textContent = '載入失敗'; }
+    document.getElementById('customer-bar-msg').textContent = (LANG === 'en')
+      ? (customers.length + ' customer(s)')
+      : ('共 ' + customers.length + ' 位客戶');
+  } catch(e) { document.getElementById('customer-bar-msg').textContent = t('msg_load_failed'); }
 }
 
 // --- Tabs ---
@@ -1760,10 +1817,10 @@ function addItemRow() {
   div.className = 'item-row';
   div.id = 'item-'+itemCount;
   div.innerHTML =
-    '<input placeholder="項目名稱 (如：強制汽車責任保險)" data-field="item_name">' +
-    '<input type="number" placeholder="保額" data-field="coverage_limit" style="max-width:120px">' +
-    '<input type="number" placeholder="自負額" data-field="deductible" style="max-width:100px">' +
-    '<input type="number" placeholder="保費" data-field="premium" style="max-width:100px">' +
+    '<input placeholder="' + t('ph_item_name') + '" data-field="item_name">' +
+    '<input type="number" placeholder="' + t('ph_coverage_limit') + '" data-field="coverage_limit" style="max-width:120px">' +
+    '<input type="number" placeholder="' + t('ph_deductible') + '" data-field="deductible" style="max-width:100px">' +
+    '<input type="number" placeholder="' + t('ph_premium') + '" data-field="premium" style="max-width:100px">' +
     '<button class="btn danger" onclick="this.parentElement.remove()">X</button>';
   document.getElementById('p-items').appendChild(div);
 }
@@ -2134,28 +2191,28 @@ async function loadOverview() {
       var or = await fetch(CONSOLE_API+'/all/overview', {headers:consoleHeaders()}).then(function(r){return r.json();});
       var o = or.data || {};
       var html = '<table style="margin-bottom:14px">' +
-        '<tr><td style="width:200px"><b>客戶數</b></td><td><span style="font-size:18px;color:#1565C0">'+(o.customer_count||0)+'</span></td></tr>' +
-        '<tr><td><b>車輛數</b></td><td><span style="font-size:18px;color:#1565C0">'+(o.vehicle_count||0)+'</span></td></tr>' +
-        '<tr><td><b>保單總數</b></td><td><span style="font-size:18px;color:#1565C0">'+(o.policy_count||0)+'</span></td></tr>' +
-        '<tr><td><b>有效保單</b></td><td><span style="color:#2E7D32">'+(o.policy_active||0)+'</span></td></tr>' +
-        '<tr><td><b>即將到期</b></td><td><span style="color:#FF9800">'+(o.policy_expiring||0)+'</span></td></tr>' +
-        '<tr><td><b>已到期</b></td><td><span style="color:#999">'+(o.policy_expired||0)+'</span></td></tr>' +
-        '<tr><td><b>累計保費</b></td><td>$'+Number(o.total_premium||0).toLocaleString()+'</td></tr>' +
+        '<tr><td style="width:200px"><b>' + t('ov_customer_count') + '</b></td><td><span style="font-size:18px;color:#1565C0">'+(o.customer_count||0)+'</span></td></tr>' +
+        '<tr><td><b>' + t('ov_vehicle_count') + '</b></td><td><span style="font-size:18px;color:#1565C0">'+(o.vehicle_count||0)+'</span></td></tr>' +
+        '<tr><td><b>' + t('ov_policy_count') + '</b></td><td><span style="font-size:18px;color:#1565C0">'+(o.policy_count||0)+'</span></td></tr>' +
+        '<tr><td><b>' + t('ov_policy_active') + '</b></td><td><span style="color:#2E7D32">'+(o.policy_active||0)+'</span></td></tr>' +
+        '<tr><td><b>' + t('ov_policy_expiring') + '</b></td><td><span style="color:#FF9800">'+(o.policy_expiring||0)+'</span></td></tr>' +
+        '<tr><td><b>' + t('ov_policy_expired') + '</b></td><td><span style="color:#999">'+(o.policy_expired||0)+'</span></td></tr>' +
+        '<tr><td><b>' + t('ov_total_premium') + '</b></td><td>$'+Number(o.total_premium||0).toLocaleString()+'</td></tr>' +
         '</table>';
       var upcoming = o.upcoming_30d || [];
       if (upcoming.length > 0) {
-        html += '<h3 style="margin-top:14px;color:#FF9800">30 天內到期 ('+upcoming.length+' 張)</h3>';
-        html += '<table><thead><tr><th>保單號碼</th><th>保險公司</th><th>到期日</th><th>剩餘天數</th></tr></thead><tbody>';
+        html += '<h3 style="margin-top:14px;color:#FF9800">' + t('ov_upcoming_30d') + ' ('+upcoming.length+')</h3>';
+        html += '<table><thead><tr><th>' + t('th_policy_number') + '</th><th>' + t('th_insurer') + '</th><th>' + t('th_end') + '</th><th>' + t('ov_days_left') + '</th></tr></thead><tbody>';
         for (var i = 0; i < upcoming.length; i++) {
           var u = upcoming[i];
           var color = u.days_left <= 7 ? '#D32F2F' : u.days_left <= 14 ? '#FF9800' : '#666';
           html += '<tr><td style="font-family:monospace;font-size:11px">'+u.policy_number+'</td><td>'+u.insurer+'</td><td>'+u.end_date+'</td>';
-          html += '<td><span style="color:'+color+';font-weight:bold">'+u.days_left+' 天</span></td></tr>';
+          html += '<td><span style="color:'+color+';font-weight:bold">'+u.days_left+' ' + t('ov_days') + '</span></td></tr>';
         }
         html += '</tbody></table>';
       }
       document.getElementById('overview-content').innerHTML = html;
-    } catch(e) { document.getElementById('overview-content').innerHTML = '<p style="color:#999">載入失敗: '+e.message+'</p>'; }
+    } catch(e) { document.getElementById('overview-content').innerHTML = '<p style="color:#999">' + t('msg_load_failed') + ': '+e.message+'</p>'; }
   } else {
     // 業務員：顯示自己的客戶列表
     try {
