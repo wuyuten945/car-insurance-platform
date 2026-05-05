@@ -62,6 +62,84 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 .pw-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:16px;padding:4px}
 .pw-toggle:hover{color:#333}
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═════════ 手機 / 平板響應式（≤ 768px） ═════════ */
+@media (max-width: 768px) {
+  body { font-size: 14px; }
+
+  /* Header */
+  .header { padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .header h1 { font-size: 16px; flex: 1 1 100%; }
+  .header > * { font-size: 12px; }
+  .header button { font-size: 11px !important; padding: 5px 10px !important; margin-left: 0 !important; }
+
+  /* Container */
+  .container { padding: 10px; max-width: 100%; }
+
+  /* Card */
+  .card { padding: 14px; border-radius: 10px; margin-bottom: 12px; }
+  .card h2 { font-size: 15px; padding-bottom: 6px; margin-bottom: 10px; }
+
+  /* Tabs：橫向捲動 */
+  .tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; gap: 4px; }
+  .tab { padding: 8px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; border-radius: 6px 6px 0 0; }
+
+  /* Row stack（左右並排的表單欄改成上下） */
+  .row { flex-direction: column; gap: 8px; }
+
+  /* 按鈕 */
+  .btn { padding: 9px 16px; font-size: 13px; margin-top: 10px; }
+
+  /* 表格：橫向捲動避免擠壓 */
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+  th, td { padding: 6px 8px; font-size: 12px; }
+
+  /* Modal 外層 padding 縮小、內層 card 改全寬 */
+  #v-upload-modal, #v-edit-form, #create-customer-modal, #change-pw-modal {
+    padding: 10px !important;
+  }
+  #v-upload-modal > div, #v-edit-form > div, #create-customer-modal > div, #change-pw-modal > div {
+    padding: 16px 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 12px !important;
+  }
+  #v-edit-form table, #v-upload-modal table { font-size: 12px; }
+  #v-edit-form input, #v-edit-form select, #v-upload-modal input, #v-upload-modal select { font-size: 13px; }
+
+  /* 操作客戶 bar 改直向堆疊 */
+  #customer-bar { display: flex; flex-direction: column; align-items: stretch !important; gap: 6px; padding: 8px !important; }
+  #customer-bar > * { margin-left: 0 !important; }
+  #cur-customer { min-width: 0 !important; width: 100% !important; }
+
+  /* 全域快速搜尋 */
+  #quick-search-bar > div:first-child { flex-wrap: wrap; gap: 6px; }
+  #quick-search-bar input { min-width: 0; flex: 1 1 100%; }
+
+  /* Login 畫面 */
+  #login-section { padding: 30px 14px; }
+  #login-section input { max-width: 100%; }
+
+  /* 圖片預覽縮小 */
+  img.preview { max-width: 140px; max-height: 100px; }
+
+  /* item-row（理賠/條款項目編輯）改直向 */
+  .item-row { flex-direction: column; align-items: stretch; }
+  .item-row .btn { margin-top: 6px; }
+
+  /* 編輯表單按鈕列在小螢幕也能換行 */
+  #v-edit-form button { margin-left: 0 !important; }
+}
+
+/* 非常小的手機（≤ 380px）：再壓縮一點 */
+@media (max-width: 380px) {
+  .header h1 { font-size: 15px; }
+  .card h2 { font-size: 14px; }
+  .tab { padding: 7px 10px; font-size: 11px; }
+  .btn { padding: 8px 12px; font-size: 12px; }
+  th, td { font-size: 11px; padding: 5px 6px; }
+  .container { padding: 8px; }
+}
 </style>
 </head>
 <body>
