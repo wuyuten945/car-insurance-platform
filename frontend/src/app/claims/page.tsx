@@ -5,6 +5,7 @@ import { ClipboardList, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { CLAIM_STAGES } from '@/lib/constants';
+import { useT } from '@/lib/i18n/LanguageProvider';
 
 interface Claim {
   id: string;
@@ -15,14 +16,6 @@ interface Claim {
   amount_claimed: number;
   amount_approved: number | null;
 }
-
-const CLAIM_TYPE_MAP: Record<string, string> = {
-  collision: '碰撞理賠',
-  theft: '竊盜理賠',
-  liability: '責任險理賠',
-  comprehensive: '綜合理賠',
-  other: '其他',
-};
 
 const STATUS_COLOR: Record<string, string> = {
   submitted: 'bg-blue-100 text-blue-700',
@@ -36,6 +29,14 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function ClaimsPage() {
+  const { t, lang } = useT();
+  const CLAIM_TYPE_MAP: Record<string, string> = {
+    collision: t('claims.type.collision'),
+    theft: t('claims.type.theft'),
+    liability: t('claims.type.liability'),
+    comprehensive: t('claims.type.comprehensive'),
+    other: t('claims.type.other'),
+  };
   const { data: claims, isLoading } = useQuery({
     queryKey: ['claims'],
     queryFn: async () => {
@@ -57,12 +58,12 @@ export default function ClaimsPage() {
   return (
     <div className="px-4 py-5 space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">理賠紀錄</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t('claims.title')}</h1>
         <Link
           href="/claims/new"
           className="flex items-center gap-1 rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm"
         >
-          <Plus className="h-4 w-4" /> 新增理賠
+          <Plus className="h-4 w-4" /> {t('claims.btnNew')}
         </Link>
       </div>
 
@@ -73,12 +74,12 @@ export default function ClaimsPage() {
       ) : !claims || claims.length === 0 ? (
         <div className="flex flex-col items-center py-20">
           <ClipboardList className="h-16 w-16 text-gray-200 mb-3" />
-          <p className="text-sm text-gray-400">尚無理賠紀錄</p>
+          <p className="text-sm text-gray-400">{t('claims.empty')}</p>
           <Link
             href="/claims/new"
             className="mt-4 rounded-xl bg-primary-500 px-6 py-2.5 text-sm font-semibold text-white"
           >
-            申請理賠
+            {t('claims.btnApply')}
           </Link>
         </div>
       ) : (
@@ -103,7 +104,7 @@ export default function ClaimsPage() {
                     </div>
                     <p className="text-xs text-gray-400 mt-1">{claim.claim_number}</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      申請日期：{new Date(claim.created_at).toLocaleDateString('zh-TW')}
+                      {t('claims.appliedAt')}{new Date(claim.created_at).toLocaleDateString(lang === 'zh' ? 'zh-TW' : 'en-US')}
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
@@ -113,7 +114,7 @@ export default function ClaimsPage() {
                       </p>
                       {claim.amount_approved !== null && claim.amount_approved !== undefined && (
                         <p className="text-[11px] text-green-600">
-                          核準 ${claim.amount_approved.toLocaleString()}
+                          {t('claims.approvedLabel')}${claim.amount_approved.toLocaleString()}
                         </p>
                       )}
                     </div>

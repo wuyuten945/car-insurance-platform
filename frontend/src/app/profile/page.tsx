@@ -30,12 +30,13 @@ type ProfileForm = {
   emergency_contact_relation: string;
 };
 
-const profileSchema = z.object({
-  name: z.string().min(1, '請輸入姓名'),
-  email: z.string().email('Email 格式錯誤').or(z.literal('')),
-  phone: z.string().regex(/^09\d{8}$/, '手機格式：09 開頭 10 碼').or(z.literal('')),
+// Schema 用的錯誤訊息會在元件內透過 t() 動態產出 — 這裡先用 zh 為預設
+const makeProfileSchema = (t: (k: string) => string) => z.object({
+  name: z.string().min(1, t('profile.errors.nameRequired')),
+  email: z.string().email(t('profile.errors.invalidEmail')).or(z.literal('')),
+  phone: z.string().regex(/^09\d{8}$/, t('profile.errors.invalidPhone')).or(z.literal('')),
   birth_date: z.string().or(z.literal('')),
-  id_number: z.string().regex(/^[A-Z][0-9]{9}$/i, '身分證：1 英文字母 + 9 數字').or(z.literal('')),
+  id_number: z.string().regex(/^[A-Z][0-9]{9}$/i, t('profile.errors.invalidIdNumber')).or(z.literal('')),
   address: z.string().or(z.literal('')),
   registered_address: z.string().or(z.literal('')),
   license_number: z.string().or(z.literal('')),
@@ -65,6 +66,7 @@ export default function ProfilePage() {
     if (!user) loadUser();
   }, [isAuthenticated, user, loadUser, router]);
 
+  const profileSchema = makeProfileSchema(t);
   const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -162,18 +164,18 @@ export default function ProfilePage() {
 
       {/* Profile Edit Form */}
       <section className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
-        <h2 className="text-base font-bold text-gray-900 mb-4">個人資料</h2>
+        <h2 className="text-base font-bold text-gray-900 mb-4">{t('profile.section.title')}</h2>
 
         {mutation.isSuccess && (
           <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-600">
-            資料已儲存成功
+            {t('profile.savedSuccess')}
           </div>
         )}
         {mutation.isError && (
           <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
             {(() => {
               const e = mutation.error as { response?: { data?: { message?: string; detail?: string } } };
-              return e?.response?.data?.message || e?.response?.data?.detail || '儲存失敗，請稍後再試';
+              return e?.response?.data?.message || e?.response?.data?.detail || t('profile.saveFailed');
             })()}
           </div>
         )}
@@ -181,13 +183,13 @@ export default function ProfilePage() {
         <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-5">
           {/* —— 基本資料 —— */}
           <div>
-            <h3 className={sectionTitle}>基本資料</h3>
+            <h3 className={sectionTitle}>{t('profile.section.basic')}</h3>
             <div className="space-y-3">
               <div>
-                <label className={labelClass}>姓名 <span className="text-red-500">*</span></label>
+                <label className={labelClass}>{t('profile.field.name')} <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input type="text" {...register('name')} className={inputClass} placeholder="王小明" />
+                  <input type="text" {...register('name')} className={inputClass} placeholder={t('profile.field.namePlaceholder')} />
                 </div>
                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
               </div>
@@ -202,7 +204,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className={labelClass}>手機號碼</label>
+                <label className={labelClass}>{t('profile.field.phone')}</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input type="tel" inputMode="numeric" {...register('phone')} className={inputClass} placeholder="0912345678" />
@@ -211,7 +213,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className={labelClass}>出生年月日</label>
+                <label className={labelClass}>{t('profile.field.birthDate')}</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input type="date" {...register('birth_date')} className={inputClass} />
@@ -220,9 +222,9 @@ export default function ProfilePage() {
 
               <div>
                 <label className={labelClass}>
-                  身分證字號
+                  {t('profile.field.idNumber')}
                   {user?.has_id_number && (
-                    <span className="ml-2 text-xs text-green-600 font-normal">✓ 已填寫（雜湊加密儲存）</span>
+                    <span className="ml-2 text-xs text-green-600 font-normal">{t('profile.field.idNumberFilled')}</span>
                   )}
                 </label>
                 <div className="relative">
@@ -232,32 +234,32 @@ export default function ProfilePage() {
                     maxLength={10}
                     {...register('id_number')}
                     className={inputClass}
-                    placeholder={user?.has_id_number ? '已儲存（如需修改請輸入新值）' : 'A123456789'}
+                    placeholder={user?.has_id_number ? t('profile.field.idNumberPlaceholderSaved') : t('profile.field.idNumberPlaceholder')}
                     style={{ textTransform: 'uppercase' }}
                   />
                 </div>
                 {errors.id_number && <p className="text-xs text-red-500 mt-1">{errors.id_number.message}</p>}
-                <p className="text-xs text-gray-400 mt-1">系統會以 SHA-256 雜湊加密，不保留明文</p>
+                <p className="text-xs text-gray-400 mt-1">{t('profile.field.idNumberHint')}</p>
               </div>
             </div>
           </div>
 
           {/* —— 地址 —— */}
           <div>
-            <h3 className={sectionTitle}>地址</h3>
+            <h3 className={sectionTitle}>{t('profile.section.address')}</h3>
             <div className="space-y-3">
               <div>
-                <label className={labelClass}>居住地址</label>
+                <label className={labelClass}>{t('profile.field.address')}</label>
                 <div className="relative">
                   <Home className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input type="text" {...register('address')} className={inputClass} placeholder="台北市中正區..." />
+                  <input type="text" {...register('address')} className={inputClass} placeholder={t('profile.field.addressPlaceholder')} />
                 </div>
               </div>
               <div>
-                <label className={labelClass}>戶籍地址</label>
+                <label className={labelClass}>{t('profile.field.registeredAddress')}</label>
                 <div className="relative">
                   <Home className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input type="text" {...register('registered_address')} className={inputClass} placeholder="與居住地相同可留空" />
+                  <input type="text" {...register('registered_address')} className={inputClass} placeholder={t('profile.field.registeredAddressPlaceholder')} />
                 </div>
               </div>
             </div>
@@ -265,17 +267,17 @@ export default function ProfilePage() {
 
           {/* —— 駕照資訊 —— */}
           <div>
-            <h3 className={sectionTitle}>駕照資訊</h3>
+            <h3 className={sectionTitle}>{t('profile.section.license')}</h3>
             <div className="space-y-3">
               <div>
-                <label className={labelClass}>駕照號碼</label>
+                <label className={labelClass}>{t('profile.field.licenseNumber')}</label>
                 <div className="relative">
                   <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input type="text" {...register('license_number')} className={inputClass} />
                 </div>
               </div>
               <div>
-                <label className={labelClass}>駕照效期</label>
+                <label className={labelClass}>{t('profile.field.licenseExpiry')}</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input type="date" {...register('license_expiry')} className={inputClass} />
@@ -286,31 +288,31 @@ export default function ProfilePage() {
 
           {/* —— 緊急聯絡人 —— */}
           <div>
-            <h3 className={sectionTitle}>緊急聯絡人</h3>
+            <h3 className={sectionTitle}>{t('profile.section.emergency')}</h3>
             <div className="space-y-3">
               <div>
-                <label className={labelClass}>姓名</label>
+                <label className={labelClass}>{t('profile.field.name')}</label>
                 <div className="relative">
                   <Heart className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input type="text" {...register('emergency_contact_name')} className={inputClass} />
                 </div>
               </div>
               <div>
-                <label className={labelClass}>關係</label>
+                <label className={labelClass}>{t('profile.field.relation')}</label>
                 <select {...register('emergency_contact_relation')} className={inputClassNoIcon}>
-                  <option value="">請選擇</option>
-                  <option value="配偶">配偶</option>
-                  <option value="父母">父母</option>
-                  <option value="子女">子女</option>
-                  <option value="兄弟姊妹">兄弟姊妹</option>
-                  <option value="親戚">親戚</option>
-                  <option value="朋友">朋友</option>
-                  <option value="同事">同事</option>
-                  <option value="其他">其他</option>
+                  <option value="">{t('profile.relation.choose')}</option>
+                  <option value="配偶">{t('profile.relation.spouse')}</option>
+                  <option value="父母">{t('profile.relation.parent')}</option>
+                  <option value="子女">{t('profile.relation.child')}</option>
+                  <option value="兄弟姊妹">{t('profile.relation.sibling')}</option>
+                  <option value="親戚">{t('profile.relation.relative')}</option>
+                  <option value="朋友">{t('profile.relation.friend')}</option>
+                  <option value="同事">{t('profile.relation.colleague')}</option>
+                  <option value="其他">{t('profile.relation.other')}</option>
                 </select>
               </div>
               <div>
-                <label className={labelClass}>聯絡電話</label>
+                <label className={labelClass}>{t('profile.field.contactPhone')}</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input type="tel" inputMode="numeric" {...register('emergency_contact_phone')} className={inputClass} />
@@ -325,7 +327,7 @@ export default function ProfilePage() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 py-3 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:opacity-50"
           >
             {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            儲存變更
+            {t('profile.saveChanges')}
           </button>
         </form>
       </section>
@@ -390,9 +392,9 @@ function LineBindingSection() {
 
       {status.bound && (
         <div className="flex items-center justify-between mb-3 text-sm">
-          <span className="text-gray-700">已加 OA 好友：</span>
+          <span className="text-gray-700">{t('profile.line.friendStatus')}</span>
           <span className={status.is_friend ? 'text-green-600 font-semibold' : 'text-amber-600'}>
-            {status.is_friend ? '✓ 已加好友（可收推播）' : '✗ 尚未加好友'}
+            {status.is_friend ? t('profile.line.isFriend') : t('profile.line.notFriend')}
           </span>
         </div>
       )}
@@ -410,7 +412,7 @@ function LineBindingSection() {
           </label>
           {status.official_id && !status.is_friend && (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
-              請至 LINE 加好友 <strong>{status.official_id}</strong>，加好友後即可收到 BOPINAN 推播通知。
+              {t('profile.line.addFriendFull', { id: status.official_id })}
             </p>
           )}
           <button

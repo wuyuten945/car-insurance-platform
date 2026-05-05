@@ -9,19 +9,20 @@ import { z } from 'zod';
 import { ArrowLeft, Loader2, Upload, CheckCircle } from 'lucide-react';
 import api from '@/lib/api-client';
 import { ACCIDENT_TYPES, MY_SITUATIONS } from '@/lib/constants';
+import { useT } from '@/lib/i18n/LanguageProvider';
 
-const claimSchema = z.object({
-  policy_id: z.string().min(1, '請選擇保單'),
-  claim_type: z.string().min(1, '請選擇理賠類型'),
-  accident_type: z.string().min(1, '請選擇事故類型'),
-  my_situation: z.string().min(1, '請選擇行車狀態'),
-  occurred_at: z.string().min(1, '請填寫事故時間'),
-  location: z.string().min(1, '請填寫事故地點'),
-  description: z.string().min(10, '請詳細描述事故情況（至少10字）'),
-  amount_claimed: z.number().min(1, '請填寫預估損失金額'),
+const makeClaimSchema = (t: (k: string) => string) => z.object({
+  policy_id: z.string().min(1, t('claimForm.err.policyRequired')),
+  claim_type: z.string().min(1, t('claimForm.err.typeRequired')),
+  accident_type: z.string().min(1, t('claimForm.err.accidentRequired')),
+  my_situation: z.string().min(1, t('claimForm.err.situationRequired')),
+  occurred_at: z.string().min(1, t('claimForm.err.occurredRequired')),
+  location: z.string().min(1, t('claimForm.err.locationRequired')),
+  description: z.string().min(10, t('claimForm.err.descRequired')),
+  amount_claimed: z.number().min(1, t('claimForm.err.amountRequired')),
 });
 
-type ClaimForm = z.infer<typeof claimSchema>;
+type ClaimForm = z.infer<ReturnType<typeof makeClaimSchema>>;
 
 interface Policy {
   id: string;
@@ -31,16 +32,17 @@ interface Policy {
   status: string;
 }
 
-const CLAIM_TYPES = [
-  { value: 'collision', label: '碰撞理賠' },
-  { value: 'theft', label: '竊盜理賠' },
-  { value: 'liability', label: '責任險理賠' },
-  { value: 'comprehensive', label: '綜合理賠' },
-  { value: 'other', label: '其他' },
-];
-
 export default function NewClaimPage() {
   const router = useRouter();
+  const { t } = useT();
+  const claimSchema = makeClaimSchema(t);
+  const CLAIM_TYPES = [
+    { value: 'collision', label: t('claims.type.collision') },
+    { value: 'theft', label: t('claims.type.theft') },
+    { value: 'liability', label: t('claims.type.liability') },
+    { value: 'comprehensive', label: t('claims.type.comprehensive') },
+    { value: 'other', label: t('claims.type.other') },
+  ];
   const [submitted, setSubmitted] = useState(false);
 
   const { data: policies } = useQuery({
@@ -71,15 +73,15 @@ export default function NewClaimPage() {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-20">
         <CheckCircle className="h-20 w-20 text-green-500 mb-4" />
-        <h1 className="text-xl font-bold text-gray-900">理賠申請已送出</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t('claimForm.submitted.title')}</h1>
         <p className="text-sm text-gray-500 mt-2 text-center">
-          我們將盡快為您處理，您可以在理賠紀錄中查看進度
+          {t('claimForm.submitted.subtitle')}
         </p>
         <button
           onClick={() => router.push('/claims')}
           className="mt-6 rounded-xl bg-primary-500 px-8 py-3 text-sm font-semibold text-white"
         >
-          查看理賠紀錄
+          {t('claimForm.submitted.btn')}
         </button>
       </div>
     );
@@ -92,24 +94,23 @@ export default function NewClaimPage() {
   return (
     <div className="px-4 py-5">
       <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500 mb-4">
-        <ArrowLeft className="h-4 w-4" /> 返回
+        <ArrowLeft className="h-4 w-4" /> {t('claimForm.back')}
       </button>
 
-      <h1 className="text-xl font-bold text-gray-900 mb-1">申請理賠</h1>
-      <p className="text-sm text-gray-500 mb-6">請填寫事故及理賠資訊</p>
+      <h1 className="text-xl font-bold text-gray-900 mb-1">{t('claimForm.title')}</h1>
+      <p className="text-sm text-gray-500 mb-6">{t('claimForm.subtitle')}</p>
 
       {mutation.isError && (
         <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
-          提交失敗，請稍後再試
+          {t('claimForm.submitFailed')}
         </div>
       )}
 
       <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-5">
-        {/* Policy Selection */}
         <div>
-          <label className={labelClass}>選擇保單</label>
+          <label className={labelClass}>{t('claimForm.lbl.policy')}</label>
           <select {...register('policy_id')} className={inputClass}>
-            <option value="">請選擇保單</option>
+            <option value="">{t('claimForm.opt.policyChoose')}</option>
             {policies?.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.vehicle_plate ? `[${p.vehicle_plate}] ` : ''}{p.insurer_name} ({p.policy_number})
@@ -119,35 +120,32 @@ export default function NewClaimPage() {
           {errors.policy_id && <p className={errorClass}>{errors.policy_id.message}</p>}
         </div>
 
-        {/* Claim Type */}
         <div>
-          <label className={labelClass}>理賠類型</label>
+          <label className={labelClass}>{t('claimForm.lbl.claimType')}</label>
           <select {...register('claim_type')} className={inputClass}>
-            <option value="">請選擇類型</option>
-            {CLAIM_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
+            <option value="">{t('claimForm.opt.typeChoose')}</option>
+            {CLAIM_TYPES.map((ct) => (
+              <option key={ct.value} value={ct.value}>{ct.label}</option>
             ))}
           </select>
           {errors.claim_type && <p className={errorClass}>{errors.claim_type.message}</p>}
         </div>
 
-        {/* Accident Type */}
         <div>
-          <label className={labelClass}>事故類型</label>
+          <label className={labelClass}>{t('claimForm.lbl.accidentType')}</label>
           <select {...register('accident_type')} className={inputClass}>
-            <option value="">請選擇事故類型</option>
-            {ACCIDENT_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
+            <option value="">{t('claimForm.opt.accidentChoose')}</option>
+            {ACCIDENT_TYPES.map((ac) => (
+              <option key={ac.value} value={ac.value}>{ac.label}</option>
             ))}
           </select>
           {errors.accident_type && <p className={errorClass}>{errors.accident_type.message}</p>}
         </div>
 
-        {/* My Situation */}
         <div>
-          <label className={labelClass}>行車狀態</label>
+          <label className={labelClass}>{t('claimForm.lbl.situation')}</label>
           <select {...register('my_situation')} className={inputClass}>
-            <option value="">請選擇您的行車狀態</option>
+            <option value="">{t('claimForm.opt.situationChoose')}</option>
             {MY_SITUATIONS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
@@ -155,40 +153,36 @@ export default function NewClaimPage() {
           {errors.my_situation && <p className={errorClass}>{errors.my_situation.message}</p>}
         </div>
 
-        {/* Date */}
         <div>
-          <label className={labelClass}>事故時間</label>
+          <label className={labelClass}>{t('claimForm.lbl.occurredAt')}</label>
           <input type="datetime-local" {...register('occurred_at')} className={inputClass} />
           {errors.occurred_at && <p className={errorClass}>{errors.occurred_at.message}</p>}
         </div>
 
-        {/* Location */}
         <div>
-          <label className={labelClass}>事故地點</label>
+          <label className={labelClass}>{t('claimForm.lbl.location')}</label>
           <input
             type="text"
-            placeholder="例：台北市信義區信義路五段7號前"
+            placeholder={t('claimForm.ph.location')}
             {...register('location')}
             className={inputClass}
           />
           {errors.location && <p className={errorClass}>{errors.location.message}</p>}
         </div>
 
-        {/* Description */}
         <div>
-          <label className={labelClass}>事故描述</label>
+          <label className={labelClass}>{t('claimForm.lbl.description')}</label>
           <textarea
             rows={4}
-            placeholder="請詳細描述事故經過..."
+            placeholder={t('claimForm.ph.description')}
             {...register('description')}
             className={inputClass + ' resize-none'}
           />
           {errors.description && <p className={errorClass}>{errors.description.message}</p>}
         </div>
 
-        {/* Amount */}
         <div>
-          <label className={labelClass}>預估損失金額 (NTD)</label>
+          <label className={labelClass}>{t('claimForm.lbl.amount')}</label>
           <input
             type="number"
             placeholder="0"
@@ -198,14 +192,13 @@ export default function NewClaimPage() {
           {errors.amount_claimed && <p className={errorClass}>{errors.amount_claimed.message}</p>}
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={mutation.isPending}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 py-3.5 text-base font-semibold text-white transition hover:bg-primary-700 disabled:opacity-50"
         >
           {mutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
-          送出理賠申請
+          {t('claimForm.btn.submit')}
         </button>
       </form>
     </div>
