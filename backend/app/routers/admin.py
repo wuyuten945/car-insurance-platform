@@ -1558,9 +1558,9 @@ async function saveEditedVehicle() {
             });
             if (conflict) {
               var msg = (LANG === 'en')
-                ? ('This email already belongs to customer "' + conflict.name + '".\n\n'
+                ? ('This email already belongs to customer "' + conflict.name + '".\\n\\n'
                    + 'Transfer this vehicle (and its policies) to that customer?')
-                : ('此 Email 已屬於客戶「' + conflict.name + '」。\n\n'
+                : ('此 Email 已屬於客戶「' + conflict.name + '」。\\n\\n'
                    + '要將此車輛（含保單）轉移到該客戶嗎？');
               if (!confirm(msg)) {
                 showMsg('ve-msg', 'err',
