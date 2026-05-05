@@ -129,6 +129,7 @@ class CreateAgentRequest(BaseModel):
     email: str = ""
     phone: str = ""
     ip_whitelist: str = ""
+    role: str = "agent"  # "agent" 或 "super_admin"（後者僅限 super_admin 呼叫）
 
 @router.post("/agents")
 async def create_agent(
@@ -136,17 +137,21 @@ async def create_agent(
     admin: AdminUser = Depends(require_super_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """新增業務員"""
+    """新增業務員或管理員（super_admin 才能建 super_admin）"""
     existing = await db.execute(select(AdminUser).where(AdminUser.username == req.username))
     if existing.scalar_one_or_none():
         raise BadRequestError(f"帳號 {req.username} 已存在")
+
+    role = req.role.strip() if req.role else "agent"
+    if role not in ("agent", "super_admin"):
+        raise BadRequestError(f"無效的 role：{role}")
 
     agent = AdminUser(
         username=req.username,
         password_hash=hash_password(req.password),
         display_name=req.display_name or req.username,
         email=req.email, phone=req.phone,
-        role="agent",
+        role=role,
         api_key=generate_api_key(),
         ip_whitelist=req.ip_whitelist,
     )
