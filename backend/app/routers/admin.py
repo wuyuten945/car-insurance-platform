@@ -1548,6 +1548,47 @@ async function saveEditedVehicle() {
     if (newEmail !== origEmail) {
       var targetUserId = window._editUserId;
       if (targetUserId) {
+        // ★ 先檢查 email 是否屬於「別的」客戶 → 提供轉移選項而非報錯
+        if (newEmail) {
+          try {
+            var cr = await fetch(CONSOLE_API+'/customers', {headers:consoleHeaders()});
+            var cd = await cr.json();
+            var conflict = (cd.data || []).find(function(c){
+              return c.email && c.email.toLowerCase() === newEmail.toLowerCase() && c.id !== targetUserId;
+            });
+            if (conflict) {
+              var msg = (LANG === 'en')
+                ? ('This email already belongs to customer "' + conflict.name + '".\n\n'
+                   + 'Transfer this vehicle (and its policies) to that customer?')
+                : ('此 Email 已屬於客戶「' + conflict.name + '」。\n\n'
+                   + '要將此車輛（含保單）轉移到該客戶嗎？');
+              if (!confirm(msg)) {
+                showMsg('ve-msg', 'err',
+                  (LANG === 'en') ? 'Cancelled. Email not changed.' : '已取消，Email 未更新');
+                return;
+              }
+              // 轉移車輛到目標客戶
+              var tr = await fetch(CONSOLE_API+'/vehicles/'+vid+'/transfer', {
+                method:'POST', headers:consoleHeaders(true),
+                body: JSON.stringify({customer_id: conflict.id})
+              });
+              var td = await tr.json();
+              if (td.success) {
+                showMsg('ve-msg', 'ok',
+                  (LANG === 'en')
+                    ? ('Vehicle transferred to ' + conflict.name)
+                    : ('車輛已轉移到「' + conflict.name + '」'));
+                loadVehicles();
+                return;
+              } else {
+                showMsg('ve-msg', 'err',
+                  (LANG === 'en' ? 'Transfer failed: ' : '轉移失敗: ')
+                  + (td.detail || td.message));
+                return;
+              }
+            }
+          } catch(_chkE) { /* 偵測失敗 → 走原本流程 */ }
+        }
         try {
           var er = await fetch(CONSOLE_API+'/customer/'+targetUserId, {
             method:'PATCH', headers:consoleHeaders(true),
