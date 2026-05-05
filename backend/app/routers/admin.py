@@ -66,9 +66,10 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 </head>
 <body>
 <div class="header">
-  <h1>BOPINAN — 管理控制台</h1>
+  <h1 data-i18n="header_title">BOPINAN — 管理控制台</h1>
   <small id="user-info"></small>
-  <button class="btn danger" id="logout-btn" style="display:none;padding:4px 12px;font-size:12px;margin-left:10px" onclick="doLogout()">登出</button>
+  <button id="lang-toggle-btn" type="button" onclick="toggleAdminLang()" style="background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">EN</button>
+  <button class="btn danger" id="logout-btn" style="display:none;padding:4px 12px;font-size:12px;margin-left:10px" onclick="doLogout()" data-i18n="btn_logout">登出</button>
   <div id="customer-bar" style="display:none;margin-top:10px;padding:10px;background:rgba(255,255,255,0.15);border-radius:6px;font-size:13px">
     <span style="margin-right:8px">操作客戶（新增車輛/保單時套用）：</span>
     <select id="cur-customer" style="background:#fff;color:#000;padding:4px 8px;border-radius:4px;border:0;min-width:280px"></select>
@@ -80,16 +81,16 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 <!-- Login (Admin Account) -->
 <div id="login-section" class="container">
   <div class="card">
-    <h2>管理員登入</h2>
-    <p style="color:#666;margin-bottom:16px">使用管理員帳號密碼登入</p>
-    <label>帳號</label>
-    <input type="text" id="login-user" placeholder="admin">
-    <label>密碼</label>
+    <h2 data-i18n="login_title">管理員登入</h2>
+    <p style="color:#666;margin-bottom:16px" data-i18n="login_hint">使用管理員帳號密碼登入</p>
+    <label data-i18n="lbl_username">帳號</label>
+    <input type="text" id="login-user" placeholder="admin" data-i18n-placeholder="ph_username">
+    <label data-i18n="lbl_password">密碼</label>
     <div class="pw-wrap">
-      <input type="password" id="login-pass" placeholder="密碼" onkeydown="if(event.key==='Enter')doAdminLogin()">
+      <input type="password" id="login-pass" placeholder="密碼" data-i18n-placeholder="ph_password" onkeydown="if(event.key==='Enter')doAdminLogin()">
       <button type="button" class="pw-toggle" onclick="togglePw('login-pass',this)">👁</button>
     </div>
-    <button class="btn" onclick="doAdminLogin()" style="width:100%;margin-top:14px">登入</button>
+    <button class="btn" onclick="doAdminLogin()" style="width:100%;margin-top:14px" data-i18n="btn_login">登入</button>
     <div id="login-msg" class="msg"></div>
   </div>
 </div>
@@ -102,23 +103,24 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     <div style="display:flex;gap:8px;align-items:center">
       <span style="font-size:18px">🔍</span>
       <input type="text" id="qs-input" placeholder="搜尋：客戶姓名 / 電話 / Email / 車牌 / 保單號 / 理賠號"
+             data-i18n-placeholder="ph_search"
              style="flex:1;border:1px solid #ddd;border-radius:6px;padding:8px 12px;font-size:14px"
              onkeydown="if(event.key==='Enter')doQuickSearch()">
-      <button onclick="doQuickSearch()" style="background:#1976d2;color:#fff;border:0;border-radius:6px;padding:8px 18px;font-weight:600;cursor:pointer">搜尋</button>
-      <button onclick="clearQuickSearch()" style="background:#f5f5f5;color:#666;border:1px solid #ddd;border-radius:6px;padding:8px 12px;cursor:pointer">清除</button>
+      <button onclick="doQuickSearch()" style="background:#1976d2;color:#fff;border:0;border-radius:6px;padding:8px 18px;font-weight:600;cursor:pointer" data-i18n="btn_search">搜尋</button>
+      <button onclick="clearQuickSearch()" style="background:#f5f5f5;color:#666;border:1px solid #ddd;border-radius:6px;padding:8px 12px;cursor:pointer" data-i18n="btn_clear">清除</button>
     </div>
     <div id="qs-results" style="margin-top:10px"></div>
   </div>
 
   <div class="tabs">
-    <button class="tab active" id="tab-btn-vehicles" onclick="switchTab('vehicles')">車輛 / 行照</button>
-    <button class="tab" id="tab-btn-policies" onclick="switchTab('policies')">保單管理</button>
-    <button class="tab" id="tab-btn-claims" onclick="switchTab('claims')">理賠申請</button>
-    <button class="tab" id="tab-btn-accidents" onclick="switchTab('accidents')">事故照片</button>
-    <button class="tab" id="tab-btn-overview" onclick="switchTab('overview')">資料總覽</button>
-    <button class="tab" id="tab-btn-agents" onclick="switchTab('agents')" style="display:none">業務員管理</button>
-    <button class="tab" id="tab-btn-assign" onclick="switchTab('assign')" style="display:none">客戶分配</button>
-    <button class="tab" id="tab-btn-logs" onclick="switchTab('logs')" style="display:none">操作日誌</button>
+    <button class="tab active" id="tab-btn-vehicles" onclick="switchTab('vehicles')" data-i18n="tab_vehicles">車輛 / 行照</button>
+    <button class="tab" id="tab-btn-policies" onclick="switchTab('policies')" data-i18n="tab_policies">保單管理</button>
+    <button class="tab" id="tab-btn-claims" onclick="switchTab('claims')" data-i18n="tab_claims">理賠申請</button>
+    <button class="tab" id="tab-btn-accidents" onclick="switchTab('accidents')" data-i18n="tab_accidents">事故照片</button>
+    <button class="tab" id="tab-btn-overview" onclick="switchTab('overview')" data-i18n="tab_overview">資料總覽</button>
+    <button class="tab" id="tab-btn-agents" onclick="switchTab('agents')" style="display:none" data-i18n="tab_agents">業務員管理</button>
+    <button class="tab" id="tab-btn-assign" onclick="switchTab('assign')" style="display:none" data-i18n="tab_assign">客戶分配</button>
+    <button class="tab" id="tab-btn-logs" onclick="switchTab('logs')" style="display:none" data-i18n="tab_logs">操作日誌</button>
   </div>
 
   <!-- Tab: Vehicles -->
@@ -410,6 +412,112 @@ var ADMIN_TOKEN = '';
 var ADMIN_ROLE = '';
 var CONSOLE_API = '/api/v1/admin-console';
 
+// --- i18n (中/英切換) ---
+var LANG = localStorage.getItem('admin_lang') || 'zh';
+var I18N = {
+  zh: {
+    header_title: 'BOPINAN — 管理控制台',
+    btn_logout: '登出',
+    login_title: '管理員登入',
+    login_hint: '使用管理員帳號密碼登入',
+    lbl_username: '帳號',
+    lbl_password: '密碼',
+    ph_username: 'admin',
+    ph_password: '密碼',
+    btn_login: '登入',
+    tab_vehicles: '車輛 / 行照',
+    tab_policies: '保單管理',
+    tab_claims: '理賠申請',
+    tab_accidents: '事故照片',
+    tab_overview: '資料總覽',
+    tab_agents: '業務員管理',
+    tab_assign: '客戶分配',
+    tab_logs: '操作日誌',
+    ph_search: '搜尋：客戶姓名 / 電話 / Email / 車牌 / 保單號 / 理賠號',
+    btn_search: '搜尋',
+    btn_clear: '清除',
+    qs_searching: '搜尋中…',
+    qs_no_result: '查無資料',
+    qs_failed: '搜尋失敗',
+    qs_error: '搜尋錯誤',
+    qs_view: '查看 →',
+    qs_section_customers: '客戶',
+    qs_section_vehicles: '車輛',
+    qs_section_policies: '保單',
+    qs_section_claims: '理賠',
+    qs_tag_customer: '客戶',
+    qs_tag_vehicle: '車輛',
+    qs_tag_policy: '保單',
+    qs_tag_claim: '理賠',
+    qs_lbl_customer: '客戶: ',
+    idle_warn_title: '⚠ 即將自動登出 - ',
+    idle_logout_msg: '閒置超過 5 分鐘，已自動登出。',
+  },
+  en: {
+    header_title: 'BOPINAN — Admin Console',
+    btn_logout: 'Logout',
+    login_title: 'Admin Login',
+    login_hint: 'Sign in with admin credentials',
+    lbl_username: 'Username',
+    lbl_password: 'Password',
+    ph_username: 'admin',
+    ph_password: 'password',
+    btn_login: 'Login',
+    tab_vehicles: 'Vehicles / Reg.',
+    tab_policies: 'Policies',
+    tab_claims: 'Claims',
+    tab_accidents: 'Accident Photos',
+    tab_overview: 'Overview',
+    tab_agents: 'Agents',
+    tab_assign: 'Customer Assign',
+    tab_logs: 'Audit Logs',
+    ph_search: 'Search: name / phone / email / plate / policy # / claim #',
+    btn_search: 'Search',
+    btn_clear: 'Clear',
+    qs_searching: 'Searching…',
+    qs_no_result: 'No results',
+    qs_failed: 'Search failed',
+    qs_error: 'Search error',
+    qs_view: 'View →',
+    qs_section_customers: 'Customers',
+    qs_section_vehicles: 'Vehicles',
+    qs_section_policies: 'Policies',
+    qs_section_claims: 'Claims',
+    qs_tag_customer: 'Cust.',
+    qs_tag_vehicle: 'Veh.',
+    qs_tag_policy: 'Pol.',
+    qs_tag_claim: 'Clm.',
+    qs_lbl_customer: 'Customer: ',
+    idle_warn_title: '⚠ Auto-logout soon - ',
+    idle_logout_msg: 'Idle over 5 minutes, you have been logged out.',
+  }
+};
+function t(key) { return (I18N[LANG] && I18N[LANG][key]) || I18N.zh[key] || key; }
+function applyAdminLang() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var k = el.getAttribute('data-i18n');
+    el.textContent = t(k);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var k = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(k);
+  });
+  // 切換按鈕顯示對立語言
+  var btn = document.getElementById('lang-toggle-btn');
+  if (btn) btn.textContent = (LANG === 'zh') ? 'EN' : '中';
+  document.documentElement.lang = LANG;
+}
+function toggleAdminLang() {
+  LANG = (LANG === 'zh') ? 'en' : 'zh';
+  localStorage.setItem('admin_lang', LANG);
+  applyAdminLang();
+  // 若搜尋結果還在，重跑一次（讓 JS 渲染的標籤跟著翻）
+  var qsBox = document.getElementById('qs-results');
+  if (qsBox && qsBox.innerHTML && document.getElementById('qs-input').value.trim()) {
+    doQuickSearch();
+  }
+}
+
 // --- Auth (Admin Account) ---
 // localStorage key（持久化，瀏覽器重啟也保留；按上一頁不會被清掉）
 var LS_TOKEN_KEY = 'admin_token_v1';
@@ -423,13 +531,13 @@ var _idleTimer = null;
 var _idleWarnTimer = null;
 function _idleAutoLogout() {
   if (!ADMIN_TOKEN) return;
-  alert('閒置超過 5 分鐘，已自動登出。');
+  alert(t('idle_logout_msg'));
   doLogout();
 }
 function _idleWarnSoon() {
   if (!ADMIN_TOKEN) return;
   // 用非阻塞 toast 提醒（用 console + 標題列閃爍）
-  document.title = '⚠ 即將自動登出 - ' + (document.title || '管理後台');
+  document.title = t('idle_warn_title') + (document.title || 'Admin');
 }
 function _resetIdleTimer() {
   if (!ADMIN_TOKEN) return;
@@ -439,7 +547,7 @@ function _resetIdleTimer() {
   _idleWarnTimer = setTimeout(_idleWarnSoon, IDLE_WARN_MS);
   // 還原標題（若已被警告過）
   if (document.title.indexOf('⚠') === 0) {
-    document.title = document.title.replace(/^⚠ 即將自動登出 - /, '');
+    document.title = document.title.replace(/^⚠[^-]*- /, '');
   }
 }
 function _bindIdleEvents() {
@@ -522,6 +630,7 @@ async function tryRestoreLogin() {
 
 // ★ 頁面載入立刻嘗試 restore（多重觸發確保各種情境都覆蓋）
 // 1. 直接呼叫（inline script 在 body 末端，DOM 已就緒）
+applyAdminLang();   // 載入時先套語言
 tryRestoreLogin();
 // 2. DOMContentLoaded（保險，若 1 太早跑完）
 if (document.readyState === 'loading') {
@@ -557,7 +666,7 @@ function doLogout() {
   _stopIdleTimer();
   var qsBox = document.getElementById('qs-results'); if (qsBox) qsBox.innerHTML = '';
   var qsIn = document.getElementById('qs-input'); if (qsIn) qsIn.value = '';
-  document.title = document.title.replace(/^⚠ 即將自動登出 - /, '');
+  document.title = document.title.replace(/^⚠[^-]*- /, '');
 }
 
 function authHeaders(json) {
@@ -624,64 +733,64 @@ async function doQuickSearch() {
   var q = document.getElementById('qs-input').value.trim();
   var box = document.getElementById('qs-results');
   if (!q) { box.innerHTML = ''; return; }
-  box.innerHTML = '<div style="color:#999;padding:8px">搜尋中…</div>';
+  box.innerHTML = '<div style="color:#999;padding:8px">' + t('qs_searching') + '</div>';
   try {
     var resp = await fetch('/api/v1/admin-console/search?q=' + encodeURIComponent(q),
       {headers: {'Authorization':'Bearer ' + ADMIN_TOKEN}});
     var json = await resp.json();
-    if (!json.success) { box.innerHTML = '<div style="color:#d32f2f;padding:8px">搜尋失敗：' + (json.message||'') + '</div>'; return; }
+    if (!json.success) { box.innerHTML = '<div style="color:#d32f2f;padding:8px">' + t('qs_failed') + '：' + (json.message||'') + '</div>'; return; }
     var d = json.data || {};
     var html = '';
     var cust = d.customers || [], veh = d.vehicles || [], pol = d.policies || [], clm = d.claims || [];
     var total = cust.length + veh.length + pol.length + clm.length;
-    if (total === 0) { box.innerHTML = '<div style="color:#666;padding:8px">查無資料</div>'; return; }
+    if (total === 0) { box.innerHTML = '<div style="color:#666;padding:8px">' + t('qs_no_result') + '</div>'; return; }
 
     var rowStyle = 'padding:8px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px';
     var tagStyle = 'display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600';
 
     if (cust.length) {
-      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>客戶 ('+cust.length+')</b></div>';
+      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>' + t('qs_section_customers') + ' ('+cust.length+')</b></div>';
       cust.forEach(function(c) {
         html += '<div style="'+rowStyle+'" onclick="qsGoCustomer(\\''+c.id+'\\')" >' +
-          '<span style="'+tagStyle+';background:#e3f2fd;color:#1565c0">客戶</span>' +
-          '<b>' + (c.name || '(無名)') + '</b>' +
+          '<span style="'+tagStyle+';background:#e3f2fd;color:#1565c0">' + t('qs_tag_customer') + '</span>' +
+          '<b>' + (c.name || '(no name)') + '</b>' +
           '<span style="color:#666;font-size:13px">' + (c.email || '') + ' ' + (c.phone || '') + '</span>' +
-          '<span style="margin-left:auto;color:#1976d2;font-size:12px">查看 →</span></div>';
+          '<span style="margin-left:auto;color:#1976d2;font-size:12px">' + t('qs_view') + '</span></div>';
       });
     }
     if (veh.length) {
-      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>車輛 ('+veh.length+')</b></div>';
+      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>' + t('qs_section_vehicles') + ' ('+veh.length+')</b></div>';
       veh.forEach(function(v) {
         html += '<div style="'+rowStyle+'" onclick="qsGoVehicle(\\''+v.id+'\\',\\''+v.user_id+'\\')">' +
-          '<span style="'+tagStyle+';background:#fff3e0;color:#e65100">車輛</span>' +
+          '<span style="'+tagStyle+';background:#fff3e0;color:#e65100">' + t('qs_tag_vehicle') + '</span>' +
           '<b>' + (v.plate_number || '') + '</b>' +
           '<span style="color:#666;font-size:13px">' + ((v.brand||'') + ' ' + (v.model||'')) + ' ('+(v.year||'')+')</span>' +
-          '<span style="color:#999;font-size:12px">客戶: ' + (v.user_name || '') + '</span>' +
-          '<span style="margin-left:auto;color:#1976d2;font-size:12px">查看 →</span></div>';
+          '<span style="color:#999;font-size:12px">' + t('qs_lbl_customer') + (v.user_name || '') + '</span>' +
+          '<span style="margin-left:auto;color:#1976d2;font-size:12px">' + t('qs_view') + '</span></div>';
       });
     }
     if (pol.length) {
-      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>保單 ('+pol.length+')</b></div>';
+      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>' + t('qs_section_policies') + ' ('+pol.length+')</b></div>';
       pol.forEach(function(p) {
         html += '<div style="'+rowStyle+'" onclick="qsGoPolicy(\\''+p.id+'\\',\\''+p.user_id+'\\')">' +
-          '<span style="'+tagStyle+';background:#e8f5e9;color:#2e7d32">保單</span>' +
+          '<span style="'+tagStyle+';background:#e8f5e9;color:#2e7d32">' + t('qs_tag_policy') + '</span>' +
           '<b>' + (p.policy_number || '') + '</b>' +
           '<span style="color:#666;font-size:13px">' + (p.insurer_name || '') + '</span>' +
           '<span style="color:#999;font-size:12px">' + (p.start_date||'') + ' ~ ' + (p.end_date||'') + ' / ' + (p.status||'') + '</span>' +
-          '<span style="color:#999;font-size:12px">客戶: ' + (p.user_name || '') + '</span>' +
-          '<span style="margin-left:auto;color:#1976d2;font-size:12px">查看 →</span></div>';
+          '<span style="color:#999;font-size:12px">' + t('qs_lbl_customer') + (p.user_name || '') + '</span>' +
+          '<span style="margin-left:auto;color:#1976d2;font-size:12px">' + t('qs_view') + '</span></div>';
       });
     }
     if (clm.length) {
-      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>理賠 ('+clm.length+')</b></div>';
+      html += '<div style="font-size:12px;color:#666;padding:4px 0;margin-top:4px"><b>' + t('qs_section_claims') + ' ('+clm.length+')</b></div>';
       clm.forEach(function(cl) {
         html += '<div style="'+rowStyle+'" onclick="qsGoClaim(\\''+cl.id+'\\',\\''+cl.user_id+'\\')">' +
-          '<span style="'+tagStyle+';background:#fce4ec;color:#c2185b">理賠</span>' +
+          '<span style="'+tagStyle+';background:#fce4ec;color:#c2185b">' + t('qs_tag_claim') + '</span>' +
           '<b>' + (cl.claim_number || '') + '</b>' +
           '<span style="color:#666;font-size:13px">' + (cl.claim_type || '') + '</span>' +
           '<span style="color:#999;font-size:12px">' + (cl.status || '') + '</span>' +
-          '<span style="color:#999;font-size:12px">客戶: ' + (cl.user_name || '') + '</span>' +
-          '<span style="margin-left:auto;color:#1976d2;font-size:12px">查看 →</span></div>';
+          '<span style="color:#999;font-size:12px">' + t('qs_lbl_customer') + (cl.user_name || '') + '</span>' +
+          '<span style="margin-left:auto;color:#1976d2;font-size:12px">' + t('qs_view') + '</span></div>';
       });
     }
     html = '<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:6px;max-height:400px;overflow:auto">' + html + '</div>';
@@ -693,7 +802,7 @@ async function doQuickSearch() {
       el.addEventListener('mouseleave', function() { el.style.background = ''; });
     });
   } catch (e) {
-    box.innerHTML = '<div style="color:#d32f2f;padding:8px">搜尋錯誤：' + e + '</div>';
+    box.innerHTML = '<div style="color:#d32f2f;padding:8px">' + t('qs_error') + '：' + e + '</div>';
   }
 }
 
