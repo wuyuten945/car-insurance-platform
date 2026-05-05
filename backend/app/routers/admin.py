@@ -225,11 +225,11 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_plate">車牌號碼</b></td><td><input type="text" id="ve-plate" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_brand">廠牌</b></td><td><input type="text" id="ve-brand" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_model">車型</b></td><td><input type="text" id="ve-model" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_year_month">出廠年月</b></td><td><input type="month" id="ve-year-month" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_year_month">出廠年月</b></td><td><input type="month" id="ve-year-month" oninput="autoComputeExpiry()" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_color">顏色</b></td><td><input type="text" id="ve-color" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_cc">排氣量 (cc)</b></td><td><input type="number" id="ve-cc" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_vin">車身號碼</b></td><td><input type="text" id="ve-vin" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_orig_reg_date">原發照日期</b></td><td><input type="date" id="ve-reg-date" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_orig_reg_date">原發照日期</b></td><td><input type="date" id="ve-reg-date" oninput="autoComputeExpiry()" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_reissue_date">換補照日期</b></td><td><input type="date" id="ve-reissue-date" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_expiry_date">驗車到期日</b></td><td><input type="date" id="ve-expiry" oninput="updateInspectionWindow()" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_inspection_window">驗車期間</b><br><span style="font-size:10px;color:#999;font-weight:normal" data-i18n="hint_inspection_window">到期日前 30 天 ~ 後 30 天</span></td><td>
@@ -1221,6 +1221,90 @@ function onTypeChange() {
   } else {
     ruleDiv.style.display = 'none';
   }
+  // 改車型 → 重新自動推算驗車到期日
+  autoComputeExpiry();
+}
+
+// ── 各車型驗車頻率規則：fn(ageYears) → freqMonths（0 = 免驗） ──
+var INSPECTION_FREQ_FN = {
+  '自用小客車':           function(a) { if (a < 5) return 0; if (a < 10) return 12; return 6; },
+  '自用小貨車':           function(a) { if (a < 5) return 0; if (a < 10) return 12; return 6; },
+  '自用小客貨兩用車':     function(a) { if (a < 5) return 0; if (a < 10) return 12; return 6; },
+  '自用大客車':           function(a) { return a < 10 ? 12 : 6; },
+  '自用大貨車':           function(a) { return a < 10 ? 12 : 6; },
+  '自用特種車':           function(a) { return 12; },
+  '營業小客車（計程車）': function(a) { return a < 5 ? 12 : 6; },
+  '營業小貨車':           function(a) { return a < 5 ? 12 : 6; },
+  '營業大客車':           function(a) { return 4; },   // 每年 3 次
+  '營業大貨車':           function(a) { return 6; },   // 每年 2 次
+  '營業遊覽車':           function(a) { return 4; },   // 每年 3 次
+  '營業特種車':           function(a) { return 12; },
+  '大型重型機車（550cc以上）': function(a) { return a < 5 ? 0 : 12; },
+  '普通重型機車（250cc以上）': function(a) { return a < 5 ? 0 : 12; },
+  '普通重型機車（50~250cc）':  function(a) { return a < 5 ? 0 : 12; },
+  '普通輕型機車':         function(a) { return a < 5 ? 0 : 12; },
+  '小型輕型機車（電動）': function(a) { return a < 5 ? 0 : 12; },
+  '拖車':                 function(a) { return 12; },
+  '曳引車':               function(a) { return 12; },
+  '電動汽車':             function(a) { if (a < 5) return 0; if (a < 10) return 12; return 6; },
+};
+
+function _addMonths(d, months) {
+  var nd = new Date(d.getTime());
+  nd.setMonth(nd.getMonth() + months);
+  return nd;
+}
+function _fmtDate(d) {
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
+}
+
+// 推算下一個驗車到期日。輸入：vehicleType / 出廠 year / 出廠 month / 原發照 yyyy-mm-dd
+function nextInspectionDue(vehicleType, year, month, regDateStr) {
+  var ruleFn = INSPECTION_FREQ_FN[vehicleType];
+  if (!ruleFn || !year || !regDateStr) return null;
+  var manuf = new Date(parseInt(year), (parseInt(month || 1) - 1), 1);
+  var regD  = new Date(regDateStr + 'T00:00:00');
+  if (isNaN(manuf.getTime()) || isNaN(regD.getTime())) return null;
+  var today = new Date(); today.setHours(0,0,0,0);
+
+  // 從 regDate 開始走，找第一個 > today 的到期日
+  var cursor = new Date(regD.getTime());
+  for (var i = 0; i < 600; i++) {  // 上限 50 年
+    var ageMs = cursor.getTime() - manuf.getTime();
+    var ageYr = ageMs / (365.25 * 24 * 3600 * 1000);
+    var freq = ruleFn(ageYr);
+    if (freq === 0) {
+      // 免驗階段：往前 1 年再判
+      cursor = _addMonths(cursor, 12);
+      continue;
+    }
+    var nextDue = _addMonths(cursor, freq);
+    if (nextDue > today) return nextDue;
+    cursor = nextDue;
+  }
+  return null;
+}
+
+// 自動填驗車到期日（依車型 + 出廠年月 + 原發照日期）
+function autoComputeExpiry() {
+  var vt = document.getElementById('v-type').value;
+  var ym = document.getElementById('ve-year-month').value;
+  var rd = document.getElementById('ve-reg-date').value;
+  if (!vt || !ym || !rd) { updateInspectionWindow(); return; }
+  var ymParts = ym.split('-');
+  if (ymParts.length !== 2) { updateInspectionWindow(); return; }
+  var due = nextInspectionDue(vt, ymParts[0], ymParts[1], rd);
+  var expEl = document.getElementById('ve-expiry');
+  if (due) {
+    expEl.value = _fmtDate(due);
+  } else {
+    // 法規屬於免驗或推算失敗 → 留空（讓使用者手動填）
+    expEl.value = '';
+  }
+  updateInspectionWindow();
 }
 
 // --- Vehicles ---
