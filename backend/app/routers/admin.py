@@ -192,7 +192,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
         </div>
         <div>
           <label data-i18n="lbl_existing_vehicle">現有車輛（更新）/ 新車</label>
-          <select id="v-select">
+          <select id="v-select" onchange="onVSelectChange()">
             <option value="__new__" data-i18n="opt_new_vehicle">+ 新增車輛</option>
           </select>
         </div>
@@ -1211,6 +1211,20 @@ var INSPECTION_RULES = {
   '電動汽車': '出廠5年內免驗；5~10年每年驗車1次；超過10年每年驗車2次'
 };
 
+// v-select 切換 → 「+ 新增車輛」收起編輯表單，避免使用者誤把舊車輛資料當新增填入
+function onVSelectChange() {
+  var v = document.getElementById('v-select').value;
+  if (v === '__new__') {
+    // 收起編輯表單；清掉 _editVid 防止後續操作誤動到舊車
+    var f = document.getElementById('v-edit-form');
+    if (f) f.style.display = 'none';
+    window._editVid = '';
+    window._editUserId = '';
+    var msg = document.getElementById('v-msg');
+    if (msg) { msg.textContent = ''; msg.className = 'msg'; }
+  }
+}
+
 function onTypeChange() {
   var type = document.getElementById('v-type').value;
   var ruleDiv = document.getElementById('v-inspection-rule');
@@ -1454,6 +1468,13 @@ async function uploadRegistration() {
       showMsg('v-msg', 'ok', d.message);
       window._lastUploadVid = vid;
       window._editVid = vid;
+      // 防止下次新增車輛時 state 殘留：明確重置上傳區
+      document.getElementById('v-select').value = '__new__';
+      document.getElementById('v-file').value = '';
+      var nameSpan = document.getElementById('v-file-name');
+      if (nameSpan) nameSpan.textContent = t('msg_no_file');
+      var preview = document.getElementById('v-preview');
+      if (preview) preview.style.display = 'none';
       loadVehicles();
       // 顯示編輯表單 + AI 辨識按鈕
       var veh = d.data.vehicle || {};
