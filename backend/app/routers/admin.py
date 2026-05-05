@@ -69,12 +69,38 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   <h1 data-i18n="header_title">BOPINAN — 管理控制台</h1>
   <small id="user-info"></small>
   <button id="lang-toggle-btn" type="button" onclick="toggleAdminLang()" title="Toggle Language" style="background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">EN</button>
+  <button id="change-pw-btn" type="button" onclick="openChangePwModal()" style="display:none;background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer" data-i18n="btn_change_password">變更密碼</button>
   <button class="btn danger" id="logout-btn" style="display:none;padding:4px 12px;font-size:12px;margin-left:10px" onclick="doLogout()" data-i18n="btn_logout">登出</button>
   <div id="customer-bar" style="display:none;margin-top:10px;padding:10px;background:rgba(255,255,255,0.15);border-radius:6px;font-size:13px">
     <span style="margin-right:8px" data-i18n="cur_customer_label">操作客戶（新增車輛/保單時套用）：</span>
     <select id="cur-customer" style="background:#fff;color:#000;padding:4px 8px;border-radius:4px;border:0;min-width:280px"></select>
     <button class="btn" style="padding:4px 10px;font-size:11px;margin-left:8px;background:#0288D1" onclick="loadCustomerList()" data-i18n="btn_refresh_customers">重新整理客戶清單</button>
     <span id="customer-bar-msg" style="margin-left:10px;color:#FFD54F;font-size:11px"></span>
+  </div>
+</div>
+
+<!-- 變更密碼彈窗 -->
+<div id="change-pw-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;padding:24px;border-radius:12px;max-width:400px;width:90%">
+    <h3 style="color:#1565C0;margin-bottom:14px" data-i18n="cp_title">變更密碼</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:14px" data-i18n="cp_hint">請先輸入當前密碼確認本人，再設定新密碼。</p>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:12px;color:#666;margin-bottom:4px" data-i18n="cp_current">當前密碼</label>
+      <div class="pw-wrap"><input type="password" id="cp-current" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"><button type="button" class="pw-toggle" onclick="togglePw('cp-current',this)">👁</button></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:12px;color:#666;margin-bottom:4px" data-i18n="cp_new">新密碼（至少 8 字元）</label>
+      <div class="pw-wrap"><input type="password" id="cp-new" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"><button type="button" class="pw-toggle" onclick="togglePw('cp-new',this)">👁</button></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;color:#666;margin-bottom:4px" data-i18n="cp_confirm">確認新密碼</label>
+      <div class="pw-wrap"><input type="password" id="cp-confirm" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px" onkeydown="if(event.key==='Enter')doChangePassword()"><button type="button" class="pw-toggle" onclick="togglePw('cp-confirm',this)">👁</button></div>
+    </div>
+    <div id="cp-msg" class="msg"></div>
+    <div style="text-align:right">
+      <button class="btn" style="background:#999;color:#fff" onclick="closeChangePwModal()" data-i18n="btn_cancel">取消</button>
+      <button class="btn success" onclick="doChangePassword()" data-i18n="cp_submit">變更</button>
+    </div>
   </div>
 </div>
 
@@ -91,6 +117,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <button type="button" class="pw-toggle" onclick="togglePw('login-pass',this)">👁</button>
     </div>
     <button class="btn" onclick="doAdminLogin()" style="width:100%;margin-top:14px" data-i18n="btn_login">登入</button>
+    <p style="font-size:11px;color:#999;margin-top:14px;text-align:center" data-i18n="forgot_pw_hint">忘記密碼？請聯繫管理員（super_admin）為您重設。本系統不支援自助式 Email 重設以保護帳號安全。</p>
     <div id="login-msg" class="msg"></div>
   </div>
 </div>
@@ -573,6 +600,18 @@ var I18N = {
     // Customer dropdown
     ph_choose: '請選擇', lbl_unnamed: '未命名',
     btn_choose_file: '選擇檔案', msg_no_file: '未選擇任何檔案',
+    btn_change_password: '變更密碼',
+    cp_title: '變更密碼',
+    cp_hint: '請先輸入當前密碼確認本人，再設定新密碼。',
+    cp_current: '當前密碼', cp_new: '新密碼（至少 8 字元）', cp_confirm: '確認新密碼',
+    cp_submit: '變更',
+    cp_success: '密碼已變更，請重新登入',
+    cp_failed: '變更失敗',
+    cp_err_required: '請填寫所有欄位',
+    cp_err_short: '新密碼至少 8 字元',
+    cp_err_mismatch: '兩次輸入的新密碼不相同',
+    cp_err_same: '新密碼不可與當前密碼相同',
+    forgot_pw_hint: '忘記密碼？請聯繫 super_admin 重設。本系統不支援自助式 Email 重設以保護帳號安全。',
   },
   en: {
     header_title: 'BOPINAN — Admin Console',
@@ -711,6 +750,18 @@ var I18N = {
     ov_days_left: 'Days Left', ov_days: 'day(s)',
     ph_choose: 'Choose', lbl_unnamed: 'Unnamed',
     btn_choose_file: 'Choose File', msg_no_file: 'No file chosen',
+    btn_change_password: 'Change Password',
+    cp_title: 'Change Password',
+    cp_hint: 'Enter your current password to confirm identity, then set a new password.',
+    cp_current: 'Current Password', cp_new: 'New Password (≥ 8 chars)', cp_confirm: 'Confirm New Password',
+    cp_submit: 'Change',
+    cp_success: 'Password changed. Please log in again.',
+    cp_failed: 'Change failed',
+    cp_err_required: 'Please fill in all fields',
+    cp_err_short: 'New password must be ≥ 8 chars',
+    cp_err_mismatch: 'New passwords do not match',
+    cp_err_same: 'New password must differ from current',
+    forgot_pw_hint: 'Forgot password? Please contact a super_admin to reset. Self-service email reset is intentionally disabled for security.',
   }
 };
 // 給 JS 動態訊息的 inline bilingual helper（避免每個都加 i18n key）
@@ -806,6 +857,7 @@ function _enterAdminUI(token, role, displayName) {
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('admin-panel').style.display = 'block';
   document.getElementById('logout-btn').style.display = 'inline-block';
+  document.getElementById('change-pw-btn').style.display = 'inline-block';
   // 依角色顯示/隱藏分頁
   var allTabs = ['vehicles','policies','claims','accidents','overview','agents','assign','logs'];
   var agentTabs = ['overview'];
@@ -889,6 +941,41 @@ function togglePw(inputId, btn) {
   else { inp.type = 'password'; btn.textContent = '👁'; }
 }
 
+// --- 變更密碼 ---
+function openChangePwModal() {
+  document.getElementById('cp-current').value = '';
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-confirm').value = '';
+  var m = document.getElementById('cp-msg'); if (m) { m.textContent=''; m.className='msg'; }
+  document.getElementById('change-pw-modal').style.display = 'flex';
+}
+function closeChangePwModal() {
+  document.getElementById('change-pw-modal').style.display = 'none';
+}
+async function doChangePassword() {
+  var cur = document.getElementById('cp-current').value;
+  var nw = document.getElementById('cp-new').value;
+  var cf = document.getElementById('cp-confirm').value;
+  if (!cur || !nw || !cf) { showMsg('cp-msg','err', t('cp_err_required')); return; }
+  if (nw.length < 8) { showMsg('cp-msg','err', t('cp_err_short')); return; }
+  if (nw !== cf) { showMsg('cp-msg','err', t('cp_err_mismatch')); return; }
+  if (nw === cur) { showMsg('cp-msg','err', t('cp_err_same')); return; }
+  try {
+    var r = await fetch(CONSOLE_API+'/change-password', {
+      method:'POST',
+      headers: {'Authorization':'Bearer '+ADMIN_TOKEN, 'Content-Type':'application/json'},
+      body: JSON.stringify({current_password: cur, new_password: nw}),
+    });
+    var d = await r.json();
+    if (d.success) {
+      showMsg('cp-msg','ok', d.message || t('cp_success'));
+      setTimeout(function(){ closeChangePwModal(); doLogout(); }, 1500);
+    } else {
+      showMsg('cp-msg','err', d.message || d.detail || t('cp_failed'));
+    }
+  } catch(e) { showMsg('cp-msg','err', t('msg_conn_failed') + ': ' + e.message); }
+}
+
 function doLogout() {
   TOKEN = ''; ADMIN_TOKEN = ''; ADMIN_ROLE = '';
   // 清 localStorage（明確登出才清，按上一頁不會清）
@@ -897,6 +984,7 @@ function doLogout() {
   localStorage.removeItem(LS_NAME_KEY);
   document.getElementById('admin-panel').style.display = 'none';
   document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('change-pw-btn').style.display = 'none';
   document.getElementById('customer-bar').style.display = 'none';
   document.getElementById('login-section').style.display = 'block';
   document.getElementById('login-user').value = '';

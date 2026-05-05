@@ -119,6 +119,43 @@ async def admin_login(req: AdminLoginRequest, request: Request, db: AsyncSession
 
 
 # ═══════════════════════════════════════════════════
+# 變更自己的密碼（任何已登入 admin 都可呼叫）
+# ═══════════════════════════════════════════════════
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password")
+async def change_password(
+    req: ChangePasswordRequest,
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    變更自己的密碼。安全規則：
+      1. 必須已登入（取得有效 token）
+      2. 必須輸入舊密碼確認本人（防止 token 被盜後直接改密碼）
+      3. 新密碼至少 8 字（簡單複雜度檢查）
+      4. 新密碼不可與舊相同
+    """
+    if not verify_password(req.current_password, admin.password_hash):
+        # 不暴露具體哪步錯（避免 brute-force 細分）
+        raise BadRequestError("當前密碼錯誤")
+    if not req.new_password or len(req.new_password) < 8:
+        raise BadRequestError("新密碼至少 8 字元")
+    if req.new_password == req.current_password:
+        raise BadRequestError("新密碼不可與當前密碼相同")
+
+    admin.password_hash = hash_password(req.new_password)
+    # 重置失敗計數
+    admin.login_fail_count = "0"
+    await log_action(db, admin, "update", "self_password", admin.id, "變更自己密碼")
+    return APIResponse(message="密碼已變更，下次登入請使用新密碼")
+
+
+# ═══════════════════════════════════════════════════
 # 管理員 CRUD（僅 super_admin）
 # ═══════════════════════════════════════════════════
 
