@@ -225,11 +225,12 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_plate">車牌號碼</b></td><td><input type="text" id="ve-plate" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_brand">廠牌</b></td><td><input type="text" id="ve-brand" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_model">車型</b></td><td><input type="text" id="ve-model" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_year">出廠年份</b></td><td><input type="number" id="ve-year" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_year_month">出廠年月</b></td><td><input type="month" id="ve-year-month" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_color">顏色</b></td><td><input type="text" id="ve-color" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_cc">排氣量 (cc)</b></td><td><input type="number" id="ve-cc" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_vin">車身號碼</b></td><td><input type="text" id="ve-vin" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
-          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_reg_date">發照日期</b></td><td><input type="date" id="ve-reg-date" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_orig_reg_date">原發照日期</b></td><td><input type="date" id="ve-reg-date" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
+          <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_reissue_date">換補照日期</b></td><td><input type="date" id="ve-reissue-date" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_expiry_date">驗車到期日</b></td><td><input type="date" id="ve-expiry" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_fuel">燃料種類</b></td><td>
             <select id="ve-fuel" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%">
@@ -515,6 +516,9 @@ var I18N = {
     lbl_brand: '廠牌',
     lbl_model: '車型',
     lbl_year: '出廠年份',
+    lbl_year_month: '出廠年月',
+    lbl_orig_reg_date: '原發照日期',
+    lbl_reissue_date: '換補照日期',
     lbl_color: '顏色',
     lbl_cc: '排氣量 (cc)',
     lbl_vin: '車身號碼',
@@ -672,6 +676,9 @@ var I18N = {
     lbl_brand: 'Make',
     lbl_model: 'Model',
     lbl_year: 'Year',
+    lbl_year_month: 'Manufacture Year/Month',
+    lbl_orig_reg_date: 'Original Reg. Date',
+    lbl_reissue_date: 'Re-issue Date',
     lbl_color: 'Color',
     lbl_cc: 'Engine cc',
     lbl_vin: 'VIN',
@@ -1406,11 +1413,18 @@ function _showEditForm(vid, veh, title) {
   document.getElementById('ve-plate').value = veh.plate_number || '';
   document.getElementById('ve-brand').value = veh.brand || '';
   document.getElementById('ve-model').value = veh.model || '';
-  document.getElementById('ve-year').value = veh.year || '';
+  // 出廠年月：YYYY-MM 格式給 month picker
+  var ymVal = '';
+  if (veh.year) {
+    var mm = veh.manufacture_month ? String(veh.manufacture_month).padStart(2, '0') : '01';
+    ymVal = veh.year + '-' + mm;
+  }
+  document.getElementById('ve-year-month').value = ymVal;
   document.getElementById('ve-color').value = veh.color || '';
   document.getElementById('ve-cc').value = veh.engine_cc || '';
   document.getElementById('ve-vin').value = veh.vin || '';
   document.getElementById('ve-reg-date').value = veh.registration_date || '';
+  document.getElementById('ve-reissue-date').value = veh.reissue_date || '';
   document.getElementById('ve-expiry').value = veh.registration_expiry || '';
   document.getElementById('ve-fuel').value = veh.fuel_type || '';
   document.getElementById('v-edit-form').style.display = 'block';
@@ -1439,8 +1453,13 @@ async function saveEditedVehicle() {
   if (brand) body.brand = brand;
   var model = document.getElementById('ve-model').value.trim();
   if (model) body.model = model;
-  var year = document.getElementById('ve-year').value;
-  if (year) body.year = parseInt(year);
+  // 出廠年月：解析 YYYY-MM 為 year + manufacture_month
+  var ym = document.getElementById('ve-year-month').value;
+  if (ym && /^\d{4}-\d{2}$/.test(ym)) {
+    var ymParts = ym.split('-');
+    body.year = parseInt(ymParts[0]);
+    body.manufacture_month = parseInt(ymParts[1]);
+  }
   var color = document.getElementById('ve-color').value.trim();
   if (color) body.color = color;
   var cc = document.getElementById('ve-cc').value;
@@ -1449,6 +1468,8 @@ async function saveEditedVehicle() {
   if (vin) body.vin = vin;
   var regDate = document.getElementById('ve-reg-date').value;
   if (regDate) body.registration_date = regDate;
+  var reissueDate = document.getElementById('ve-reissue-date').value;
+  if (reissueDate) body.reissue_date = reissueDate;
   var expiry = document.getElementById('ve-expiry').value;
   if (expiry) body.registration_expiry = expiry;
   var vtype = document.getElementById('v-type').value;
@@ -1631,11 +1652,16 @@ async function ocrRegistrationDirect() {
       document.getElementById('ve-plate').value = veh.plate_number || document.getElementById('ve-plate').value;
       document.getElementById('ve-brand').value = veh.brand || document.getElementById('ve-brand').value;
       document.getElementById('ve-model').value = veh.model || document.getElementById('ve-model').value;
-      document.getElementById('ve-year').value = veh.year || document.getElementById('ve-year').value;
+      // 出廠年月：veh.year + veh.manufacture_month → YYYY-MM
+      if (veh.year) {
+        var _mm = veh.manufacture_month ? String(veh.manufacture_month).padStart(2, '0') : '01';
+        document.getElementById('ve-year-month').value = veh.year + '-' + _mm;
+      }
       document.getElementById('ve-color').value = veh.color || document.getElementById('ve-color').value;
       document.getElementById('ve-cc').value = veh.engine_cc || document.getElementById('ve-cc').value;
       document.getElementById('ve-vin').value = veh.vin || document.getElementById('ve-vin').value;
       if (veh.registration_date) document.getElementById('ve-reg-date').value = veh.registration_date;
+      if (veh.reissue_date) document.getElementById('ve-reissue-date').value = veh.reissue_date;
       if (veh.registration_expiry) document.getElementById('ve-expiry').value = veh.registration_expiry;
       if (veh.fuel_type) document.getElementById('ve-fuel').value = veh.fuel_type;
       loadVehicles();

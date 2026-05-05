@@ -42,6 +42,8 @@ async def _ensure_columns():
         ("users", "password_hash",   "VARCHAR(255)"),
         ("users", "is_line_friend",  "BOOLEAN NOT NULL DEFAULT FALSE"),
         ("users", "line_friend_at",  "TIMESTAMP WITH TIME ZONE"),
+        ("user_vehicles", "manufacture_month", "INTEGER"),
+        ("user_vehicles", "reissue_date",      "DATE"),
     ]
     is_sqlite = "sqlite" in str(engine.url)
     try:

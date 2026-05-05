@@ -12,6 +12,7 @@ class UserVehicle(TimestampMixin, Base):
     brand = Column(String(50))
     model = Column(String(50))
     year = Column(Integer)
+    manufacture_month = Column(Integer)            # 出廠月份 1-12（搭配 year 表示出廠年月）
     color = Column(String(20))
     vin = Column(String(50))
     engine_cc = Column(Integer)
@@ -21,7 +22,8 @@ class UserVehicle(TimestampMixin, Base):
 
     # 行照資料
     registration_image_url = Column(String(500))  # 行照圖片路徑
-    registration_date = Column(Date)               # 發照日期
+    registration_date = Column(Date)               # 原發照日期
+    reissue_date = Column(Date)                    # 換/補照日期（補發或更換新行照）
     registration_expiry = Column(Date)             # 行照有效期限（= 驗車到期日）
     last_inspection_date = Column(Date)            # 上次驗車日期
 

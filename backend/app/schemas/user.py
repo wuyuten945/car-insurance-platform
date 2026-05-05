@@ -94,6 +94,7 @@ class VehicleCreate(BaseModel):
     brand: str | None = None
     model: str | None = None
     year: int | None = None
+    manufacture_month: int | None = None
     color: str | None = None
     vin: str | None = None
     engine_cc: int | None = None
@@ -101,6 +102,7 @@ class VehicleCreate(BaseModel):
     vehicle_type: str | None = None
     fuel_type: str | None = None
     registration_date: date | None = None
+    reissue_date: date | None = None
     registration_expiry: date | None = None
     last_inspection_date: date | None = None
 
@@ -110,6 +112,7 @@ class VehicleUpdate(BaseModel):
     brand: str | None = None
     model: str | None = None
     year: int | None = None
+    manufacture_month: int | None = None
     color: str | None = None
     vin: str | None = None
     engine_cc: int | None = None
@@ -117,6 +120,7 @@ class VehicleUpdate(BaseModel):
     vehicle_type: str | None = None
     fuel_type: str | None = None
     registration_date: date | None = None
+    reissue_date: date | None = None
     registration_expiry: date | None = None
     last_inspection_date: date | None = None
 
@@ -127,6 +131,7 @@ class VehicleOut(BaseModel):
     brand: str | None = None
     model: str | None = None
     year: int | None = None
+    manufacture_month: int | None = None
     color: str | None = None
     vin: str | None = None
     engine_cc: int | None = None
@@ -135,6 +140,7 @@ class VehicleOut(BaseModel):
     fuel_type: str | None = None
     registration_image_url: str | None = None
     registration_date: date | None = None
+    reissue_date: date | None = None
     registration_expiry: date | None = None
     last_inspection_date: date | None = None
     created_at: datetime
