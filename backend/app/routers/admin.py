@@ -416,14 +416,14 @@ var LS_TOKEN_KEY = 'admin_token_v1';
 var LS_ROLE_KEY = 'admin_role_v1';
 var LS_NAME_KEY = 'admin_name_v1';
 
-// --- 閒置自動登出（10 分鐘無動作） ---
-var IDLE_TIMEOUT_MS = 10 * 60 * 1000;  // 10 分鐘
-var IDLE_WARN_MS    = 9 * 60 * 1000;   // 第 9 分鐘提醒（剩 1 分鐘）
+// --- 閒置自動登出（5 分鐘無動作） ---
+var IDLE_TIMEOUT_MS = 5 * 60 * 1000;   // 5 分鐘
+var IDLE_WARN_MS    = 4 * 60 * 1000;   // 第 4 分鐘提醒（剩 1 分鐘）
 var _idleTimer = null;
 var _idleWarnTimer = null;
 function _idleAutoLogout() {
   if (!ADMIN_TOKEN) return;
-  alert('閒置超過 10 分鐘，已自動登出。');
+  alert('閒置超過 5 分鐘，已自動登出。');
   doLogout();
 }
 function _idleWarnSoon() {
