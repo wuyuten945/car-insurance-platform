@@ -860,6 +860,10 @@ if (document.readyState === 'loading') {
 }
 // 3. pageshow（處理瀏覽器「上一頁」從 bfcache 還原的情境）
 window.addEventListener('pageshow', function(e) {
+  // 從 bfcache 回來時，舊的紅色錯誤訊息會還在 → 清掉
+  // （不只 bfcache，每次 pageshow 都清比較簡單一致）
+  var lm = document.getElementById('login-msg');
+  if (lm) { lm.textContent = ''; lm.className = 'msg'; }
   // 若當前已是登入狀態（admin-panel 顯示中）就不再 restore
   if (document.getElementById('admin-panel').style.display === 'block') return;
   tryRestoreLogin();
@@ -884,6 +888,9 @@ function doLogout() {
   document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
   document.getElementById('user-info').textContent = '';
+  // 清登入頁殘留錯誤訊息（避免下次顯示時看到舊紅字）
+  var lm = document.getElementById('login-msg');
+  if (lm) { lm.textContent = ''; lm.className = 'msg'; }
   // 停掉閒置計時 + 清空快速搜尋
   _stopIdleTimer();
   var qsBox = document.getElementById('qs-results'); if (qsBox) qsBox.innerHTML = '';
