@@ -195,9 +195,13 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 
   <!-- Tab: Vehicles -->
   <div id="tab-vehicles" class="tab-content active">
-    <div class="card">
-      <h2 data-i18n="h_upload_reg">新增車輛（上傳行照 AI 辨識）</h2>
-      <p style="color:#666;font-size:13px;margin-bottom:12px" data-i18n="upload_reg_hint">已有行照圖片時，先在頁面頂部選好「操作客戶」，再上傳行照即可自動辨識並建立車輛。<br>沒有行照（中古車尚未過戶等）→ 請改用下方「現有車輛」區的綠色「+ 新增車輛（手動）」按鈕。<br>更新既有車輛的行照請從「現有車輛」表內各車的「上傳/更換」按鈕。</p>
+
+  <!-- ★★ 上傳行照 modal（按下「+新增車輛(上傳行照)」開啟） ★★ -->
+  <div id="v-upload-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9997;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
+    <div style="background:#fff;padding:22px 26px;border-radius:14px;max-width:680px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+      <button type="button" onclick="closeVehicleUploadModal()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888;line-height:1">×</button>
+      <h2 style="margin-top:0;margin-bottom:6px" data-i18n="h_upload_reg">新增車輛（上傳行照 AI 辨識）</h2>
+      <p style="color:#666;font-size:13px;margin-bottom:14px" data-i18n="upload_reg_hint">操作客戶：<b id="v-upload-modal-customer" style="color:#1565C0">—</b><br>選擇車輛型式並上傳行照後，系統會自動建立車輛並 AI 辨識內容。</p>
 
       <div class="row">
         <div>
@@ -256,11 +260,16 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
         <span id="v-loading-text" data-i18n="msg_uploading">上傳中...</span>
       </div>
       <div id="v-msg" class="msg"></div>
+    </div>
+  </div>
+  <!-- ★★ 上傳行照 modal 結束 ★★ -->
 
-      <!-- OCR / Edit Form (unified) -->
-      <div id="v-edit-form" style="display:none;margin-top:16px">
-        <h3 id="v-edit-title" style="font-size:14px;color:#2E7D32;margin-bottom:10px" data-i18n="h_ocr_result">AI 辨識結果</h3>
-        <p style="font-size:11px;color:#888;margin-bottom:10px" data-i18n="ocr_hint_edit">點擊各欄位值可直接編輯修正</p>
+  <!-- ★★ 車輛編輯/新增表單 modal（OCR result & 手動新增 & 編輯既有都用這個） ★★ -->
+  <div id="v-edit-form" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
+    <div style="background:#fff;padding:20px 26px;border-radius:14px;max-width:760px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+      <button type="button" onclick="closeVehicleFormModal()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888;line-height:1">×</button>
+      <h3 id="v-edit-title" style="font-size:16px;color:#2E7D32;margin-top:0;margin-bottom:10px" data-i18n="h_ocr_result">AI 辨識結果</h3>
+      <p style="font-size:11px;color:#888;margin-bottom:10px" data-i18n="ocr_hint_edit">點擊各欄位值可直接編輯修正</p>
         <table style="font-size:13px;width:100%"><tbody>
           <tr><td style="width:130px;color:#666;padding:6px"><b data-i18n="lbl_customer_name">客戶姓名</b></td><td><input type="text" id="ve-customer-name" placeholder="此車輛所屬客戶（修改會更新客戶資料）" data-i18n-placeholder="ph_customer_name" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%;background:#fffbea"></td></tr>
           <tr><td style="color:#666;padding:6px"><b data-i18n="lbl_customer_email">客戶 Email</b></td><td><input type="email" id="ve-customer-email" placeholder="設定後客戶可用此 Email 登入並看到自己的車輛保單" data-i18n-placeholder="ph_customer_email" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;width:100%;background:#e8f5e9"></td></tr>
@@ -309,8 +318,11 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           </div>
         </div>
 
-        <button class="btn success" style="margin-top:14px" onclick="saveEditedVehicle()" data-i18n="btn_save_vehicle">儲存車輛資料</button>
-        <button class="btn" style="margin-top:14px;margin-left:8px;background:#0288D1" onclick="addAnotherVehicleSameCustomer()" data-i18n="btn_add_another_vehicle">+ 新增此客戶另一輛車</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;border-top:1px solid #eee;padding-top:14px">
+          <button class="btn success" onclick="saveEditedVehicle()" data-i18n="btn_save_vehicle">儲存車輛資料</button>
+          <button class="btn" style="background:#0288D1" onclick="addAnotherVehicleSameCustomer()" data-i18n="btn_add_another_vehicle">+ 新增此客戶另一輛車</button>
+          <button class="btn" style="background:#777;margin-left:auto" onclick="closeVehicleFormModal()" data-i18n="btn_done_close">完成 / 關閉</button>
+        </div>
         <div id="ve-msg" class="msg"></div>
       </div>
     </div>
@@ -592,6 +604,7 @@ var I18N = {
     btn_add_new_vehicle: '+ 新增車輛',
     btn_add_new_vehicle_manual: '+ 新增車輛（手動）',
     btn_add_new_vehicle_ocr: '+ 新增車輛（上傳行照）',
+    btn_done_close: '完成 / 關閉',
     btn_new_customer: '+ 新增客戶',
     cc_title: '選擇 / 新增客戶',
     cc_hint: '先選一位現有客戶，或為轉介紹的新客戶建立稱呼（如「王大哥」「陳小姐」）。電話與 Email 之後再補。',
@@ -774,6 +787,7 @@ var I18N = {
     btn_add_new_vehicle: '+ Add Vehicle',
     btn_add_new_vehicle_manual: '+ Add Vehicle (Manual)',
     btn_add_new_vehicle_ocr: '+ Add Vehicle (Upload Reg.)',
+    btn_done_close: 'Done',
     btn_new_customer: '+ New Customer',
     cc_title: 'Pick / New Customer',
     cc_hint: 'Pick an existing customer, or create a new one — for referrals just use a friendly name like "Mr. Wang" or "Ms. Chen". Phone and email can be filled later.',
@@ -1426,72 +1440,77 @@ function openManualVehicleForm() {
   var msg = document.getElementById('ve-msg');
   if (msg) { msg.textContent = ''; msg.className = 'msg'; }
 
-  document.getElementById('v-edit-form').style.display = 'block';
-  document.getElementById('v-edit-form').scrollIntoView({behavior:'smooth', block:'start'});
+  document.getElementById('v-edit-form').style.display = 'flex';
   showMsg('ve-msg','ok',
     t('msg_manual_new_vehicle').replace('{name}', custName || ''));
 }
 
-// 「+ 新增車輛（上傳行照）」按鈕（現有車輛 table 上方）→ 滾到上傳區並重置狀態
+// === 上傳行照 modal 開關 ===
+function closeVehicleUploadModal() {
+  var m = document.getElementById('v-upload-modal');
+  if (m) m.style.display = 'none';
+}
+function closeVehicleFormModal() {
+  var m = document.getElementById('v-edit-form');
+  if (m) m.style.display = 'none';
+  window._editIsNew = false;
+}
+
+// 「+ 新增車輛（上傳行照）」按鈕 → 開啟上傳行照 modal
 function scrollToAddVehicle() {
-  // 收起編輯表單、清空殘留
-  var ef = document.getElementById('v-edit-form');
-  if (ef) ef.style.display = 'none';
+  // 沒選客戶 → 先彈出「選擇 / 新增客戶」modal，選好後再次觸發本函式
+  var cid = currentCustomerId();
+  if (!cid) {
+    openCreateCustomerModal(function() { scrollToAddVehicle(); });
+    return;
+  }
+  // 確保編輯表單 modal 是關閉的（避免兩個 modal 疊加）
+  closeVehicleFormModal();
+  // 重置 vid 等狀態，避免上傳被誤導向舊車
   window._editVid = '';
   window._editIsNew = false;
   window._editUserId = '';
-  document.getElementById('v-select').value = '__new__';
-  document.getElementById('v-file').value = '';
+  var sel = document.getElementById('v-select');
+  if (sel) sel.value = '__new__';
+  var file = document.getElementById('v-file');
+  if (file) file.value = '';
   var nameSpan = document.getElementById('v-file-name');
   if (nameSpan) nameSpan.textContent = t('msg_no_file');
   var preview = document.getElementById('v-preview');
   if (preview) preview.style.display = 'none';
   var msg = document.getElementById('v-msg');
   if (msg) { msg.textContent = ''; msg.className = 'msg'; }
-  // 沒選客戶 → 直接彈出「選擇 / 新增客戶」modal，選好後再次觸發本函式
-  var cid = currentCustomerId();
-  if (!cid) {
-    openCreateCustomerModal(function() { scrollToAddVehicle(); });
-    return;
+  var loading = document.getElementById('v-loading');
+  if (loading) loading.style.display = 'none';
+  var ocrBtn = document.getElementById('v-ocr-btn');
+  if (ocrBtn) ocrBtn.style.display = 'none';
+  var upBtn = document.getElementById('v-upload-btn');
+  if (upBtn) upBtn.disabled = false;
+  // 顯示目前操作客戶於 modal header
+  var custSel = document.getElementById('cur-customer');
+  var custName = '';
+  if (custSel && custSel.selectedIndex >= 0) {
+    custName = (custSel.options[custSel.selectedIndex].text || '').split(' · ')[0].trim();
   }
-  // 滾到上傳區
-  var typeSelect = document.getElementById('v-type');
-  if (typeSelect) typeSelect.scrollIntoView({behavior:'smooth', block:'start'});
-  showMsg('v-msg', 'ok',
-    LANG === 'en' ? 'Choose vehicle type and upload registration to create new vehicle'
-                  : '請選擇車輛型式並上傳行照即可新增車輛');
+  var lbl = document.getElementById('v-upload-modal-customer');
+  if (lbl) lbl.textContent = custName || '(未選擇)';
+  // 開啟 modal
+  document.getElementById('v-upload-modal').style.display = 'flex';
 }
 
-// 在編輯某輛車時，按「新增此客戶另一輛車」→ 切回上傳區、客戶 dropdown 預設此車主、清空狀態
+// 在編輯某輛車時，按「新增此客戶另一輛車」→ 關閉編輯 modal，重新以手動模式開啟
 function addAnotherVehicleSameCustomer() {
   var uid = window._editUserId;
   if (!uid) {
     showMsg('ve-msg','err', LANG === 'en' ? 'No customer context' : '找不到目前車輛的客戶');
     return;
   }
-  // 先確保「操作客戶」dropdown 選到此車主
+  // 確保「操作客戶」dropdown 選到此車主
   var custSel = document.getElementById('cur-customer');
   if (custSel) custSel.value = uid;
-  // 收起編輯表單、重置上傳區
-  document.getElementById('v-edit-form').style.display = 'none';
-  window._editVid = '';
-  window._editIsNew = false;
-  window._editUserId = '';
-  document.getElementById('v-select').value = '__new__';
-  document.getElementById('v-file').value = '';
-  var nameSpan = document.getElementById('v-file-name');
-  if (nameSpan) nameSpan.textContent = t('msg_no_file');
-  var preview = document.getElementById('v-preview');
-  if (preview) preview.style.display = 'none';
-  var msg = document.getElementById('v-msg');
-  if (msg) { msg.textContent = ''; msg.className = 'msg'; }
-  // 滾到上傳行照區
-  var typeSelect = document.getElementById('v-type');
-  if (typeSelect) typeSelect.scrollIntoView({behavior:'smooth', block:'start'});
-  // 提示使用者下一步
-  showMsg('v-msg', 'ok',
-    LANG === 'en' ? 'Choose vehicle type and registration image to add another vehicle for this customer'
-                  : '請選擇車型、上傳行照，即可為同客戶新增另一輛車');
+  closeVehicleFormModal();
+  // 直接在 modal 鏈中接續開「手動新增車輛」表單（同一客戶）
+  setTimeout(function(){ openManualVehicleForm(); }, 50);
 }
 
 // v-select 切換 → 「+ 新增車輛」收起編輯表單，避免使用者誤把舊車輛資料當新增填入
@@ -1811,6 +1830,8 @@ async function runOcr() {
 }
 
 function _showEditForm(vid, veh, title) {
+  // 從 OCR / upload 流程進來時，先關掉上傳 modal，避免兩層 modal 疊加
+  closeVehicleUploadModal();
   window._editVid = vid;
   window._editIsNew = false;
   window._editUserId = veh.user_id || '';
@@ -1850,8 +1871,7 @@ function _showEditForm(vid, veh, title) {
   document.getElementById('ve-expiry').value = veh.registration_expiry || '';
   document.getElementById('ve-fuel').value = veh.fuel_type || '';
   updateInspectionWindow();
-  document.getElementById('v-edit-form').style.display = 'block';
-  document.getElementById('v-edit-form').scrollIntoView({behavior:'smooth'});
+  document.getElementById('v-edit-form').style.display = 'flex';
 }
 
 async function editVehicleFromList(vid) {
