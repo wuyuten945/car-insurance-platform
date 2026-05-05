@@ -35,6 +35,10 @@ async def lifespan(app: FastAPI):
     # 建立上傳目錄
     Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
 
+    # 自動補既有 DB 缺漏的欄位（idempotent）— Base.metadata.create_all 不會 ALTER 現有表
+    # 因此每次新增 model 欄位後，要在這裡列出讓既有部署自動補
+    await _ensure_columns()
+
     # Render Free 層 ephemeral filesystem：DB 空時自動 seed（demo 用）
     try:
         import os
