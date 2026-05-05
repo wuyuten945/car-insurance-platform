@@ -200,6 +200,7 @@ class UpdateAgentRequest(BaseModel):
     password: str | None = None
     is_active: bool | None = None
     ip_whitelist: str | None = None
+    role: str | None = None  # 'agent' 或 'super_admin'
 
 @router.patch("/agents/{agent_id}")
 async def update_agent(
@@ -226,6 +227,10 @@ async def update_agent(
         agent.is_active = req.is_active; changes.append("啟用" if req.is_active else "停用")
     if req.ip_whitelist is not None:
         agent.ip_whitelist = req.ip_whitelist; changes.append("IP白名單")
+    if req.role is not None:
+        if req.role not in ("agent", "super_admin"):
+            raise BadRequestError(f"無效的 role：{req.role}")
+        agent.role = req.role; changes.append(f"角色={req.role}")
 
     await log_action(db, admin, "update", "agent", agent_id, f"更新: {','.join(changes)}")
     return APIResponse(message=f"業務員已更新（{','.join(changes)}）")
