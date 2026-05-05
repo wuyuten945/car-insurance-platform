@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { KeyRound, ArrowRight, Loader2, Mail, Languages, AlertTriangle, Copy, Check } from 'lucide-react';
+import { KeyRound, ArrowRight, Loader2, Mail, Languages, AlertTriangle, Copy, Check, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api-client';
@@ -117,16 +117,31 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col bg-gradient-to-b from-primary-500 to-primary-700">
-      {/* Language toggle (top-right) */}
-      <button
-        type="button"
-        onClick={toggleLang}
-        aria-label="Toggle language"
-        className="absolute top-4 right-4 z-10 flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-xs font-bold text-white hover:bg-white/30 transition"
-      >
-        <Languages className="h-3.5 w-3.5" />
-        {lang === 'zh' ? 'EN' : '中'}
-      </button>
+      {/* Top-right controls: 管理員入口 + 語言切換 */}
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+            window.location.href = `${apiBase}/admin`;
+          }}
+          aria-label="管理員入口"
+          title={lang === 'zh' ? '管理員後台' : 'Admin'}
+          className="flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-xs font-bold text-white hover:bg-white/30 transition cursor-pointer"
+        >
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {lang === 'zh' ? '管理員' : 'Admin'}
+        </button>
+        <button
+          type="button"
+          onClick={toggleLang}
+          aria-label="Toggle language"
+          className="flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-xs font-bold text-white hover:bg-white/30 transition cursor-pointer"
+        >
+          <Languages className="h-3.5 w-3.5" />
+          {lang === 'zh' ? 'EN' : '中'}
+        </button>
+      </div>
 
       {/* Top section */}
       <div className="flex flex-1 flex-col items-center justify-center px-6 pt-12 pb-8 text-white">
