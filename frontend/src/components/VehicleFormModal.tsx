@@ -66,21 +66,31 @@ export default function VehicleFormModal({ open, initial, onClose, onSaved }: Pr
       setErr('請至少輸入車牌號碼');
       return;
     }
-    const body: VehiclePayload = { ...form };
+    // 把 form 各字串欄位的空字串轉 null（後端 schema 用 None），數字欄位保留原值
+    const s = (v: string | null | undefined): string | null =>
+      v && String(v).trim() ? String(v).trim() : null;
+    let bodyYear: number | null = null;
+    let bodyMonth: number | null = null;
     if (yearMonth && /^\d{4}-\d{2}$/.test(yearMonth)) {
-      const [y, m] = yearMonth.split('-');
-      body.year = parseInt(y, 10);
-      body.manufacture_month = parseInt(m, 10);
-    } else {
-      body.year = null;
-      body.manufacture_month = null;
+      const [yy, mm] = yearMonth.split('-');
+      bodyYear = parseInt(yy, 10);
+      bodyMonth = parseInt(mm, 10);
     }
-    // 清掉空字串 → null（後端 schema 用 None）— 透過 cast 把 body 視為 Record 走，避開
-    // VehiclePayload 各欄位是 string | number | null | undefined 混型造成 === '' 比較的 TS 報錯
-    const bag = body as Record<string, unknown>;
-    Object.keys(bag).forEach((k) => {
-      if (bag[k] === '') bag[k] = null;
-    });
+    const body: VehiclePayload = {
+      plate_number: form.plate_number.trim(),
+      brand: s(form.brand),
+      model: s(form.model),
+      year: bodyYear,
+      manufacture_month: bodyMonth,
+      color: s(form.color),
+      vin: s(form.vin),
+      engine_cc: form.engine_cc ?? null,
+      vehicle_type: s(form.vehicle_type),
+      fuel_type: s(form.fuel_type),
+      registration_date: s(form.registration_date),
+      reissue_date: s(form.reissue_date),
+      registration_expiry: s(form.registration_expiry),
+    };
     setBusy(true);
     try {
       if (isEdit) {
