@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitErrorHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, Loader2, Send, CheckCircle } from 'lucide-react';
@@ -80,7 +80,7 @@ export default function NewClaimPage() {
   }, [mutation.isError]);
 
   // 驗證失敗 → 自動捲到第一個有錯誤的欄位
-  const onInvalid = (errs: Record<string, { ref?: { name?: string } }>) => {
+  const onInvalid: SubmitErrorHandler<ClaimForm> = (errs) => {
     const first = Object.keys(errs)[0];
     if (!first) return;
     const el = document.querySelector(`[name="${first}"]`) as HTMLElement | null;
