@@ -106,7 +106,7 @@ export default function QuoteRequestsPage() {
       </div>
 
       <Link href="/quote" className="flex items-center justify-center gap-1 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-2 text-xs text-gray-600">
-        <Calculator className="h-4 w-4" /> 想先自助試算保費？前往「續保保費報價」
+        <Calculator className="h-4 w-4" /> 想先自助試算保費？前往「保費簡易試算（參考）」
       </Link>
 
       {isLoading ? (
