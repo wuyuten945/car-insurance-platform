@@ -508,9 +508,27 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           </div>
         </div>
 
-        <!-- 強制險 期間 -->
+        <!-- 強制險 全套（如果跟任意險不同保險公司 / 保單號 / 期間） -->
         <div style="margin-top:14px;padding:12px;background:#FFF3E0;border-radius:8px;border-left:4px solid #E65100">
-          <div style="font-size:13px;color:#E65100;font-weight:bold;margin-bottom:8px" data-i18n="sec_compulsory_period">強制險 期間（汽車強制責任險，可與任意險不同）</div>
+          <div style="font-size:13px;color:#E65100;font-weight:bold;margin-bottom:8px" data-i18n="sec_compulsory_period">強制險（汽車強制責任險，可能跟任意險不同家、不同保單號、不同期間）</div>
+          <div class="row">
+            <div>
+              <label data-i18n="lbl_compulsory_insurer">強制險 保險公司</label>
+              <select id="p-cinsurer" onchange="onInsurerChange('p-cinsurer','p-cinsurer-other')"></select>
+              <input type="text" id="p-cinsurer-other" placeholder="保險公司名稱" data-i18n-placeholder="ph_insurer_other" style="display:none;margin-top:6px">
+            </div>
+            <div>
+              <label data-i18n="lbl_compulsory_policy_no">強制險 保單號碼</label>
+              <input type="text" id="p-cnumber" placeholder="例：CALI-2026-001234">
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label data-i18n="lbl_compulsory_premium">強制險 保費</label>
+              <input type="number" id="p-cpremium" placeholder="1500">
+            </div>
+            <div></div>
+          </div>
           <div class="row">
             <div>
               <label data-i18n="lbl_compulsory_start">強制險 起保日</label>
@@ -588,7 +606,13 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
               <input type="time" id="pe-end-time" lang="en-GB" step="60" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:4px">
             </div>
           </td></tr>
-          <tr><td colspan="2" style="padding:8px 6px 4px;color:#E65100;font-weight:bold;font-size:13px;border-top:1px solid #eee" data-i18n="sec_compulsory_period">強制險 期間</td></tr>
+          <tr><td colspan="2" style="padding:8px 6px 4px;color:#E65100;font-weight:bold;font-size:13px;border-top:1px solid #eee" data-i18n="sec_compulsory_period">強制險（可能跟任意險不同家）</td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_insurer">強制險 保險公司</td><td>
+            <select id="pe-cinsurer" onchange="onInsurerChange('pe-cinsurer','pe-cinsurer-other')" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></select>
+            <input type="text" id="pe-cinsurer-other" placeholder="保險公司名稱" data-i18n-placeholder="ph_insurer_other" style="display:none;margin-top:6px;width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
+          </td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_policy_no">強制險 保單號碼</td><td><input type="text" id="pe-cnumber" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_premium">強制險 保費</td><td><input type="number" id="pe-cpremium" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_start">強制險起保日</td><td>
             <div style="display:flex;gap:6px">
               <input type="date" id="pe-cstart" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:4px">
@@ -970,7 +994,10 @@ var I18N = {
     opt_active: '有效', opt_expiring: '即將到期', opt_expired: '已到期',
     lbl_start_date: '起保日', lbl_end_date: '到期日', lbl_premium: '總保費',
     sec_voluntary_period: '任意險 期間（綜合險 / 第三人責任 / 車體損失 等）',
-    sec_compulsory_period: '強制險 期間（汽車強制責任險，可與任意險不同）',
+    sec_compulsory_period: '強制險（汽車強制責任險，可能跟任意險不同家、不同保單號、不同期間）',
+    lbl_compulsory_insurer: '強制險 保險公司',
+    lbl_compulsory_policy_no: '強制險 保單號碼',
+    lbl_compulsory_premium: '強制險 保費',
     lbl_compulsory_start: '強制險 起保日',
     lbl_compulsory_end: '強制險 到期日',
     h_coverage_items: '保障項目',
@@ -1160,9 +1187,12 @@ var I18N = {
     opt_active: 'Active', opt_expiring: 'Expiring', opt_expired: 'Expired',
     lbl_start_date: 'Start', lbl_end_date: 'End', lbl_premium: 'Premium',
     sec_voluntary_period: 'Voluntary Coverage Period (Comprehensive / 3rd-Party / Collision etc.)',
-    sec_compulsory_period: 'Compulsory Coverage Period (CALI — may differ from voluntary)',
-    lbl_compulsory_start: 'Compulsory Start',
-    lbl_compulsory_end: 'Compulsory End',
+    sec_compulsory_period: 'Compulsory (CALI — may have different insurer / policy # / period from voluntary)',
+    lbl_compulsory_insurer: 'CALI Insurer',
+    lbl_compulsory_policy_no: 'CALI Policy #',
+    lbl_compulsory_premium: 'CALI Premium',
+    lbl_compulsory_start: 'CALI Start',
+    lbl_compulsory_end: 'CALI End',
     h_coverage_items: 'Coverage Items',
     btn_add_item: '+ Add Item',
     btn_create_policy: 'Create Policy',
@@ -3015,6 +3045,9 @@ async function createPolicy() {
     end_date: eParts.date,
     start_time: sParts.time,
     end_time: eParts.time,
+    compulsory_insurer_name: getInsurerValue('p-cinsurer','p-cinsurer-other') || null,
+    compulsory_policy_number: (document.getElementById('p-cnumber').value || '').trim() || null,
+    compulsory_premium: parseFloat(document.getElementById('p-cpremium').value) || null,
     compulsory_start_date: csParts.date,
     compulsory_end_date: ceParts.date,
     compulsory_start_time: csParts.time,
@@ -3050,7 +3083,11 @@ async function createPolicy() {
 
 function _resetPolicyFormFields() {
   fillInsurerSelect('p-insurer', 'p-insurer-other', '');
-  ['p-number','p-premium'].forEach(function(id){ document.getElementById(id).value = ''; });
+  fillInsurerSelect('p-cinsurer', 'p-cinsurer-other', '');
+  ['p-number','p-premium','p-cnumber','p-cpremium'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
   _writeDatePair('p-start', '', '');
   _writeDatePair('p-end', '', '');
   _writeDatePair('p-cstart', '', '');
@@ -3304,6 +3341,9 @@ function editPolicyFromList(pid) {
   _writeDatePair('pe-end', p.end_date, p.end_time);
   _writeDatePair('pe-cstart', p.compulsory_start_date, p.compulsory_start_time);
   _writeDatePair('pe-cend', p.compulsory_end_date, p.compulsory_end_time);
+  fillInsurerSelect('pe-cinsurer', 'pe-cinsurer-other', p.compulsory_insurer_name || '');
+  document.getElementById('pe-cnumber').value = p.compulsory_policy_number || '';
+  document.getElementById('pe-cpremium').value = p.compulsory_premium || '';
   document.getElementById('pe-premium').value = p.total_premium || '';
   document.getElementById('pe-status').value = p.status || 'active';
   document.getElementById('p-edit-modal').style.display = 'flex';
@@ -3328,6 +3368,9 @@ async function savePolicyEdit() {
     end_date: peeParts.date,
     start_time: pesParts.time,
     end_time: peeParts.time,
+    compulsory_insurer_name: getInsurerValue('pe-cinsurer','pe-cinsurer-other') || null,
+    compulsory_policy_number: (document.getElementById('pe-cnumber').value || '').trim() || null,
+    compulsory_premium: parseFloat(document.getElementById('pe-cpremium').value) || null,
     compulsory_start_date: pcsParts.date,
     compulsory_end_date: pceParts.date,
     compulsory_start_time: pcsParts.time,

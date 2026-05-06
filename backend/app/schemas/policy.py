@@ -25,6 +25,9 @@ class PolicyOut(BaseModel):
     end_date: date
     start_time: time | None = None
     end_time: time | None = None
+    compulsory_insurer_name: str | None = None
+    compulsory_policy_number: str | None = None
+    compulsory_premium: Decimal | None = None
     compulsory_start_date: date | None = None
     compulsory_end_date: date | None = None
     compulsory_start_time: time | None = None
@@ -122,6 +125,9 @@ class PolicyCreate(BaseModel):
     end_date: date
     start_time: time | None = None
     end_time: time | None = None
+    compulsory_insurer_name: str | None = None
+    compulsory_policy_number: str | None = None
+    compulsory_premium: Decimal | None = None
     compulsory_start_date: date | None = None
     compulsory_end_date: date | None = None
     compulsory_start_time: time | None = None
@@ -140,6 +146,9 @@ class PolicyUpdate(BaseModel):
     end_date: date | None = None
     start_time: time | None = None
     end_time: time | None = None
+    compulsory_insurer_name: str | None = None
+    compulsory_policy_number: str | None = None
+    compulsory_premium: Decimal | None = None
     compulsory_start_date: date | None = None
     compulsory_end_date: date | None = None
     compulsory_start_time: time | None = None

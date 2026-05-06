@@ -50,6 +50,9 @@ async def _ensure_columns():
         ("policies",      "compulsory_end_date",   "DATE"),
         ("policies",      "compulsory_start_time", "TIME"),
         ("policies",      "compulsory_end_time",   "TIME"),
+        ("policies",      "compulsory_insurer_name",  "VARCHAR(100)"),
+        ("policies",      "compulsory_policy_number", "VARCHAR(50)"),
+        ("policies",      "compulsory_premium",       "NUMERIC(12, 2)"),
     ]
     is_sqlite = "sqlite" in str(engine.url)
     try:

@@ -18,7 +18,11 @@ class Policy(TimestampMixin, Base):
     # 起保 / 到期 的「時:分」精度（NULL = 整日，舊資料保留 NULL）
     start_time = Column(Time, nullable=True)
     end_time = Column(Time, nullable=True)
-    # 強制險 期間（汽車強制責任險，可與任意險期間不同；舊資料/未填皆為 NULL）
+    # 強制險 全套（汽車強制責任險）— 可能跟任意險不同保險公司、不同保單號、不同保費、不同期間
+    # 舊資料/未填皆為 NULL；要保人自己若只有強制險而無任意險，仍以上方欄位為主
+    compulsory_insurer_name = Column(String(100), nullable=True)
+    compulsory_policy_number = Column(String(50), nullable=True)
+    compulsory_premium = Column(Numeric(12, 2), nullable=True)
     compulsory_start_date = Column(Date, nullable=True)
     compulsory_end_date = Column(Date, nullable=True)
     compulsory_start_time = Column(Time, nullable=True)
