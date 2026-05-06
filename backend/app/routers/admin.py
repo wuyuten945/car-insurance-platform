@@ -684,6 +684,57 @@ function onInsurerChange(selectId, otherInputId) {
   }
 }
 
+// === 民國年顯示輔助 ===
+// 西元 → 民國（同時保留月日）。範例：'2026-03-14' → '民國 115 年 (2026 年) 03 月 14 日'
+function rocLabel(val) {
+  if (!val) return '';
+  var p = String(val).split('-');
+  if (p.length < 2) return '';
+  var y = parseInt(p[0]);
+  if (isNaN(y) || y < 1912) return '';
+  var roc = y - 1911;
+  var mm = (p[1] || '').padStart(2, '0');
+  var s = '民國 ' + roc + ' 年 (' + y + ' 年) ' + mm + ' 月';
+  if (p.length >= 3 && p[2]) s += ' ' + p[2].padStart(2, '0') + ' 日';
+  return s;
+}
+
+// 需要顯示民國年小標的 input id（行照欄位 + 保單期間 + 編輯保單期間）
+var ROC_FIELDS = [
+  've-year-month','ve-reg-date','ve-reissue-date','ve-expiry','ve-window-start','ve-window-end',
+  'p-start','p-end','pe-start','pe-end'
+];
+
+function _attachRocLabel(inputId) {
+  var inp = document.getElementById(inputId);
+  if (!inp) return;
+  var lblId = inputId + '-roc';
+  if (document.getElementById(lblId)) return; // 已附加過
+  var lbl = document.createElement('small');
+  lbl.id = lblId;
+  lbl.style.cssText = 'display:block;color:#1565C0;font-size:11px;margin-top:3px;font-weight:600';
+  inp.parentElement.insertBefore(lbl, inp.nextSibling);
+  function refresh() { lbl.textContent = rocLabel(inp.value) || ''; }
+  inp.addEventListener('input', refresh);
+  inp.addEventListener('change', refresh);
+  refresh();
+}
+
+function initRocLabels() {
+  ROC_FIELDS.forEach(_attachRocLabel);
+}
+
+// 程式化設值（如 _showEditForm / OCR 自動填）後手動更新標籤（addEventListener 不會自動觸發）
+function refreshRocLabels() {
+  ROC_FIELDS.forEach(function(id){
+    var inp = document.getElementById(id);
+    var lbl = document.getElementById(id + '-roc');
+    if (inp && lbl) lbl.textContent = rocLabel(inp.value) || '';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initRocLabels);
+
 // --- i18n (中/英切換) ---
 var LANG = localStorage.getItem('admin_lang') || 'zh';
 var I18N = {
@@ -1619,6 +1670,7 @@ function _doOpenManualVehicleFormForCurrent() {
   if (msg) { msg.textContent = ''; msg.className = 'msg'; }
 
   document.getElementById('v-edit-form').style.display = 'flex';
+  refreshRocLabels();
   showMsg('ve-msg','ok',
     t('msg_manual_new_vehicle').replace('{name}', custName || ''));
 }
@@ -2052,6 +2104,7 @@ function _showEditForm(vid, veh, title) {
   document.getElementById('ve-fuel').value = veh.fuel_type || '';
   updateInspectionWindow();
   document.getElementById('v-edit-form').style.display = 'flex';
+  refreshRocLabels();
 }
 
 async function editVehicleFromList(vid) {
@@ -2084,6 +2137,7 @@ function updateInspectionWindow() {
   var end = new Date(d.getTime()); end.setDate(end.getDate() + 30);
   ws.value = fmt(start);
   we.value = fmt(end);
+  refreshRocLabels();
 }
 
 // 手動新增車輛 → POST /customer/{cid}/vehicles，成功後切回 PATCH 編輯模式
@@ -2875,6 +2929,7 @@ function _resetPolicyFormFields() {
   document.getElementById('p-status').value = 'active';
   document.getElementById('p-items').innerHTML = '';
   itemCount = 0;
+  refreshRocLabels();
 }
 
 // 全域保留最近一次抓的保單（雙擊展開時不再重新打 API）
@@ -3060,6 +3115,7 @@ function editPolicyFromList(pid) {
   document.getElementById('pe-premium').value = p.total_premium || '';
   document.getElementById('pe-status').value = p.status || 'active';
   document.getElementById('p-edit-modal').style.display = 'flex';
+  refreshRocLabels();
 }
 
 function closePolicyEdit() {
