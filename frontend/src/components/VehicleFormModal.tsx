@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import api from '@/lib/api-client';
 import { VEHICLE_TYPE_GROUPS, FUEL_TYPES, rocLabel } from '@/lib/vehicleTypes';
+import { nextInspectionDue } from '@/lib/inspectionRules';
 
 export interface VehiclePayload {
   id?: string;
@@ -58,6 +59,17 @@ export default function VehicleFormModal({ open, initial, onClose, onSaved }: Pr
 
   const update = <K extends keyof VehiclePayload>(k: K, v: VehiclePayload[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
+  };
+
+  // 任何「車型 / 出廠年月 / 原發照日期」變動 → 自動推算驗車到期日（除非使用者已手動覆寫）
+  const autoExpiry = (typeOverride?: string | null, ymOverride?: string, regOverride?: string) => {
+    const vt = typeOverride !== undefined ? typeOverride : form.vehicle_type;
+    const ym = ymOverride !== undefined ? ymOverride : yearMonth;
+    const rd = regOverride !== undefined ? regOverride : (form.registration_date ?? '');
+    if (!vt || !ym || !rd || !/^\d{4}-\d{2}$/.test(ym)) return;
+    const [y, m] = ym.split('-');
+    const due = nextInspectionDue(vt, parseInt(y, 10), parseInt(m, 10), rd);
+    if (due) setForm((f) => ({ ...f, registration_expiry: due }));
   };
 
   const handleSave = async () => {
@@ -130,7 +142,7 @@ export default function VehicleFormModal({ open, initial, onClose, onSaved }: Pr
 
             <div>
               <label className={labelClass}>車輛型式（監理分類）</label>
-              <select className={inputClass} value={form.vehicle_type ?? ''} onChange={(e) => update('vehicle_type', e.target.value)}>
+              <select className={inputClass} value={form.vehicle_type ?? ''} onChange={(e) => { update('vehicle_type', e.target.value); autoExpiry(e.target.value); }}>
                 <option value="">— 請選擇 —</option>
                 {VEHICLE_TYPE_GROUPS.map((g) => (
                   <optgroup key={g.label} label={g.label}>
@@ -153,7 +165,7 @@ export default function VehicleFormModal({ open, initial, onClose, onSaved }: Pr
 
             <div>
               <label className={labelClass}>出廠年月</label>
-              <input type="month" className={inputClass} value={yearMonth} onChange={(e) => setYearMonth(e.target.value)} />
+              <input type="month" className={inputClass} value={yearMonth} onChange={(e) => { setYearMonth(e.target.value); autoExpiry(undefined, e.target.value); }} />
               {yearMonth && <span className={rocClass}>{rocLabel(yearMonth)}</span>}
             </div>
 
@@ -183,7 +195,7 @@ export default function VehicleFormModal({ open, initial, onClose, onSaved }: Pr
             <div className="grid grid-cols-1 gap-3">
               <div>
                 <label className={labelClass}>原發照日期</label>
-                <input type="date" className={inputClass} value={form.registration_date ?? ''} onChange={(e) => update('registration_date', e.target.value)} />
+                <input type="date" className={inputClass} value={form.registration_date ?? ''} onChange={(e) => { update('registration_date', e.target.value); autoExpiry(undefined, undefined, e.target.value); }} />
                 {form.registration_date && <span className={rocClass}>{rocLabel(form.registration_date)}</span>}
               </div>
               <div>

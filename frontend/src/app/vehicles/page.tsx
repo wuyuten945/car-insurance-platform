@@ -15,6 +15,8 @@ import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
 import VehicleFormModal, { type VehiclePayload } from '@/components/VehicleFormModal';
 import AddToCalendar from '@/components/AddToCalendar';
+import InspectionInsuranceGuide from '@/components/InspectionInsuranceGuide';
+import { useEligibility } from '@/lib/useEligibility';
 
 interface Vehicle {
   id: string;
@@ -75,12 +77,27 @@ export default function VehiclesPage() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<VehiclePayload | null>(null);
+  const { eligibility } = useEligibility();
 
   const { data: vehicles, isLoading } = useQuery({
     queryKey: ['vehicles'],
     queryFn: async () => {
       const res = await api.get('/api/v1/customers/vehicles');
       return res.data.data as Vehicle[];
+    },
+    enabled: isAuthenticated,
+  });
+
+  // 抓自己所有保單，給驗車卡片用來檢查強制險夠不夠
+  const { data: allPolicies } = useQuery({
+    queryKey: ['my-policies-for-inspection'],
+    queryFn: async () => {
+      const res = await api.get('/api/v1/policies');
+      return (res.data.data || []) as Array<{
+        id: string; status: string; vehicle_id?: string | null;
+        compulsory_end_date?: string | null; end_date?: string;
+        data_source?: string;
+      }>;
     },
     enabled: isAuthenticated,
   });
@@ -133,7 +150,16 @@ export default function VehiclesPage() {
           </button>
         </div>
       ) : (
-        vehicles.map((v) => <VehicleCard key={v.id} vehicle={v} onEdit={() => handleEdit(v)} />)
+        vehicles.map((v) => (
+          <VehicleCard
+            key={v.id}
+            vehicle={v}
+            onEdit={() => handleEdit(v)}
+            policies={(allPolicies ?? []).filter((p) => p.vehicle_id === v.id)}
+            hasAgentPolicy={eligibility.has_agent_policy}
+            lineOaUrl={eligibility.line_oa_url}
+          />
+        ))
       )}
 
       <VehicleFormModal
@@ -146,7 +172,17 @@ export default function VehiclesPage() {
   );
 }
 
-function VehicleCard({ vehicle, onEdit }: { vehicle: Vehicle; onEdit: () => void }) {
+interface PolicyForGuide {
+  id: string; status: string; vehicle_id?: string | null;
+  compulsory_end_date?: string | null; end_date?: string;
+  data_source?: string;
+}
+function VehicleCard({
+  vehicle, onEdit, policies, hasAgentPolicy, lineOaUrl,
+}: {
+  vehicle: Vehicle; onEdit: () => void;
+  policies: PolicyForGuide[]; hasAgentPolicy: boolean; lineOaUrl: string;
+}) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showStatus, setShowStatus] = useState(false);
@@ -283,6 +319,16 @@ function VehicleCard({ vehicle, onEdit }: { vehicle: Vehicle; onEdit: () => void
             </p>
           </div>
         </div>
+
+        {/* 驗車期間 + 強制險引導 */}
+        <InspectionInsuranceGuide
+          vehicleId={vehicle.id}
+          vehiclePlate={vehicle.plate_number}
+          registrationExpiry={vehicle.registration_expiry}
+          policies={policies}
+          hasAgentPolicy={hasAgentPolicy}
+          lineOaUrl={lineOaUrl}
+        />
 
         {/* Registration image — 只有自填紀錄能上傳/更換；業務員建檔的只讀 */}
         {vehicle.registration_image_url ? (
