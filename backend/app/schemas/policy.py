@@ -155,3 +155,5 @@ class PolicyUpdate(BaseModel):
     compulsory_end_time: time | None = None
     total_premium: Decimal | None = None
     document_url: str | None = None
+    # 整批 replace 保障項目；None = 不動，空陣列 = 全清掉
+    items: list[PolicyItemCreate] | None = None

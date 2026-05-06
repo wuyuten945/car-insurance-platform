@@ -199,9 +199,32 @@ class PolicyService:
             if existing.scalar_one_or_none():
                 raise BadRequestError(f"保單號碼 {update_data['policy_number']} 已存在")
 
+        # items 是 relationship，要單獨處理（整批 replace：先刪舊 → 再插新）
+        items_payload = update_data.pop("items", None)
+
         for key, value in update_data.items():
             setattr(policy, key, value)
+
+        if items_payload is not None:
+            # 刪除既有保障項目
+            for it in list(policy.items):
+                await self.db.delete(it)
+            await self.db.flush()
+            # 插入新的
+            for item_data in items_payload:
+                self.db.add(PolicyItem(
+                    policy_id=policy.id,
+                    item_name=item_data["item_name"],
+                    coverage_limit=item_data.get("coverage_limit"),
+                    deductible=item_data.get("deductible"),
+                    premium=item_data.get("premium"),
+                    is_active=item_data.get("is_active", True),
+                    description=item_data.get("description"),
+                    exclusions=item_data.get("exclusions"),
+                ))
+
         await self.db.flush()
+        await self.db.refresh(policy)
         return policy
 
     async def delete_policy(self, user_id: str, policy_id: str) -> None:

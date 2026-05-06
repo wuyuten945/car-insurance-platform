@@ -635,6 +635,14 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
             </select>
           </td></tr>
         </tbody></table>
+
+        <!-- 保障項目（編輯版）-->
+        <div style="margin-top:14px;padding:12px;background:#F1F8E9;border-radius:8px;border-left:4px solid #2E7D32">
+          <div style="font-size:13px;color:#2E7D32;font-weight:bold;margin-bottom:8px" data-i18n="h_coverage_items">保障項目</div>
+          <div id="pe-items"></div>
+          <button class="btn" style="background:#666;margin-top:8px;padding:6px 14px;font-size:12px" onclick="addEditItemRow()" data-i18n="btn_add_item">+ 新增項目</button>
+        </div>
+
         <div style="margin-top:14px;text-align:right">
           <button class="btn" style="background:#999;color:#fff" onclick="closePolicyEdit()" data-i18n="btn_cancel">取消</button>
           <button class="btn success" onclick="savePolicyEdit()" data-i18n="btn_save">儲存</button>
@@ -3053,18 +3061,45 @@ async function loadVehiclesForPolicySelect(cid) {
 }
 
 let itemCount = 0;
-function addItemRow() {
+// 共用建項目 row 的工具：containerId 指定要 append 到哪個 div；values 可選預填 {item_name, coverage_limit, deductible, premium}
+function _buildItemRow(containerId, values) {
   itemCount++;
+  values = values || {};
   const div = document.createElement('div');
   div.className = 'item-row';
-  div.id = 'item-'+itemCount;
+  div.id = 'item-' + itemCount;
+  // helper: 把數字 → 千分位字串
+  function fmt(v){ if (v == null || v === '') return ''; return Number(v).toLocaleString('en-US', {maximumFractionDigits:2}); }
+  function esc(v){ return (v == null ? '' : String(v).replace(/"/g,'&quot;')); }
   div.innerHTML =
-    '<input placeholder="' + t('ph_item_name') + '" data-field="item_name">' +
-    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_coverage_limit') + '" data-field="coverage_limit" style="max-width:120px">' +
-    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_deductible') + '" data-field="deductible" style="max-width:100px">' +
-    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_premium') + '" data-field="premium" style="max-width:100px">' +
+    '<input placeholder="' + t('ph_item_name') + '" data-field="item_name" value="' + esc(values.item_name) + '">' +
+    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_coverage_limit') + '" data-field="coverage_limit" style="max-width:120px" value="' + esc(fmt(values.coverage_limit)) + '">' +
+    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_deductible') + '" data-field="deductible" style="max-width:100px" value="' + esc(fmt(values.deductible)) + '">' +
+    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_premium') + '" data-field="premium" style="max-width:100px" value="' + esc(fmt(values.premium)) + '">' +
     '<button class="btn danger" onclick="this.parentElement.remove()">X</button>';
-  document.getElementById('p-items').appendChild(div);
+  document.getElementById(containerId).appendChild(div);
+}
+
+function addItemRow() { _buildItemRow('p-items'); }
+function addEditItemRow() { _buildItemRow('pe-items'); }
+
+// 從 .item-row 列表收集成 array（金額用 parseThousand 拆千分位）
+function _collectItemRows(containerId) {
+  var out = [];
+  document.querySelectorAll('#' + containerId + ' .item-row').forEach(function(row){
+    var item = {};
+    row.querySelectorAll('input').forEach(function(inp){
+      var f = inp.dataset.field;
+      if (!f) return;
+      if (f === 'item_name') item[f] = inp.value;
+      else if (inp.value) {
+        var n = parseThousand(inp.value);
+        if (n != null) item[f] = n;
+      }
+    });
+    if (item.item_name) out.push(item);
+  });
+  return out;
 }
 
 async function createPolicy() {
@@ -3408,6 +3443,16 @@ function editPolicyFromList(pid) {
   document.getElementById('pe-cnumber').value = p.compulsory_policy_number || '';
   setNumberWithComma('pe-cpremium', p.compulsory_premium);
   setNumberWithComma('pe-premium', p.total_premium);
+  // 載入既有保障項目到 pe-items
+  document.getElementById('pe-items').innerHTML = '';
+  (p.items || []).forEach(function(it){
+    _buildItemRow('pe-items', {
+      item_name: it.item_name,
+      coverage_limit: it.coverage_limit,
+      deductible: it.deductible,
+      premium: it.premium,
+    });
+  });
   document.getElementById('pe-status').value = p.status || 'active';
   document.getElementById('p-edit-modal').style.display = 'flex';
   refreshRocLabels();
@@ -3442,6 +3487,8 @@ async function savePolicyEdit() {
   };
   var prem = parseThousand(document.getElementById('pe-premium').value);
   if (prem != null) body.total_premium = prem;
+  // 蒐集保障項目（整批 replace；後端會先刪舊再插新）
+  body.items = _collectItemRows('pe-items');
 
   // ① 先更新保單欄位
   try {
