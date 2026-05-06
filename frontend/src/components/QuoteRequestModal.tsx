@@ -92,9 +92,11 @@ export default function QuoteRequestModal({
 
   const handleSubmit = async () => {
     setErr('');
-    const desired = Object.entries(items)
+    const desired: { name: string; limit?: number; note?: string }[] = Object.entries(items)
       .filter(([, v]) => v.checked)
-      .map(([name, v]) => ({ name, limit: v.limit }));
+      .map(([name, v]): { name: string; limit?: number } =>
+        v.limit != null ? { name, limit: v.limit } : { name }
+      );
     if (customItem.trim()) {
       customItem.split(/[,，;；]+/).map((s) => s.trim()).filter(Boolean)
         .forEach((s) => desired.push({ name: s }));
