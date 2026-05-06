@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Loader2, Upload, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Send, CheckCircle } from 'lucide-react';
 import api from '@/lib/api-client';
 import { ACCIDENT_TYPES, MY_SITUATIONS } from '@/lib/constants';
 import { useT } from '@/lib/i18n/LanguageProvider';
@@ -69,6 +69,27 @@ export default function NewClaimPage() {
     onSuccess: () => setSubmitted(true),
   });
 
+  // 送出成功 → 自動把畫面捲到頂部，讓使用者看到「✓ 已送出」確認頁
+  useEffect(() => {
+    if (submitted) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [submitted]);
+
+  // 送出失敗 → 把錯誤訊息捲到視野中央
+  useEffect(() => {
+    if (mutation.isError) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [mutation.isError]);
+
+  // 驗證失敗 → 自動捲到第一個有錯誤的欄位
+  const onInvalid = (errs: Record<string, { ref?: { name?: string } }>) => {
+    const first = Object.keys(errs)[0];
+    if (!first) return;
+    const el = document.querySelector(`[name="${first}"]`) as HTMLElement | null;
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      try { el.focus(); } catch {}
+    }
+  };
+
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-20">
@@ -106,7 +127,7 @@ export default function NewClaimPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-5">
+      <form onSubmit={handleSubmit((data) => mutation.mutate(data), onInvalid)} className="space-y-5">
         <div>
           <label className={labelClass}>{t('claimForm.lbl.policy')}</label>
           <select {...register('policy_id')} className={inputClass}>
@@ -197,8 +218,8 @@ export default function NewClaimPage() {
           disabled={mutation.isPending}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 py-3.5 text-base font-semibold text-white transition hover:bg-primary-700 disabled:opacity-50"
         >
-          {mutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
-          {t('claimForm.btn.submit')}
+          {mutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+          {mutation.isPending ? t('claimForm.btn.submitting') : t('claimForm.btn.submit')}
         </button>
       </form>
     </div>
