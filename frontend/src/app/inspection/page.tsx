@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 interface Station {
   id: string;
@@ -37,6 +38,7 @@ const TYPE_LABELS: Record<string, { label: string; color: string; bg: string }> 
 };
 
 export default function InspectionPage() {
+  const { ready: __authReady } = useAuthGuard();
   const [keyword, setKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -114,6 +116,8 @@ export default function InspectionPage() {
   };
 
   const hasActiveFilters = keyword || selectedCity || selectedType;
+
+  if (!__authReady) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">

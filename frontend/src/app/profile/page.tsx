@@ -14,6 +14,7 @@ import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { useT } from '@/lib/i18n/LanguageProvider';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 type ProfileForm = {
   name: string;
@@ -47,6 +48,7 @@ const makeProfileSchema = (t: (k: string) => string) => z.object({
 });
 
 export default function ProfilePage() {
+  const { ready: __authReady } = useAuthGuard();
   const router = useRouter();
   const { user, loadUser, logout, isAuthenticated } = useAuthStore();
   const { t } = useT();
@@ -128,6 +130,8 @@ export default function ProfilePage() {
   const inputClassNoIcon = 'w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100';
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5';
   const sectionTitle = 'text-sm font-bold text-gray-800 mb-3 mt-2 first:mt-0';
+
+  if (!__authReady) return null;
 
   return (
     <div className="px-4 py-5 space-y-6">

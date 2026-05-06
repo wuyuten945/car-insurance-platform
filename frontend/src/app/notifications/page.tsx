@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Loader2, CheckCheck, Car, Shield, Calendar, CircleCheck, CircleX, Clock, AlertTriangle } from 'lucide-react';
 import api from '@/lib/api-client';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 interface PinnedItem {
   id: string;
@@ -41,6 +42,7 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
+  const { ready: __authReady } = useAuthGuard();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -71,6 +73,8 @@ export default function NotificationsPage() {
     if (dd < 7) return `${dd} 天前`;
     return d.toLocaleDateString('zh-TW');
   };
+
+  if (!__authReady) return null;
 
   return (
     <div className="px-4 py-5">

@@ -6,6 +6,7 @@ import { FileText, ChevronRight, Loader2, Phone, Truck } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useT } from '@/lib/i18n/LanguageProvider';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 interface PolicyItem {
   item_name: string;
@@ -69,6 +70,7 @@ function hasTowInsurance(items: PolicyItem[]): boolean {
 }
 
 export default function PoliciesPage() {
+  const { ready: __authReady } = useAuthGuard();
   const [activeTab, setActiveTab] = useState('all');
   const { t } = useT();
 
@@ -96,6 +98,8 @@ export default function PoliciesPage() {
   const filtered = policies?.filter((p) =>
     activeTab === 'all' ? true : p.status === activeTab
   ) ?? [];
+
+  if (!__authReady) return null;
 
   return (
     <div className="px-4 py-5">

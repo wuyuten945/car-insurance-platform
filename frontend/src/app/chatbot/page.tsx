@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Send, Bot, Loader2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 interface Message {
   id?: string;
@@ -22,6 +23,7 @@ const QUICK_REPLIES = [
 ];
 
 export default function ChatbotPage() {
+  const { ready: __authReady } = useAuthGuard();
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
@@ -76,6 +78,8 @@ export default function ChatbotPage() {
       handleSend();
     }
   };
+
+  if (!__authReady) return null;
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">

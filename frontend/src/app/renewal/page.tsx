@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Check, Star, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 interface RenewalQuote {
   id: string;
@@ -23,6 +24,9 @@ interface RenewalQuote {
 }
 
 export default function RenewalPage() {
+  const { ready: __authReady } = useAuthGuard();
+  if (!__authReady) return null;
+
   return (
     <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary-500" /></div>}>
       <RenewalContent />

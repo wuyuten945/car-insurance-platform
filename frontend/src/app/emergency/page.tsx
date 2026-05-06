@@ -10,6 +10,7 @@ import {
 import api from '@/lib/api-client';
 import { useEligibility } from '@/lib/useEligibility';
 import LockedFeatureNotice from '@/components/LockedFeatureNotice';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 interface NearbyResource {
   id: string;
@@ -88,6 +89,7 @@ export default function EmergencyPage() {
   const [uploadingKey, setUploadingKey] = useState('');
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const { eligibility } = useEligibility();
+  const { ready: authReady } = useAuthGuard();
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -158,6 +160,8 @@ export default function EmergencyPage() {
     }
     return `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
   };
+
+  if (!authReady) return null;
 
   return (
     <div className="px-4 py-5 space-y-6">

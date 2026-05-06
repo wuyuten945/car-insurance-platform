@@ -11,6 +11,7 @@ import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { useT } from '@/lib/i18n/LanguageProvider';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 interface Vehicle {
   id: string;
@@ -52,6 +53,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 };
 
 export default function VehiclesPage() {
+  const { ready: __authReady } = useAuthGuard();
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const { t } = useT();
@@ -70,6 +72,8 @@ export default function VehiclesPage() {
   });
 
   if (!isAuthenticated) return null;
+
+  if (!__authReady) return null;
 
   return (
     <div className="px-4 py-5 space-y-4">

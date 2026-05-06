@@ -12,6 +12,7 @@ import { ACCIDENT_TYPES, MY_SITUATIONS } from '@/lib/constants';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useEligibility } from '@/lib/useEligibility';
 import LockedFeatureNotice from '@/components/LockedFeatureNotice';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 const makeClaimSchema = (t: (k: string) => string) => z.object({
   policy_id: z.string().min(1, t('claimForm.err.policyRequired')),
@@ -46,6 +47,7 @@ export default function NewClaimPage() {
     { value: 'other', label: t('claims.type.other') },
   ];
   const [submitted, setSubmitted] = useState(false);
+  const { ready: authReady } = useAuthGuard();
   const { eligibility, isLoading: eligLoading } = useEligibility();
 
   const { data: policies } = useQuery({
@@ -73,9 +75,13 @@ export default function NewClaimPage() {
   });
 
   // 送出成功 → 自動把畫面捲到頂部，讓使用者看到「✓ 已送出」確認頁
+  // 6 秒後自動跳到「理賠紀錄」頁，避免使用者沒按按鈕被卡在這頁（包含登出後又重整的尷尬狀況）
   useEffect(() => {
-    if (submitted) window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [submitted]);
+    if (!submitted) return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const timer = setTimeout(() => router.push('/claims'), 6000);
+    return () => clearTimeout(timer);
+  }, [submitted, router]);
 
   // 送出失敗 → 把錯誤訊息捲到視野中央
   useEffect(() => {
@@ -92,6 +98,9 @@ export default function NewClaimPage() {
       try { el.focus(); } catch {}
     }
   };
+
+  // 等 auth guard 確認登入再 render（沒登入會被導去 /login）
+  if (!authReady) return null;
 
   // 自填客戶 → 鎖定整頁，顯示「請聯繫 LINE」CTA
   if (!eligLoading && !eligibility.can_file_claim) {

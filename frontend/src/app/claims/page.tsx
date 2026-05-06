@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api-client';
 import { CLAIM_STAGES } from '@/lib/constants';
 import { useT } from '@/lib/i18n/LanguageProvider';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 
 interface Claim {
   id: string;
@@ -29,6 +30,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function ClaimsPage() {
+  const { ready: __authReady } = useAuthGuard();
   const { t, lang } = useT();
   const CLAIM_TYPE_MAP: Record<string, string> = {
     collision: t('claims.type.collision'),
@@ -54,6 +56,8 @@ export default function ClaimsPage() {
     const stage = CLAIM_STAGES.find((s) => s.key === status);
     return stage?.icon ?? '';
   };
+
+  if (!__authReady) return null;
 
   return (
     <div className="px-4 py-5 space-y-5">
