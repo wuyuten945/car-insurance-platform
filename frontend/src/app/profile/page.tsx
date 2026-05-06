@@ -58,6 +58,7 @@ export default function ProfilePage() {
   const MENU_ITEMS = [
     { href: '/vehicles', icon: Car, label: t('profile.menu.vehicles') },
     { href: '/quote', icon: Calculator, label: '續保保費報價' },
+    { href: '/quote-requests', icon: FileText, label: '我的詢價工單' },
     { href: '/notifications', icon: Bell, label: t('profile.menu.notifications') },
     { href: '/chatbot', icon: MessageCircle, label: t('profile.menu.chatbot') },
     { href: '/inspection', icon: MapPin, label: t('profile.menu.inspection') },

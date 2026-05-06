@@ -7,6 +7,7 @@ from app.models.notification import Notification
 from app.models.chatbot import ChatbotSession, ChatbotMessage
 from app.models.rental import RentalCar
 from app.models.inspection import InspectionStation
+from app.models.quote_request import QuoteRequest, QuoteResponse
 
 __all__ = [
     "User", "UserConsent",
@@ -18,4 +19,5 @@ __all__ = [
     "ChatbotSession", "ChatbotMessage",
     "RentalCar",
     "InspectionStation",
+    "QuoteRequest", "QuoteResponse",
 ]

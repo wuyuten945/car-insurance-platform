@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, Calculator, Loader2, Star, Check, MessageCircle, Phone, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Calculator, Loader2, Star, Check, MessageCircle, Phone, AlertTriangle, FileText, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
 import { useEligibility } from '@/lib/useEligibility';
 import { VEHICLE_TYPE_GROUPS } from '@/lib/vehicleTypes';
+import QuoteRequestModal from '@/components/QuoteRequestModal';
 
 interface VehicleLite {
   id: string;
@@ -51,12 +52,26 @@ export default function QuotePage() {
   const [driverAge, setDriverAge] = useState<string>('');
   const [tier, setTier] = useState('standard');
   const [includeCompulsory, setIncludeCompulsory] = useState(true);
+  const [claimsCount, setClaimsCount] = useState('0');
+  const [surchargePct, setSurchargePct] = useState('');
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const { data: vehicles } = useQuery({
     queryKey: ['my-vehicles-for-quote'],
     queryFn: async () => {
       const res = await api.get('/api/v1/customers/vehicles');
       return res.data.data as VehicleLite[];
+    },
+  });
+
+  const { data: policies } = useQuery({
+    queryKey: ['my-policies-for-quote'],
+    queryFn: async () => {
+      const res = await api.get('/api/v1/policies');
+      return (res.data.data || []) as Array<{
+        id: string; insurer_name: string; policy_number: string;
+        end_date?: string; vehicle_id?: string | null; data_source?: string;
+      }>;
     },
   });
 
@@ -74,8 +89,20 @@ export default function QuotePage() {
         if (manualCC) body.engine_cc = parseInt(manualCC, 10);
       }
       if (driverAge) body.driver_age = parseInt(driverAge, 10);
+      // 加入出險次數 + 加費%（後端 /estimate 之後可擴充支援；目前先 client side 套用倍率以提升估算準確度）
       const res = await api.post('/api/v1/renewal/estimate', body);
-      return res.data.data as { quotes: QuoteResult[]; disclaimer: string };
+      const data = res.data.data as { quotes: QuoteResult[]; disclaimer: string };
+      // Client-side 修正：依出險次數 / 加費%
+      const claimsMul: Record<string, number> = { '0': 0.80, '1': 1.0, '2': 1.20, '3': 1.50 };
+      const cm = claimsMul[claimsCount] ?? 1.0;
+      const sm = surchargePct ? (1 + parseFloat(surchargePct) / 100) : 1.0;
+      data.quotes = data.quotes.map((q) => ({
+        ...q,
+        quoted_premium: Math.round(q.quoted_premium * cm * sm / 10) * 10,
+      })).sort((a, b) => a.quoted_premium - b.quoted_premium);
+      // 重新標 is_recommended（最低價）
+      data.quotes.forEach((q, i) => { q.is_recommended = i === 0; });
+      return data;
     },
   });
 
@@ -158,10 +185,27 @@ export default function QuotePage() {
           </div>
         )}
 
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass}>駕駛人年齡</label>
+            <input type="number" className={inputClass} value={driverAge} onChange={(e) => setDriverAge(e.target.value)} placeholder="35" />
+            <p className="text-[10px] text-gray-400 mt-1">&lt; 25 歲 +20%、≥ 65 歲 +10%</p>
+          </div>
+          <div>
+            <label className={labelClass}>過去 3 年出險次數</label>
+            <select className={inputClass} value={claimsCount} onChange={(e) => setClaimsCount(e.target.value)}>
+              <option value="0">0 次（-20%）</option>
+              <option value="1">1 次（不變）</option>
+              <option value="2">2 次（+20%）</option>
+              <option value="3">3 次以上（+50%）</option>
+            </select>
+          </div>
+        </div>
+
         <div>
-          <label className={labelClass}>駕駛人年齡（選填，影響費率）</label>
-          <input type="number" className={inputClass} value={driverAge} onChange={(e) => setDriverAge(e.target.value)} placeholder="35" />
-          <p className="text-[10px] text-gray-400 mt-1">25 歲以下 +20%、65 歲以上 +10%</p>
+          <label className={labelClass}>已知加費費率（選填，例：+20）</label>
+          <input type="number" step="0.01" className={inputClass} value={surchargePct} onChange={(e) => setSurchargePct(e.target.value)} placeholder="0" />
+          <p className="text-[10px] text-gray-400 mt-1">如保險公司已告知您的個人加費比率（從人因素），請填入百分比</p>
         </div>
 
         <div>
@@ -243,13 +287,23 @@ export default function QuotePage() {
             </div>
           ))}
 
-          {/* 投保 CTA */}
+          {/* 主要 CTA：請業務員精確報價（送出詢價工單）*/}
+          <button
+            onClick={() => setRequestOpen(true)}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 px-4 py-4 text-base font-bold text-white shadow-lg"
+          >
+            <FileText className="h-5 w-5" />
+            請業務員精確報價（6–12 小時內回覆）
+            <ArrowRight className="h-5 w-5" />
+          </button>
+
+          {/* 次要 CTA */}
           <div className="rounded-2xl bg-gradient-to-br from-green-50 to-blue-50 p-4 border border-green-200">
-            <p className="text-sm font-bold text-gray-900 mb-1">想正式投保？</p>
             <p className="text-xs text-gray-600 mb-3 leading-relaxed">
               {eligibility.has_agent_policy
-                ? '您是 BOPINAN 已服務客戶，請聯繫您專屬的業務員報價並核保。'
-                : '透過 LINE 與我們聯繫，由專人為您正式核保並辦理投保。'}
+                ? '👤 您是 BOPINAN 已服務客戶，請業務員報價會自動指派給您專屬的業務員。'
+                : '🆕 您目前沒有業務員，送出詢價工單會由本平台管理員為您處理。'}
+              另可直接聯繫：
             </p>
             <div className="flex gap-2">
               {!eligibility.has_agent_policy && eligibility.line_oa_url && (
@@ -264,8 +318,24 @@ export default function QuotePage() {
               </a>
             </div>
           </div>
+
+          <Link href="/quote-requests" className="block text-center text-xs text-primary-600 hover:underline pt-2">
+            → 我的詢價工單（追蹤進度）
+          </Link>
         </div>
       )}
+
+      <QuoteRequestModal
+        open={requestOpen}
+        onClose={() => setRequestOpen(false)}
+        onSubmitted={() => { /* keep modal open with success state */ }}
+        vehicles={vehicles ?? []}
+        policies={policies ?? []}
+        defaults={{
+          vehicle_id: vehicleMode === 'pick' && vehicleId ? vehicleId : undefined,
+          driver_age: driverAge ? parseInt(driverAge, 10) : undefined,
+        }}
+      />
 
       {mutation.isError && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">

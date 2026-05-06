@@ -1638,8 +1638,184 @@ async def update_claim_progress(
 
 
 # ═══════════════════════════════════════════════════
-# 業務員待辦提醒中心：保單到期 + 驗車到期 依時間分群
+# 詢價工單（業務員 / 管理員側）
 # ═══════════════════════════════════════════════════
+from app.models.quote_request import QuoteRequest, QuoteResponse
+from app.schemas.quote_request import QuoteResponseCreate, QuoteRequestStatusUpdate
+
+
+@router.get("/agent/quote-requests")
+async def admin_list_quote_requests(
+    status: str | None = Query(None, description="pending/in_progress/quoted/completed/cancelled"),
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """列出業務員 / 管理員可見的詢價工單。
+    - super_admin：全部
+    - agent：assigned_to_admin_id = self_id
+    """
+    q = (
+        select(QuoteRequest)
+        .options(
+            selectinload(QuoteRequest.user),
+            selectinload(QuoteRequest.vehicle),
+            selectinload(QuoteRequest.assigned_admin),
+            selectinload(QuoteRequest.responses),
+        )
+        .order_by(desc(QuoteRequest.submitted_at))
+    )
+    if admin.role != "super_admin":
+        q = q.where(QuoteRequest.assigned_to_admin_id == admin.id)
+    if status:
+        q = q.where(QuoteRequest.status == status)
+    r = await db.execute(q)
+    reqs = list(r.scalars().unique().all())
+    out: list[dict] = []
+    for qr in reqs:
+        out.append({
+            "id": qr.id,
+            "user_id": qr.user_id,
+            "customer_name": qr.user.name if qr.user else None,
+            "customer_phone": qr.user.phone if qr.user else None,
+            "vehicle_plate": qr.vehicle.plate_number if qr.vehicle else None,
+            "use_existing_policy": qr.use_existing_policy,
+            "desired_items": qr.desired_items or [],
+            "driver_age": qr.driver_age,
+            "claims_count_3y": qr.claims_count_3y,
+            "surcharge_pct": float(qr.surcharge_pct) if qr.surcharge_pct else None,
+            "notes": qr.notes,
+            "assigned_to_admin_id": qr.assigned_to_admin_id,
+            "assigned_admin_name": qr.assigned_admin.display_name if qr.assigned_admin else None,
+            "status": qr.status,
+            "submitted_at": qr.submitted_at.isoformat() if qr.submitted_at else None,
+            "quoted_at": qr.quoted_at.isoformat() if qr.quoted_at else None,
+            "completed_at": qr.completed_at.isoformat() if qr.completed_at else None,
+            "responses": [
+                {
+                    "id": rsp.id, "insurer_name": rsp.insurer_name,
+                    "quoted_premium": float(rsp.quoted_premium),
+                    "coverage_details": rsp.coverage_details or [],
+                    "valid_until": str(rsp.valid_until) if rsp.valid_until else None,
+                    "notes": rsp.notes,
+                    "is_recommended": rsp.is_recommended,
+                } for rsp in (qr.responses or [])
+            ],
+        })
+    return APIResponse(data=out)
+
+
+@router.post("/quote-requests/{req_id}/responses")
+async def admin_add_quote_response(
+    req_id: str,
+    payload: QuoteResponseCreate,
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """新增一筆保險公司報價（一張工單可加多筆）"""
+    r = await db.execute(select(QuoteRequest).where(QuoteRequest.id == req_id))
+    qr = r.scalar_one_or_none()
+    if not qr:
+        raise NotFoundError("詢價工單不存在")
+    # 權限：agent 只能改自己負責的
+    if admin.role != "super_admin" and qr.assigned_to_admin_id != admin.id:
+        raise ForbiddenError("無權處理此工單")
+
+    rsp = QuoteResponse(
+        quote_request_id=req_id,
+        insurer_name=payload.insurer_name,
+        quoted_premium=payload.quoted_premium,
+        coverage_details=payload.coverage_details,
+        valid_until=payload.valid_until,
+        notes=payload.notes,
+        is_recommended=payload.is_recommended,
+    )
+    db.add(rsp)
+    # 第一次加 response 自動切到 in_progress；前端按「完成回報」會切到 quoted
+    if qr.status == "pending":
+        qr.status = "in_progress"
+    await db.flush()
+    await log_action(db, admin, "create", "quote_response", req_id, detail=f"insurer={payload.insurer_name}")
+    return APIResponse(data={"id": rsp.id}, message="報價已新增")
+
+
+@router.delete("/quote-responses/{rsp_id}")
+async def admin_delete_quote_response(
+    rsp_id: str,
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    r = await db.execute(
+        select(QuoteResponse).options(selectinload(QuoteResponse.request)).where(QuoteResponse.id == rsp_id)
+    )
+    rsp = r.scalar_one_or_none()
+    if not rsp:
+        raise NotFoundError("報價不存在")
+    if admin.role != "super_admin" and rsp.request.assigned_to_admin_id != admin.id:
+        raise ForbiddenError("無權處理此工單")
+    await db.delete(rsp)
+    await log_action(db, admin, "delete", "quote_response", rsp_id)
+    return APIResponse(message="已刪除")
+
+
+@router.patch("/quote-requests/{req_id}")
+async def admin_update_quote_status(
+    req_id: str,
+    payload: QuoteRequestStatusUpdate,
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """切換工單狀態（in_progress / quoted / completed / cancelled）"""
+    r = await db.execute(
+        select(QuoteRequest).options(selectinload(QuoteRequest.user), selectinload(QuoteRequest.responses))
+        .where(QuoteRequest.id == req_id)
+    )
+    qr = r.scalar_one_or_none()
+    if not qr:
+        raise NotFoundError("詢價工單不存在")
+    if admin.role != "super_admin" and qr.assigned_to_admin_id != admin.id:
+        raise ForbiddenError("無權處理此工單")
+
+    valid_states = {"pending", "in_progress", "quoted", "completed", "cancelled"}
+    if payload.status not in valid_states:
+        raise BadRequestError(f"狀態值不合法：{payload.status}")
+
+    qr.status = payload.status
+    now = datetime.now(timezone.utc)
+    notify_user = False
+    if payload.status == "quoted" and qr.quoted_at is None:
+        qr.quoted_at = now
+        notify_user = True   # 客戶會收到「報價已回報」通知
+    if payload.status in ("completed", "cancelled"):
+        qr.completed_at = now
+
+    await db.flush()
+    await log_action(db, admin, "update", "quote_request", req_id, detail=f"status={payload.status}")
+
+    # 通知客戶（站內 + LINE + Email if 開啟）
+    if notify_user and qr.user:
+        try:
+            from app.models.notification import Notification
+            from app.core.line_messaging import push_to_user
+            from app.core.email import email_service
+
+            n_titles = f"📋 您的詢價工單已有 {len(qr.responses or [])} 家報價"
+            n_body = (
+                f"{qr.user.name or '您'} 您好，\n"
+                f"您先前送出的詢價工單已完成詢價，目前共 {len(qr.responses or [])} 家保險公司報價，"
+                f"請至 BOPINAN 平台「我的詢價」查看完整內容。"
+            )
+            db.add(Notification(
+                user_id=qr.user_id, title=n_titles, body=n_body,
+                notification_type="quote_response", reference_type="quote_request",
+                reference_id=qr.id, channel="multi",
+            ))
+            await push_to_user(qr.user, f"🛡 BOPINAN {n_titles}\n\n{n_body}")
+            if qr.user.email and getattr(qr.user, "notify_email_enabled", False):
+                await email_service.send(qr.user.email, n_titles, f"<p>{n_body.replace(chr(10), '<br>')}</p>")
+        except Exception as e:
+            logging.getLogger(__name__).warning(f"quote_request notify fail: {e}")
+
+    return APIResponse(message="狀態已更新")
 
 def _bucket_for(days: int) -> str:
     """負數 = 已逾期；0 = 當天；1-3、4-7、8-30 各別分桶；30+ 不顯示"""

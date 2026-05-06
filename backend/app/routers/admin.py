@@ -96,11 +96,11 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 
   /* Modal 外層 padding 縮小、內層 card 改全寬 */
   #v-upload-modal, #v-edit-form, #create-customer-modal, #change-pw-modal,
-  #p-upload-modal, #p-form-modal, #p-edit-modal, #csv-import-modal {
+  #p-upload-modal, #p-form-modal, #p-edit-modal, #csv-import-modal, #quote-respond-modal {
     padding: 10px !important;
   }
   #v-upload-modal > div, #v-edit-form > div, #create-customer-modal > div, #change-pw-modal > div,
-  #p-upload-modal > div, #p-form-modal > div, #p-edit-modal > div, #csv-import-modal > div {
+  #p-upload-modal > div, #p-form-modal > div, #p-edit-modal > div, #csv-import-modal > div, #quote-respond-modal > div {
     padding: 16px 14px !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -339,6 +339,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     <button class="tab" id="tab-btn-claims" onclick="switchTab('claims')" data-i18n="tab_claims">理賠申請</button>
     <button class="tab" id="tab-btn-accidents" onclick="switchTab('accidents')" data-i18n="tab_accidents">事故照片</button>
     <button class="tab" id="tab-btn-overview" onclick="switchTab('overview')" data-i18n="tab_overview">資料總覽</button>
+    <button class="tab" id="tab-btn-quotes" onclick="switchTab('quotes')" data-i18n="tab_quotes">詢價工單</button>
     <button class="tab" id="tab-btn-agents" onclick="switchTab('agents')" style="display:none" data-i18n="tab_agents">業務員管理</button>
     <button class="tab" id="tab-btn-assign" onclick="switchTab('assign')" style="display:none" data-i18n="tab_assign">客戶分配</button>
     <button class="tab" id="tab-btn-logs" onclick="switchTab('logs')" style="display:none" data-i18n="tab_logs">操作日誌</button>
@@ -825,6 +826,69 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     </div>
   </div>
 
+  <!-- 詢價回報 modal -->
+  <div id="quote-respond-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
+    <div style="background:#fff;padding:22px 26px;border-radius:14px;max-width:600px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+      <button type="button" onclick="closeQuoteRespond()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888">×</button>
+      <h3 style="margin-top:0">處理詢價工單 / 加入報價</h3>
+      <p style="font-size:11px;color:#666">向保險公司詢得各家報價後，逐筆加進來；填完所有報價按「✓ 完成回報」會通知客戶。</p>
+
+      <div class="row">
+        <div>
+          <label>保險公司</label>
+          <input type="text" id="qrsp-insurer" placeholder="富邦產險">
+        </div>
+        <div>
+          <label>保費 (NTD)</label>
+          <input type="text" inputmode="decimal" id="qrsp-premium" placeholder="18,500" oninput="formatThousand(this)">
+        </div>
+      </div>
+      <div>
+        <label>報價有效期至</label>
+        <input type="date" id="qrsp-valid-until">
+      </div>
+      <div>
+        <label>保障明細（每行一項，格式：<code>項目名稱|保額(萬)|保費</code>）</label>
+        <textarea id="qrsp-coverage" rows="6" placeholder="第三人責任險（體傷）|500|3500&#10;車體損失險甲式|200|18500&#10;道路救援||"></textarea>
+      </div>
+      <div>
+        <label>備註（特別條款 / 折扣等）</label>
+        <textarea id="qrsp-notes" rows="2"></textarea>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:8px">
+        <input type="checkbox" id="qrsp-recommend"> <span style="font-size:12px">標記為推薦方案</span>
+      </label>
+
+      <div id="qrsp-msg" class="msg" style="margin-top:8px"></div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;border-top:1px solid #eee;padding-top:14px;flex-wrap:wrap">
+        <button class="btn success" onclick="submitQuoteResponse()" style="padding:8px 16px;font-size:13px">➕ 加入此筆報價</button>
+        <button class="btn" onclick="markQuoteRequestStatus('in_progress')" style="background:#0288D1;padding:8px 16px;font-size:13px">處理中</button>
+        <button class="btn" onclick="markQuoteRequestStatus('quoted')" style="background:#2E7D32;padding:8px 16px;font-size:13px">✓ 完成回報（通知客戶）</button>
+        <button class="btn" onclick="markQuoteRequestStatus('completed')" style="background:#666;padding:8px 16px;font-size:13px">已結案</button>
+        <button class="btn" style="background:#999;margin-left:auto" onclick="closeQuoteRespond()">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: 詢價工單 -->
+  <div id="tab-quotes" class="tab-content">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <h2 style="margin:0" data-i18n="h_quote_requests">詢價工單</h2>
+        <div style="display:flex;gap:6px;font-size:11px">
+          <button class="qr-filter" data-status="" onclick="loadQuoteRequests('')" style="padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">全部</button>
+          <button class="qr-filter" data-status="pending" onclick="loadQuoteRequests('pending')" style="padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">待處理</button>
+          <button class="qr-filter" data-status="in_progress" onclick="loadQuoteRequests('in_progress')" style="padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">處理中</button>
+          <button class="qr-filter" data-status="quoted" onclick="loadQuoteRequests('quoted')" style="padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">已回報</button>
+          <button class="qr-filter" data-status="completed" onclick="loadQuoteRequests('completed')" style="padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">已結案</button>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#666;margin-bottom:8px">客戶送出的詢價工單。處理流程：實際向保險公司詢價 → 加入「報價」→ 標記「已回報」（通知客戶）。</p>
+      <div id="quote-list"></div>
+    </div>
+  </div>
+
   <!-- Console: Agents -->
   <div id="tab-agents" class="tab-content">
     <div class="card">
@@ -1099,6 +1163,184 @@ function _alignInsured(prefix) {
   var nameEl = document.getElementById(prefix + '-in-name');
   if (nameEl) nameEl.value = custName;
   _recheckInsuredAlignment(prefix);
+}
+
+// === 詢價工單（admin/agent 端）===
+async function loadQuoteRequests(status) {
+  var box = document.getElementById('quote-list');
+  if (!box) return;
+  // active filter UI
+  document.querySelectorAll('.qr-filter').forEach(function(btn){
+    if (btn.dataset.status === status) {
+      btn.style.background = '#1565C0'; btn.style.color = '#fff'; btn.style.borderColor = '#1565C0';
+    } else {
+      btn.style.background = '#fff'; btn.style.color = '#333'; btn.style.borderColor = '#ddd';
+    }
+  });
+  box.innerHTML = '<div style="padding:20px;text-align:center;color:#999">載入中...</div>';
+  try {
+    var qs = status ? ('?status=' + encodeURIComponent(status)) : '';
+    var r = await fetch(CONSOLE_API + '/agent/quote-requests' + qs, { headers: consoleHeaders(false) });
+    var d = await r.json();
+    var rows = d.data || [];
+    if (rows.length === 0) {
+      box.innerHTML = '<div style="padding:30px;text-align:center;color:#999;font-size:13px">沒有符合條件的詢價工單</div>';
+      return;
+    }
+    var html = '';
+    rows.forEach(function(qr) {
+      var statColor = {
+        pending: '#E65100', in_progress: '#1565C0', quoted: '#2E7D32',
+        completed: '#666', cancelled: '#D32F2F'
+      }[qr.status] || '#666';
+      var statLabel = {
+        pending: '待處理', in_progress: '處理中', quoted: '已回報', completed: '已結案', cancelled: '已取消'
+      }[qr.status] || qr.status;
+      html += '<div style="border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:10px;background:#fff">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
+      html += '<div>';
+      html += '<span style="display:inline-block;padding:2px 8px;font-size:11px;font-weight:600;color:#fff;background:' + statColor + ';border-radius:4px">' + statLabel + '</span>';
+      html += ' <b style="margin-left:6px">' + (qr.customer_name || '') + '</b>';
+      if (qr.customer_phone) html += ' <span style="color:#999;font-size:11px">' + qr.customer_phone + '</span>';
+      if (qr.vehicle_plate) html += ' <span style="color:#1565C0;font-family:monospace;margin-left:4px">' + qr.vehicle_plate + '</span>';
+      if (qr.use_existing_policy) html += ' <span style="color:#0288D1;font-size:10px;background:#E3F2FD;padding:1px 6px;border-radius:3px">與原保單相同</span>';
+      html += '<div style="font-size:11px;color:#666;margin-top:2px">送出：' + (qr.submitted_at ? qr.submitted_at.replace('T',' ').substring(0,16) : '-')
+            + (qr.assigned_admin_name ? ' · 處理人：' + qr.assigned_admin_name : '') + '</div>';
+      html += '</div>';
+      html += '<button onclick="openQuoteRespond(\\'' + qr.id + '\\')" style="padding:6px 14px;font-size:12px;background:#1565C0;color:#fff;border:0;border-radius:6px;cursor:pointer">處理 / 回報報價</button>';
+      html += '</div>';
+      // 內容摘要
+      if (qr.desired_items && qr.desired_items.length) {
+        html += '<div style="margin-top:6px;font-size:11px;color:#666">勾選項目：';
+        qr.desired_items.forEach(function(it){
+          html += '<span style="display:inline-block;background:#F5F5F5;padding:2px 6px;border-radius:3px;margin:1px">'
+                + it.name + (it.limit ? ' ' + (it.limit / 10000) + '萬' : '') + '</span>';
+        });
+        html += '</div>';
+      }
+      var meta = [];
+      if (qr.driver_age != null) meta.push('駕駛年齡 ' + qr.driver_age);
+      if (qr.claims_count_3y != null) meta.push('3 年出險 ' + qr.claims_count_3y + ' 次');
+      if (qr.surcharge_pct != null) meta.push('已知加費 ' + qr.surcharge_pct + '%');
+      if (meta.length) html += '<div style="margin-top:4px;font-size:11px;color:#666">' + meta.join(' · ') + '</div>';
+      if (qr.notes) html += '<div style="margin-top:4px;font-size:11px;color:#888;background:#FFF8E1;padding:4px 8px;border-radius:4px">📝 ' + qr.notes + '</div>';
+      // 已加的報價列表
+      if (qr.responses && qr.responses.length) {
+        html += '<div style="margin-top:8px;border-top:1px solid #f0f0f0;padding-top:8px">';
+        html += '<div style="font-size:11px;color:#666;margin-bottom:4px">已加 ' + qr.responses.length + ' 家報價：</div>';
+        qr.responses.forEach(function(rsp) {
+          html += '<div style="background:' + (rsp.is_recommended?'#FFF3E0':'#F5F5F5')
+                + ';padding:4px 8px;border-radius:4px;margin:2px 0;display:flex;justify-content:space-between;font-size:12px">';
+          html += '<span><b>' + rsp.insurer_name + '</b>'
+                + (rsp.is_recommended ? ' <span style="color:#E65100">⭐</span>' : '') + '</span>';
+          html += '<span><b>$' + Number(rsp.quoted_premium).toLocaleString() + '</b>';
+          html += ' <button onclick="deleteQuoteResponse(\\'' + rsp.id + '\\',\\'' + qr.id + '\\')" style="margin-left:6px;background:#FFEBEE;color:#C62828;border:0;border-radius:3px;padding:1px 6px;font-size:10px;cursor:pointer">刪</button></span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div style="color:#D32F2F;padding:20px">載入失敗：' + e.message + '</div>';
+  }
+}
+
+window._respondingReqId = '';
+
+function openQuoteRespond(reqId) {
+  window._respondingReqId = reqId;
+  // 先重置欄位
+  ['qrsp-insurer','qrsp-premium','qrsp-notes','qrsp-valid-until','qrsp-coverage'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('qrsp-recommend').checked = false;
+  document.getElementById('quote-respond-modal').style.display = 'flex';
+}
+
+function closeQuoteRespond() {
+  document.getElementById('quote-respond-modal').style.display = 'none';
+  window._respondingReqId = '';
+}
+
+async function submitQuoteResponse() {
+  var rid = window._respondingReqId;
+  if (!rid) return;
+  var insurer = document.getElementById('qrsp-insurer').value.trim();
+  var premium = document.getElementById('qrsp-premium').value;
+  if (!insurer || !premium) {
+    showMsg('qrsp-msg','err','請填寫保險公司與保費'); return;
+  }
+  var coverageRaw = document.getElementById('qrsp-coverage').value.trim();
+  var coverage = [];
+  if (coverageRaw) {
+    coverageRaw.split('\\n').forEach(function(line){
+      line = line.trim();
+      if (!line) return;
+      // 格式：項目名稱|保額|保費（用 | 分割）
+      var parts = line.split('|').map(function(s){return s.trim();});
+      var obj = { name: parts[0] };
+      if (parts[1]) obj.limit = parseInt(parts[1]) * 10000;  // 輸入「萬」單位
+      if (parts[2]) obj.premium = parseFloat(parts[2]);
+      coverage.push(obj);
+    });
+  }
+  var body = {
+    insurer_name: insurer,
+    quoted_premium: parseFloat(parseThousand(premium) || premium),
+    coverage_details: coverage,
+    valid_until: document.getElementById('qrsp-valid-until').value || null,
+    notes: document.getElementById('qrsp-notes').value.trim() || null,
+    is_recommended: document.getElementById('qrsp-recommend').checked,
+  };
+  try {
+    var r = await fetch(CONSOLE_API + '/quote-requests/' + rid + '/responses', {
+      method: 'POST', headers: consoleHeaders(true), body: JSON.stringify(body),
+    });
+    var d = await r.json();
+    if (d.success) {
+      showMsg('qrsp-msg','ok','已加入報價');
+      setTimeout(function(){ closeQuoteRespond(); loadQuoteRequests(''); }, 800);
+    } else {
+      showMsg('qrsp-msg','err','失敗：' + (d.message || ''));
+    }
+  } catch(e) {
+    showMsg('qrsp-msg','err','錯誤：' + e.message);
+  }
+}
+
+async function markQuoteRequestStatus(status) {
+  var rid = window._respondingReqId;
+  if (!rid) return;
+  if (status === 'quoted') {
+    if (!confirm('標記為「已回報」會通知客戶（站內 + LINE + Email），確定？')) return;
+  }
+  try {
+    var r = await fetch(CONSOLE_API + '/quote-requests/' + rid, {
+      method: 'PATCH', headers: consoleHeaders(true), body: JSON.stringify({ status: status }),
+    });
+    var d = await r.json();
+    if (d.success) {
+      showMsg('qrsp-msg','ok','狀態已更新');
+      setTimeout(function(){ closeQuoteRespond(); loadQuoteRequests(''); }, 600);
+    } else {
+      showMsg('qrsp-msg','err','失敗：' + (d.message || ''));
+    }
+  } catch(e) {
+    showMsg('qrsp-msg','err','錯誤：' + e.message);
+  }
+}
+
+async function deleteQuoteResponse(rspId, reqId) {
+  if (!confirm('確定刪除此筆報價？')) return;
+  try {
+    await fetch(CONSOLE_API + '/quote-responses/' + rspId, {
+      method: 'DELETE', headers: consoleHeaders(false),
+    });
+    loadQuoteRequests('');
+  } catch(e) { alert('刪除失敗：' + e.message); }
 }
 
 // === 業務員待辦提醒中心 ===
@@ -1534,6 +1776,8 @@ var I18N = {
     tab_claims: '理賠申請',
     tab_accidents: '事故照片',
     tab_overview: '資料總覽',
+    tab_quotes: '詢價工單',
+    h_quote_requests: '詢價工單',
     tab_agents: '業務員管理',
     tab_assign: '客戶分配',
     tab_logs: '操作日誌',
@@ -1751,6 +1995,8 @@ var I18N = {
     tab_claims: 'Claims',
     tab_accidents: 'Accident Photos',
     tab_overview: 'Overview',
+    tab_quotes: 'Quote Requests',
+    h_quote_requests: 'Quote Requests',
     tab_agents: 'Agents',
     tab_assign: 'Customer Assign',
     tab_logs: 'Audit Logs',
@@ -2040,8 +2286,8 @@ function _enterAdminUI(token, role, displayName) {
   document.getElementById('logout-btn').style.display = 'inline-block';
   document.getElementById('change-pw-btn').style.display = 'inline-block';
   // 依角色顯示/隱藏分頁
-  var allTabs = ['vehicles','policies','claims','accidents','overview','agents','assign','logs'];
-  var agentTabs = ['overview'];
+  var allTabs = ['vehicles','policies','claims','accidents','overview','quotes','agents','assign','logs'];
+  var agentTabs = ['overview','quotes'];
   var superTabs = allTabs;
   var visibleTabs = (role === 'super_admin') ? superTabs : agentTabs;
   for (var ti = 0; ti < allTabs.length; ti++) {
@@ -2239,6 +2485,7 @@ function switchTab(name) {
   if (name === 'agents') loadAgents();
   if (name === 'assign') loadAssignSelects();
   if (name === 'logs') loadLogs();
+  if (name === 'quotes') loadQuoteRequests('');
 }
 
 // --- 全域快速搜尋 ---
