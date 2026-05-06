@@ -3164,13 +3164,29 @@ function _buildItemRow(containerId, values) {
   // helper: 把數字 → 千分位字串
   function fmt(v){ if (v == null || v === '') return ''; return Number(v).toLocaleString('en-US', {maximumFractionDigits:2}); }
   function esc(v){ return (v == null ? '' : String(v).replace(/"/g,'&quot;')); }
+  // 最後一欄（保費）按 Enter → 自動加新一列並 focus 到「項目名稱」
+  var enterHook = "if(event.key==='Enter'){event.preventDefault();_onItemPremiumEnter(this,'" + containerId + "');}";
   div.innerHTML =
     '<input placeholder="' + t('ph_item_name') + '" data-field="item_name" value="' + esc(values.item_name) + '">' +
     '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_coverage_limit') + '" data-field="coverage_limit" style="max-width:120px" value="' + esc(fmt(values.coverage_limit)) + '">' +
     '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_deductible') + '" data-field="deductible" style="max-width:100px" value="' + esc(fmt(values.deductible)) + '">' +
-    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_premium') + '" data-field="premium" style="max-width:100px" value="' + esc(fmt(values.premium)) + '">' +
+    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" onkeydown="' + enterHook + '" placeholder="' + t('ph_premium') + '" data-field="premium" style="max-width:100px" value="' + esc(fmt(values.premium)) + '">' +
     '<button class="btn danger" onclick="this.parentElement.remove()">X</button>';
   document.getElementById(containerId).appendChild(div);
+}
+
+// 保費欄按 Enter → 加一列空 row 並聚焦第一格（連續快速輸入專用）
+function _onItemPremiumEnter(inp, containerId) {
+  if (containerId === 'pe-items') addEditItemRow();
+  else addItemRow();
+  setTimeout(function(){
+    var rows = document.querySelectorAll('#' + containerId + ' .item-row');
+    var newRow = rows[rows.length - 1];
+    if (newRow) {
+      var first = newRow.querySelector('input[data-field="item_name"]');
+      if (first) first.focus();
+    }
+  }, 0);
 }
 
 function addItemRow() { _buildItemRow('p-items'); }
