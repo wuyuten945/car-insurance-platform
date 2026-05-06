@@ -786,6 +786,95 @@ function setNumberWithComma(id, val) {
   el.value = Number(val).toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
+// === 客戶 cell hover popover：滑到客戶欄就浮現該客戶所有保單 / 車輛 ===
+// 共用 tooltip 容器（僅一個，重複利用）
+function _ensureCustHoverTip() {
+  if (document.getElementById('cust-hover-tip')) return;
+  var t = document.createElement('div');
+  t.id = 'cust-hover-tip';
+  t.style.cssText = 'position:fixed;display:none;z-index:99999;background:#fff;color:#333;padding:10px 14px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.25);font-size:12px;max-width:440px;border:1px solid #ccc;pointer-events:none;line-height:1.5';
+  document.body.appendChild(t);
+}
+
+function _renderCustPolicyTip(uid) {
+  var items = (window._lastPolicies || []).filter(function(p){ return p.user_id === uid; });
+  if (items.length === 0) return '<i style="color:#999">查無此客戶保單</i>';
+  var html = '<div style="font-weight:bold;color:#1565C0;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:4px">'
+    + (items[0].customer_name || '') + ' · 共 ' + items.length + ' 張保單</div>';
+  items.forEach(function(p){
+    html += '<div style="padding:5px 0;border-top:1px dashed #f0f0f0">';
+    html += '<b style="font-family:monospace">' + (p.policy_number||'') + '</b> · ' + (p.insurer_name||'')
+         + ' · <span style="color:' + (p.status==='active'?'#2E7D32':p.status==='expired'?'#D32F2F':'#E65100') + '">' + (p.status||'') + '</span>';
+    html += '<br><span style="color:#666;font-size:11px">任意險：' + (p.start_date||'') + (p.start_time?' '+p.start_time:'')
+         + ' ~ ' + (p.end_date||'') + (p.end_time?' '+p.end_time:'') + '</span>';
+    if (p.compulsory_insurer_name || p.compulsory_policy_number) {
+      html += '<br><span style="color:#E65100;font-size:11px">強制險：' + (p.compulsory_insurer_name||'')
+           + ' ' + (p.compulsory_policy_number||'')
+           + (p.compulsory_start_date ? ' / ' + p.compulsory_start_date + ' ~ ' + (p.compulsory_end_date||'') : '')
+           + '</span>';
+    }
+    if (p.vehicle_plate) html += '<br><span style="color:#666;font-size:11px">車輛：' + p.vehicle_plate + '</span>';
+    if (p.total_premium) html += '<br><span style="color:#666;font-size:11px">保費：$' + Number(p.total_premium).toLocaleString() + '</span>';
+    html += '</div>';
+  });
+  return html;
+}
+
+function _renderCustVehicleTip(uid) {
+  var items = (window._lastVehicles || []).filter(function(v){ return v.user_id === uid; });
+  if (items.length === 0) return '<i style="color:#999">查無此客戶車輛</i>';
+  var html = '<div style="font-weight:bold;color:#1565C0;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:4px">'
+    + (items[0].customer_name || '') + ' · 共 ' + items.length + ' 輛車</div>';
+  items.forEach(function(v){
+    html += '<div style="padding:5px 0;border-top:1px dashed #f0f0f0">';
+    html += '<b>' + (v.plate_number||'') + '</b> · ' + (v.brand||'') + ' ' + (v.model||'') + ' · ' + (v.vehicle_type||'-');
+    html += '<br><span style="color:#666;font-size:11px">' + (v.year||'?') + (v.manufacture_month?'/'+String(v.manufacture_month).padStart(2,'0'):'')
+         + ' · ' + (v.color||'') + ' · ' + (v.engine_cc?v.engine_cc+'cc':'') + ' · ' + (v.fuel_type||'') + '</span>';
+    if (v.registration_expiry) html += '<br><span style="color:#666;font-size:11px">行照到期：' + v.registration_expiry + '</span>';
+    if (v.vin) html += '<br><span style="color:#999;font-size:10px;font-family:monospace">VIN: ' + v.vin + '</span>';
+    html += '</div>';
+  });
+  return html;
+}
+
+document.addEventListener('mouseover', function(e){
+  var cell = e.target.closest('[data-hover-cust]');
+  if (!cell) return;
+  if (e.relatedTarget && cell.contains(e.relatedTarget)) return; // 還在 cell 內部移動
+  _ensureCustHoverTip();
+  var uid = cell.dataset.hoverCust;
+  var type = cell.dataset.hoverType;
+  var html = (type === 'policy') ? _renderCustPolicyTip(uid)
+           : (type === 'vehicle') ? _renderCustVehicleTip(uid)
+           : '';
+  if (!html) return;
+  var t = document.getElementById('cust-hover-tip');
+  t.innerHTML = html;
+  t.style.display = 'block';
+});
+
+document.addEventListener('mousemove', function(e){
+  var t = document.getElementById('cust-hover-tip');
+  if (!t || t.style.display === 'none') return;
+  var w = t.offsetWidth, h = t.offsetHeight;
+  var x = e.clientX + 14;
+  var y = e.clientY + 14;
+  if (x + w > window.innerWidth - 8) x = e.clientX - w - 14;
+  if (y + h > window.innerHeight - 8) y = e.clientY - h - 14;
+  if (x < 4) x = 4;
+  if (y < 4) y = 4;
+  t.style.left = x + 'px';
+  t.style.top = y + 'px';
+});
+
+document.addEventListener('mouseout', function(e){
+  var cell = e.target.closest('[data-hover-cust]');
+  if (!cell) return;
+  if (e.relatedTarget && cell.contains(e.relatedTarget)) return; // 還在 cell 內部
+  var t = document.getElementById('cust-hover-tip');
+  if (t) t.style.display = 'none';
+});
+
 function getInsurerValue(selectId, otherInputId) {
   var sel = document.getElementById(selectId);
   if (!sel) return '';
@@ -2046,6 +2135,7 @@ async function loadVehicles() {
     var r = await fetch(CONSOLE_API+'/all/vehicles', {headers: consoleHeaders(false)});
     var d = await r.json();
     var vehicles = d.data || [];
+    window._lastVehicles = vehicles;  // 快取給「客戶欄 hover popover」使用
     // Populate vehicle select (existing + new)
     var sel = document.getElementById('v-select');
     var psel = document.getElementById('p-vehicle');
@@ -2075,7 +2165,10 @@ async function loadVehicles() {
       }
       imgCell += '<button onclick="uploadRowRegistration(&quot;' + v.id + '&quot;,&quot;' + v.plate_number + '&quot;)" style="padding:3px 10px;font-size:11px;background:#2E7D32;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-top:3px">' + btnLabel + '</button>';
       var ownerCell = v.customer_name
-        ? '<b>' + v.customer_name + '</b>' + (v.customer_phone ? '<br><span style="font-size:11px;color:#666">' + v.customer_phone + '</span>' : '')
+        ? '<div data-hover-cust="' + (v.user_id||'') + '" data-hover-type="vehicle" style="cursor:help">'
+            + '<b>' + v.customer_name + '</b>'
+            + (v.customer_phone ? '<br><span style="font-size:11px;color:#666">' + v.customer_phone + '</span>' : '')
+          + '</div>'
         : '<span style="color:#999">-</span>';
       // 驗車期間 = 到期日 ±30 天 + 顏色標示（過期/即將到期）
       var windowCell = '<span style="color:#999">-</span>';
@@ -3277,7 +3370,10 @@ async function loadPolicies() {
     var cls = p.status==='active'?'active':p.status==='expired'?'expired':'expiring';
     var label = p.status==='active'?'有效':p.status==='expired'?'已到期':'即將到期';
     var owner = p.customer_name
-      ? '<b>'+p.customer_name+'</b>' + (p.customer_phone ? '<br><span style="font-size:11px;color:#666">'+p.customer_phone+'</span>' : '')
+      ? '<div data-hover-cust="' + (p.user_id||'') + '" data-hover-type="policy" style="cursor:help">'
+          + '<b>'+p.customer_name+'</b>'
+          + (p.customer_phone ? '<br><span style="font-size:11px;color:#666">'+p.customer_phone+'</span>' : '')
+        + '</div>'
       : '<span style="color:#999">-</span>';
     var plate = p.vehicle_plate || '<span style="color:#999">-</span>';
     var cidEsc = (p.user_id||'');
