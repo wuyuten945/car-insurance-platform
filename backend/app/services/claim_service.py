@@ -62,14 +62,41 @@ class ClaimService:
         self.db = db
 
     async def create_claim(self, user_id: str, data: ClaimCreate) -> Claim:
+        # 先驗證 policy 屬於這位使用者（避免 FK 失敗 → 500）
+        from app.models.policy import Policy
+        pol = await self.db.execute(
+            select(Policy).where(Policy.id == data.policy_id, Policy.user_id == user_id)
+        )
+        if not pol.scalar_one_or_none():
+            raise BadRequestError("找不到此保單，或該保單不屬於您")
+
+        # 前台金額用 amount_claimed，後端欄位是 claimed_amount → 兩個都接，前者優先
+        amount = data.claimed_amount if data.claimed_amount is not None else data.amount_claimed
+
+        # 把前台表單其他欄位（事故描述等）合進 notes
+        notes_parts = []
+        if data.notes:
+            notes_parts.append(str(data.notes))
+        if data.description:
+            notes_parts.append(f"【事故描述】{data.description}")
+        if data.location:
+            notes_parts.append(f"【事故地點】{data.location}")
+        if data.occurred_at:
+            notes_parts.append(f"【事故時間】{data.occurred_at.isoformat()}")
+        if data.accident_type:
+            notes_parts.append(f"【事故類型】{data.accident_type}")
+        if data.my_situation:
+            notes_parts.append(f"【行車狀態】{data.my_situation}")
+        merged_notes = "\n".join(notes_parts) if notes_parts else None
+
         claim = Claim(
             user_id=user_id,
             accident_id=data.accident_id,
             policy_id=data.policy_id,
             claim_number=generate_claim_number(),
             claim_type=data.claim_type,
-            claimed_amount=data.claimed_amount,
-            notes=data.notes,
+            claimed_amount=amount,
+            notes=merged_notes,
         )
         self.db.add(claim)
         await self.db.flush()
@@ -95,7 +122,17 @@ class ClaimService:
         )
         self.db.add(adjuster)
         await self.db.flush()
-        return claim
+
+        # 重新撈一次 claim 把關聯（progress / adjuster / documents）一併載進來
+        # 否則 ClaimOut.model_validate(claim) 會觸發 async lazy-load → MissingGreenlet → 500
+        loaded = await self.db.execute(
+            select(Claim).options(
+                selectinload(Claim.progress_history),
+                selectinload(Claim.adjuster),
+                selectinload(Claim.documents),
+            ).where(Claim.id == claim.id)
+        )
+        return loaded.scalar_one()
 
     async def list_claims(self, user_id: str, status: str = None) -> list[Claim]:
         query = select(Claim).options(

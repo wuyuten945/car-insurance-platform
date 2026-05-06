@@ -9,6 +9,13 @@ class ClaimCreate(BaseModel):
     claim_type: str | None = None
     claimed_amount: Decimal | None = None
     notes: str | None = None
+    # 前台理賠申請表附帶欄位 — 會合併進 notes（或之後建立 accident 記錄）
+    accident_type: str | None = None
+    my_situation: str | None = None
+    occurred_at: datetime | None = None
+    location: str | None = None
+    description: str | None = None
+    amount_claimed: Decimal | None = None  # 前台用名稱，等同 claimed_amount
 
 
 class ClaimProgressOut(BaseModel):
