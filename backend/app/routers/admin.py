@@ -484,8 +484,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           </div>
         </div>
         <div class="row">
-          <div><label data-i18n="lbl_start_date">起保日</label><input type="date" id="p-start"></div>
-          <div><label data-i18n="lbl_end_date">到期日</label><input type="date" id="p-end"></div>
+          <div><label data-i18n="lbl_start_date">起保日</label><input type="date" id="p-start" oninput="autoComputePolicyEnd()"></div>
+          <div><label data-i18n="lbl_end_date">到期日 <span style="font-size:10px;color:#999">（自動 = 起保日 +1 年；可手動修正）</span></label><input type="date" id="p-end" oninput="markPolicyEndManual()"></div>
           <div><label data-i18n="lbl_premium">總保費</label><input type="number" id="p-premium" placeholder="18500"></div>
         </div>
         <div style="margin-top:16px">
@@ -2925,11 +2925,39 @@ function _resetPolicyFormFields() {
   fillInsurerSelect('p-insurer', 'p-insurer-other', '');
   ['p-number','p-premium'].forEach(function(id){ document.getElementById(id).value = ''; });
   document.getElementById('p-start').value = '';
-  document.getElementById('p-end').value = '';
+  var endEl = document.getElementById('p-end');
+  endEl.value = '';
+  delete endEl.dataset.manualEdit;  // 清掉手動編輯標記，下次新建時起保日仍會自動帶到期日
   document.getElementById('p-status').value = 'active';
   document.getElementById('p-items').innerHTML = '';
   itemCount = 0;
   refreshRocLabels();
+}
+
+// 起保日變動 → 到期日 = 起保日 + 1 年（同月日；除非使用者手動編輯過到期日）
+function autoComputePolicyEnd() {
+  var startEl = document.getElementById('p-start');
+  var endEl = document.getElementById('p-end');
+  if (!startEl || !endEl) return;
+  var s = startEl.value;
+  if (!s) return;
+  // 已被使用者手動改過 → 不覆蓋（尊重 2 年保單等特殊情境）
+  if (endEl.dataset.manualEdit === '1') return;
+  var d = new Date(s + 'T00:00:00');
+  if (isNaN(d.getTime())) return;
+  d.setFullYear(d.getFullYear() + 1);
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  endEl.value = y + '-' + m + '-' + dd;
+  refreshRocLabels();
+}
+
+// 使用者手動改了到期日 → 標記後續起保日變動不再自動覆蓋
+function markPolicyEndManual() {
+  var endEl = document.getElementById('p-end');
+  if (!endEl) return;
+  endEl.dataset.manualEdit = endEl.value ? '1' : '0';
 }
 
 // 全域保留最近一次抓的保單（雙擊展開時不再重新打 API）
