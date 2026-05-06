@@ -28,29 +28,77 @@ from app.models.vehicle import UserVehicle
 from app.models.policy import Policy, PolicyItem
 
 
-COLUMNS = [
+# 內部 field name ↔ 對外的中文表頭。
+# Export 用中文表頭（業務員容易讀寫）；Import 同時接受中文與英文 header（兼容舊檔）
+COLUMN_DEF: list[tuple[str, str]] = [
     # 客戶
-    "customer_id", "customer_name", "customer_phone", "customer_email", "customer_birth_date",
-    "customer_address", "customer_registered_address",
-    "customer_license_number", "customer_license_expiry",
-    "customer_emergency_contact_name", "customer_emergency_contact_phone", "customer_emergency_contact_relation",
+    ("customer_id",                          "客戶ID"),
+    ("customer_name",                        "客戶姓名"),
+    ("customer_phone",                       "客戶電話"),
+    ("customer_email",                       "客戶Email"),
+    ("customer_birth_date",                  "客戶生日"),
+    ("customer_address",                     "通訊地址"),
+    ("customer_registered_address",          "戶籍地址"),
+    ("customer_license_number",              "駕照號碼"),
+    ("customer_license_expiry",              "駕照到期日"),
+    ("customer_emergency_contact_name",      "緊急聯絡人姓名"),
+    ("customer_emergency_contact_phone",     "緊急聯絡人電話"),
+    ("customer_emergency_contact_relation",  "緊急聯絡人關係"),
     # 車輛
-    "vehicle_id", "plate_number", "vehicle_type", "brand", "model",
-    "year", "manufacture_month", "color", "engine_cc", "vin", "fuel_type",
-    "registration_date", "reissue_date", "registration_expiry",
-    "vehicle_data_source",  # 'agent' or 'self'
+    ("vehicle_id",            "車輛ID"),
+    ("plate_number",          "車牌號碼"),
+    ("vehicle_type",          "車輛型式"),
+    ("brand",                 "廠牌"),
+    ("model",                 "車型"),
+    ("year",                  "出廠年"),
+    ("manufacture_month",     "出廠月"),
+    ("color",                 "顏色"),
+    ("engine_cc",             "排氣量(cc)"),
+    ("vin",                   "車身號碼VIN"),
+    ("fuel_type",             "燃料種類"),
+    ("registration_date",     "原發照日期"),
+    ("reissue_date",          "換補照日期"),
+    ("registration_expiry",   "驗車到期日"),
+    ("vehicle_data_source",   "車輛資料來源(agent/self)"),
     # 任意險
-    "voluntary_insurer", "voluntary_policy_number", "voluntary_status",
-    "voluntary_start", "voluntary_end", "voluntary_premium",
+    ("voluntary_insurer",       "任意險保險公司"),
+    ("voluntary_policy_number", "任意險保單號碼"),
+    ("voluntary_status",        "任意險狀態(active/expiring/expired/cancelled)"),
+    ("voluntary_start",         "任意險起保日"),
+    ("voluntary_end",           "任意險到期日"),
+    ("voluntary_premium",       "任意險保費"),
     # 強制險
-    "compulsory_insurer", "compulsory_policy_number",
-    "compulsory_start", "compulsory_end", "compulsory_premium",
-    # 保障項目（pipe-separated）
-    "coverage_items",  # "名稱|保額|自付額|保費;名稱2|...;..."
-    # 其他
-    "policy_data_source",
-    "notes",
+    ("compulsory_insurer",       "強制險保險公司"),
+    ("compulsory_policy_number", "強制險保單號碼"),
+    ("compulsory_start",         "強制險起保日"),
+    ("compulsory_end",           "強制險到期日"),
+    ("compulsory_premium",       "強制險保費"),
+    # 保障項目 + 其他
+    ("coverage_items",     "保障項目(名稱|保額|自付額|保費;名稱2|...)"),
+    ("policy_data_source", "保單資料來源(agent/self)"),
+    ("notes",              "備註"),
 ]
+
+# 內部 field name → 對外 header（給 DictWriter 用）
+ZH_HEADER_BY_FIELD: dict[str, str] = {f: zh for f, zh in COLUMN_DEF}
+# 對外 header → 內部 field name；同時接受中文與英文（兼容）
+FIELD_BY_HEADER: dict[str, str] = {}
+for f, zh in COLUMN_DEF:
+    FIELD_BY_HEADER[zh] = f
+    FIELD_BY_HEADER[f] = f
+# Excel 有時欄位前後會被加引號或空白，讀取時正規化
+def _normalize_header(h: str) -> str:
+    if h is None:
+        return ""
+    return h.strip().lstrip("﻿")
+
+def _resolve_field(header: str) -> str | None:
+    h = _normalize_header(header)
+    return FIELD_BY_HEADER.get(h)
+
+# 給其他地方查詢「內部欄位順序」用（保留 list 形式 — 外部仍叫 COLUMNS 兼容舊 import 路徑）
+COLUMNS: list[str] = [f for f, _ in COLUMN_DEF]
+ZH_HEADERS: list[str] = [zh for _, zh in COLUMN_DEF]
 
 
 def _str(v: Any) -> str:
@@ -151,8 +199,12 @@ async def export_csv_for_customers(db: AsyncSession, customer_ids: list[str] | N
 
     buf = io.StringIO()
     buf.write("﻿")  # BOM 給 Excel
-    w = csv.DictWriter(buf, fieldnames=COLUMNS, extrasaction="ignore")
+    # 用中文表頭輸出，業務員直接看得懂
+    w = csv.DictWriter(buf, fieldnames=ZH_HEADERS, extrasaction="ignore")
     w.writeheader()
+
+    def _to_zh_row(en_row: dict[str, str]) -> dict[str, str]:
+        return {ZH_HEADER_BY_FIELD[f]: v for f, v in en_row.items() if f in ZH_HEADER_BY_FIELD}
 
     for cust in customers:
         veh_list = list(cust.vehicles or [])
@@ -165,7 +217,7 @@ async def export_csv_for_customers(db: AsyncSession, customer_ids: list[str] | N
 
         if not veh_list and not policies:
             # 純客戶（沒車沒保單）→ 還是輸出一列，方便客戶資料異動
-            w.writerow(_row_for(cust, None, None))
+            w.writerow(_to_zh_row(_row_for(cust, None, None)))
             continue
 
         # 先依 vehicle_id 分組保單
@@ -173,19 +225,19 @@ async def export_csv_for_customers(db: AsyncSession, customer_ids: list[str] | N
             veh_policies = [p for p in policies if p.vehicle_id == veh.id]
             if veh_policies:
                 for p in veh_policies:
-                    w.writerow(_row_for(cust, veh, p))
+                    w.writerow(_to_zh_row(_row_for(cust, veh, p)))
                     emitted_pol_ids.add(p.id)
                     emitted_veh_ids.add(veh.id)
             else:
                 # 此車沒保單 → 輸出 vehicle 那列（policy 空）
-                w.writerow(_row_for(cust, veh, None))
+                w.writerow(_to_zh_row(_row_for(cust, veh, None)))
                 emitted_veh_ids.add(veh.id)
 
         # 沒被 emit 的保單（vehicle_id 為 NULL，或對應車輛已不存在）
         for p in policies:
             if p.id in emitted_pol_ids:
                 continue
-            w.writerow(_row_for(cust, None, p))
+            w.writerow(_to_zh_row(_row_for(cust, None, p)))
 
     return buf.getvalue()
 
@@ -287,7 +339,15 @@ async def import_csv(
 
     for idx, raw in enumerate(reader, start=2):  # start=2 因為第 1 列是 header
         summary["rows_total"] += 1
-        row = {k: (v.strip() if isinstance(v, str) else v) for k, v in raw.items() if k}
+        # header 可能是中文也可能是英文 — 一律先翻成內部 field name
+        row: dict[str, str] = {}
+        for k, v in raw.items():
+            if not k:
+                continue
+            field = _resolve_field(k)
+            if not field:
+                continue
+            row[field] = (v.strip() if isinstance(v, str) else v)
 
         try:
             # ── 1. 解析 / upsert 客戶 ──

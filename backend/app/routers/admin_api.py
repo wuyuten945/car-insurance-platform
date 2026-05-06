@@ -1653,11 +1653,62 @@ async def export_unified_csv(
 async def export_csv_template(
     admin: AdminUser = Depends(get_current_admin),
 ):
-    """下載空白 CSV 範本（只有 header，幫助新手填寫）"""
-    from app.core.admin_csv import COLUMNS
-    text = "﻿" + ",".join(COLUMNS) + "\n"
+    """下載空白 CSV 範本：中文表頭 + 一列範例值，幫業務員一眼看懂格式"""
+    from app.core.admin_csv import ZH_HEADERS, COLUMN_DEF
+    # 第 1 列：中文表頭
+    # 第 2 列：每欄的範例 / 提示，業務員填新資料時可以直接刪掉這列
+    EXAMPLES = {
+        "customer_id": "(留空 → 系統自動產生；填現有 ID 則更新)",
+        "customer_name": "王大明",
+        "customer_phone": "0912345678",
+        "customer_email": "wang@example.com",
+        "customer_birth_date": "1985-03-14",
+        "customer_address": "台北市信義區信義路五段7號",
+        "customer_registered_address": "新北市板橋區中山路100號",
+        "customer_license_number": "A123456789",
+        "customer_license_expiry": "2030-12-31",
+        "customer_emergency_contact_name": "王小美",
+        "customer_emergency_contact_phone": "0922222222",
+        "customer_emergency_contact_relation": "配偶",
+        "vehicle_id": "(留空)",
+        "plate_number": "ABC-1234",
+        "vehicle_type": "自用小客車",
+        "brand": "Toyota",
+        "model": "Altis",
+        "year": "2020",
+        "manufacture_month": "3",
+        "color": "白",
+        "engine_cc": "1800",
+        "vin": "WBA12345678901234",
+        "fuel_type": "汽油",
+        "registration_date": "2020-04-15",
+        "reissue_date": "",
+        "registration_expiry": "2026-04-15",
+        "vehicle_data_source": "agent",
+        "voluntary_insurer": "富邦產險",
+        "voluntary_policy_number": "FBN-2026-001234",
+        "voluntary_status": "active",
+        "voluntary_start": "2026-04-15",
+        "voluntary_end": "2027-04-15",
+        "voluntary_premium": "18500",
+        "compulsory_insurer": "新光產險",
+        "compulsory_policy_number": "CALI-2026-005678",
+        "compulsory_start": "2026-04-15",
+        "compulsory_end": "2027-04-15",
+        "compulsory_premium": "1500",
+        "coverage_items": "車體損失|2000000|10000|18500;第三人責任|3000000|0|6500",
+        "policy_data_source": "agent",
+        "notes": "可填任何補充說明",
+    }
+    import csv as _csv
+    import io as _io
+    buf = _io.StringIO()
+    buf.write("﻿")  # BOM
+    w = _csv.writer(buf)
+    w.writerow(ZH_HEADERS)
+    w.writerow([EXAMPLES.get(f, "") for f, _zh in COLUMN_DEF])
     return StreamingResponse(
-        io.BytesIO(text.encode("utf-8")),
+        io.BytesIO(buf.getvalue().encode("utf-8")),
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="bopinan_csv_template.csv"'},
     )
