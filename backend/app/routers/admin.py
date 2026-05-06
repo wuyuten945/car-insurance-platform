@@ -276,6 +276,24 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     <div id="csv-result" style="margin-top:8px;font-size:12px"></div>
   </div>
 
+  <!-- 業務員待辦提醒中心 -->
+  <div id="todo-bar" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:18px">🔔</span>
+      <span style="font-size:13px;font-weight:600;color:#1565C0" data-i18n="todo_title">待辦提醒中心（保單 / 驗車到期）</span>
+      <span id="todo-summary" style="font-size:11px;color:#666;margin-left:8px"></span>
+      <button onclick="loadAgentTasks()" style="margin-left:auto;background:#0288D1;color:#fff;border:0;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer" data-i18n="btn_todo_refresh">🔄 重新整理</button>
+    </div>
+    <div id="todo-tabs" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;font-size:12px">
+      <button class="todo-tab" data-bucket="overdue"  onclick="switchTodoBucket('overdue')"  style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">🚨 已逾期 <span class="todo-cnt"></span></button>
+      <button class="todo-tab" data-bucket="today"    onclick="switchTodoBucket('today')"    style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">📍 當天 <span class="todo-cnt"></span></button>
+      <button class="todo-tab" data-bucket="next_3d"  onclick="switchTodoBucket('next_3d')"  style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">⚡ 近 3 日 <span class="todo-cnt"></span></button>
+      <button class="todo-tab" data-bucket="next_7d"  onclick="switchTodoBucket('next_7d')"  style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">📅 近 7 日 <span class="todo-cnt"></span></button>
+      <button class="todo-tab" data-bucket="next_30d" onclick="switchTodoBucket('next_30d')" style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">📆 近 30 日 <span class="todo-cnt"></span></button>
+    </div>
+    <div id="todo-list" style="margin-top:10px"></div>
+  </div>
+
   <!-- 上傳大量匯入 — 說明 modal -->
   <div id="csv-import-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
     <div style="background:#fff;padding:22px 26px;border-radius:14px;max-width:600px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
@@ -839,24 +857,40 @@ function setNumberWithComma(id, val) {
   el.value = Number(val).toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
-// === 加入行事曆按鈕（業務員 / 自己的行事曆）===
-// 給業務員快速把客戶的保單到期、驗車到期同步到自己 Google / Apple / Outlook 行事曆
-function _icalBlobUrl(title, dateStr, desc, days) {
-  if (!dateStr) return '';
+// === 加入 / 取消 行事曆 — 用 data-* 屬性傳值（避開 onclick 字串轉義雷）===
+// uid 用「用途+物件 id」設定固定值 → 加入 vs 取消 用同一個 UID，匯入 .ics CANCEL 時行事曆會找到原事件移除
+function _icalIcs(method, title, dateStr, desc, uid, days) {
   var dt = String(dateStr).replace(/-/g, '');
   var n = new Date(dateStr + 'T00:00:00');
   n.setDate(n.getDate() + 1);
   var end = n.getFullYear() + String(n.getMonth() + 1).padStart(2,'0') + String(n.getDate()).padStart(2,'0');
   var stamp = new Date().toISOString().replace(/[-:]/g,'').replace(/\\.\\d{3}/,'');
-  var alarms = (days || [30,14,7,1]).map(function(d){
-    return ['BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+title+' 倒數 '+d+' 天','TRIGGER:-PT'+(d*1440)+'M','END:VALARM'].join('\\r\\n');
-  }).join('\\r\\n');
-  var ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BOPINAN//Admin//ZH','CALSCALE:GREGORIAN',
-    'BEGIN:VEVENT','UID:bopinan-admin-'+Date.now()+'@bopinan',
-    'DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+dt,'DTEND;VALUE=DATE:'+end,
-    'SUMMARY:'+title,'DESCRIPTION:'+(desc||'').replace(/\\n/g,'\\\\n'),
-    alarms,'END:VEVENT','END:VCALENDAR'].join('\\r\\n');
-  return URL.createObjectURL(new Blob([ics], {type:'text/calendar;charset=utf-8'}));
+  var safeDesc = String(desc||'').replace(/\\\\/g,'\\\\\\\\').replace(/\\n/g,'\\\\n').replace(/,/g,'\\\\,');
+  var lines = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BOPINAN//Admin//ZH','CALSCALE:GREGORIAN',
+    'METHOD:' + method,
+    'BEGIN:VEVENT',
+    'UID:' + uid,
+    'DTSTAMP:' + stamp,
+    'DTSTART;VALUE=DATE:' + dt,
+    'DTEND;VALUE=DATE:' + end,
+    'SUMMARY:' + (method === 'CANCEL' ? '[已取消] ' : '') + title,
+    'DESCRIPTION:' + safeDesc,
+    'STATUS:' + (method === 'CANCEL' ? 'CANCELLED' : 'CONFIRMED'),
+    'SEQUENCE:' + (method === 'CANCEL' ? '1' : '0'),
+  ];
+  if (method !== 'CANCEL') {
+    (days || [30,14,7,1]).forEach(function(d){
+      lines.push('BEGIN:VALARM');
+      lines.push('ACTION:DISPLAY');
+      lines.push('DESCRIPTION:' + title + ' 倒數 ' + d + ' 天');
+      lines.push('TRIGGER:-PT' + (d*1440) + 'M');
+      lines.push('END:VALARM');
+    });
+  }
+  lines.push('END:VEVENT');
+  lines.push('END:VCALENDAR');
+  return lines.join('\\r\\n');
 }
 function _googleCalUrl(title, dateStr, desc) {
   if (!dateStr) return '#';
@@ -867,43 +901,175 @@ function _googleCalUrl(title, dateStr, desc) {
   var p = new URLSearchParams({action:'TEMPLATE', text:title, dates:dt+'/'+end, details:desc||''});
   return 'https://calendar.google.com/calendar/render?' + p.toString();
 }
-window._calOpen = function(btn, title, dateStr, desc){
-  // 移除既有 popover
+function _downloadIcs(filename, ics) {
+  var blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+// 點到 .cal-btn 或 .cal-cancel-btn → 顯示對應 popover
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.cal-btn, .cal-cancel-btn');
+  if (!btn) return;
+  e.stopPropagation();
+  var isCancel = btn.classList.contains('cal-cancel-btn');
+  var title = btn.dataset.calTitle || '';
+  var dateStr = btn.dataset.calDate || '';
+  var desc = btn.dataset.calDesc || '';
+  var uid = btn.dataset.calUid || ('bopinan-' + Date.now() + '@bopinan');
+  if (!dateStr) return;
+
   var old = document.getElementById('_cal_pop'); if (old) old.remove();
   var pop = document.createElement('div');
   pop.id = '_cal_pop';
-  pop.style.cssText = 'position:absolute;z-index:10001;background:#fff;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);overflow:hidden;font-size:12px;min-width:160px';
-  pop.innerHTML = '<a href="'+_googleCalUrl(title,dateStr,desc)+'" target="_blank" rel="noopener" style="display:block;padding:6px 10px;text-decoration:none;color:#333;border-bottom:1px solid #eee">📅 Google 日曆</a>'
-                + '<a href="#" id="_cal_ics" style="display:block;padding:6px 10px;text-decoration:none;color:#333">🍎 Apple/Outlook (.ics)</a>';
+  pop.style.cssText = 'position:absolute;z-index:10001;background:#fff;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);overflow:hidden;font-size:12px;min-width:200px';
+
+  if (isCancel) {
+    pop.innerHTML =
+        '<div style="padding:6px 10px;background:#fff3e0;font-size:11px;color:#E65100;border-bottom:1px solid #eee">下載取消通知並匯入到行事曆</div>'
+      + '<a href="#" data-act="ics-cancel" style="display:block;padding:6px 10px;text-decoration:none;color:#333">🍎 下載 .ics 取消通知</a>'
+      + '<a href="' + _googleCalUrl('[已取消] ' + title, dateStr, '⚠️ 此事件已取消\\n\\n' + desc) + '" target="_blank" rel="noopener" style="display:block;padding:6px 10px;text-decoration:none;color:#333;border-top:1px solid #eee">📅 在 Google 日曆中刪除（手動）</a>';
+  } else {
+    pop.innerHTML =
+        '<a href="' + _googleCalUrl(title, dateStr, desc) + '" target="_blank" rel="noopener" style="display:block;padding:6px 10px;text-decoration:none;color:#333;border-bottom:1px solid #eee">📅 Google 日曆</a>'
+      + '<a href="#" data-act="ics-add" style="display:block;padding:6px 10px;text-decoration:none;color:#333">🍎 Apple / Outlook (.ics)</a>';
+  }
+
   document.body.appendChild(pop);
   var r = btn.getBoundingClientRect();
-  pop.style.left = (r.right - pop.offsetWidth) + 'px';
+  pop.style.left = (r.right + window.scrollX - pop.offsetWidth) + 'px';
   pop.style.top = (r.bottom + window.scrollY + 4) + 'px';
-  // 修正：popover 寬度需先測量，重設 left
   setTimeout(function(){ pop.style.left = (r.right + window.scrollX - pop.offsetWidth) + 'px'; }, 0);
-  document.getElementById('_cal_ics').onclick = function(e){
-    e.preventDefault();
-    var u = _icalBlobUrl(title,dateStr,desc);
-    var a = document.createElement('a'); a.href = u; a.download = title + '.ics';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
+
+  pop.addEventListener('click', function(ev){
+    var a = ev.target.closest('[data-act]');
+    if (!a) return;
+    ev.preventDefault();
+    var act = a.getAttribute('data-act');
+    if (act === 'ics-add') {
+      _downloadIcs(title + '.ics', _icalIcs('REQUEST', title, dateStr, desc, uid));
+    } else if (act === 'ics-cancel') {
+      _downloadIcs('CANCEL_' + title + '.ics', _icalIcs('CANCEL', title, dateStr, desc, uid));
+    }
     pop.remove();
-  };
-  // 點外面關閉
+  });
+
   setTimeout(function(){
     document.addEventListener('click', function _close(ev){
-      if (!pop.contains(ev.target) && ev.target !== btn) {
+      if (!pop.contains(ev.target) && !btn.contains(ev.target)) {
         pop.remove(); document.removeEventListener('click', _close);
       }
     });
   }, 0);
-};
-function _calBtnHtml(title, dateStr, desc) {
+});
+
+// 用 data-* 屬性產生加入 + 取消兩顆按鈕；安全（不會被 desc 內的引號或換行 break）
+function _attr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _calBtnHtml(title, dateStr, desc, uid) {
   if (!dateStr) return '';
-  var titleEsc = String(title).replace(/'/g, "\\'");
-  var descEsc = String(desc||'').replace(/'/g, "\\'");
-  return '<button onclick="event.stopPropagation();_calOpen(this,\\'' + titleEsc + '\\',\\'' + dateStr + '\\',\\'' + descEsc + '\\')" '
-       + 'style="margin-left:4px;padding:2px 6px;font-size:10px;background:#E3F2FD;color:#1565C0;border:1px solid #BBDEFB;border-radius:4px;cursor:pointer;white-space:nowrap" title="加入行事曆">📅</button>';
+  var u = uid || ('bopinan-' + String(title).replace(/\\s+/g,'-') + '-' + dateStr + '@bopinan');
+  var common = 'data-cal-title="' + _attr(title) + '" data-cal-date="' + _attr(dateStr) + '" data-cal-desc="' + _attr(desc) + '" data-cal-uid="' + _attr(u) + '"';
+  return '<button class="cal-btn" ' + common + ' style="margin-left:4px;padding:2px 6px;font-size:10px;background:#E3F2FD;color:#1565C0;border:1px solid #BBDEFB;border-radius:4px;cursor:pointer;white-space:nowrap" title="加入行事曆">📅 加入</button>'
+       + '<button class="cal-cancel-btn" ' + common + ' style="margin-left:2px;padding:2px 6px;font-size:10px;background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A;border-radius:4px;cursor:pointer;white-space:nowrap" title="取消加入行事曆">✕</button>';
+}
+
+// === 業務員待辦提醒中心 ===
+window._todoData = null;
+window._todoActiveBucket = 'today';
+
+async function loadAgentTasks() {
+  var sumEl = document.getElementById('todo-summary');
+  if (sumEl) sumEl.textContent = LANG==='en' ? 'Loading...' : '載入中⋯';
+  try {
+    var r = await fetch(CONSOLE_API + '/agent/tasks', { headers: consoleHeaders(false) });
+    var d = await r.json();
+    if (!d.success) {
+      if (sumEl) sumEl.textContent = (LANG==='en'?'Failed: ':'失敗：') + (d.message || '');
+      return;
+    }
+    window._todoData = d.data;
+    var c = d.data.counts || {};
+    if (sumEl) {
+      sumEl.textContent = (LANG==='en'
+        ? `截至 ${d.data.as_of}：總 ${(c.overdue||0)+(c.today||0)+(c.next_3d||0)+(c.next_7d||0)+(c.next_30d||0)} 項`
+        : `截至 ${d.data.as_of}：共 ${(c.overdue||0)+(c.today||0)+(c.next_3d||0)+(c.next_7d||0)+(c.next_30d||0)} 項待辦`);
+    }
+    // 更新 tab 計數
+    document.querySelectorAll('.todo-tab').forEach(function(btn){
+      var b = btn.dataset.bucket;
+      var cnt = c[b] || 0;
+      var span = btn.querySelector('.todo-cnt');
+      if (span) span.textContent = cnt > 0 ? '(' + cnt + ')' : '';
+      // 高亮逾期 / 當天
+      if (b === 'overdue' && cnt > 0) {
+        btn.style.background = '#FFEBEE'; btn.style.borderColor = '#EF9A9A'; btn.style.color = '#C62828';
+      } else if (b === 'today' && cnt > 0) {
+        btn.style.background = '#FFF3E0'; btn.style.borderColor = '#FFB74D'; btn.style.color = '#E65100';
+      } else {
+        btn.style.background = '#fff'; btn.style.borderColor = '#ddd'; btn.style.color = '#333';
+      }
+    });
+    // 預設展開：有逾期就先看逾期，否則看當天
+    var firstBucket = (c.overdue > 0) ? 'overdue' : (c.today > 0 ? 'today' : 'next_30d');
+    switchTodoBucket(window._todoActiveBucket || firstBucket);
+  } catch(e) {
+    if (sumEl) sumEl.textContent = (LANG==='en'?'Error: ':'錯誤：') + e.message;
+  }
+}
+
+function switchTodoBucket(bucket) {
+  window._todoActiveBucket = bucket;
+  // active tab 視覺
+  document.querySelectorAll('.todo-tab').forEach(function(btn){
+    if (btn.dataset.bucket === bucket) {
+      btn.style.fontWeight = '700';
+      btn.style.borderWidth = '2px';
+    } else {
+      btn.style.fontWeight = '400';
+      btn.style.borderWidth = '1px';
+    }
+  });
+  var data = window._todoData;
+  if (!data) return;
+  var items = (data.buckets || {})[bucket] || [];
+  var box = document.getElementById('todo-list');
+  if (items.length === 0) {
+    box.innerHTML = '<div style="padding:20px;text-align:center;color:#999;font-size:12px">' + (LANG==='en' ? 'No items in this bucket' : '此區段沒有待辦事項') + '</div>';
+    return;
+  }
+  var html = '<table style="width:100%;font-size:12px"><thead><tr style="background:#F5F5F5"><th style="padding:6px">類別</th><th style="padding:6px">客戶</th><th style="padding:6px">車牌 / 保單</th><th style="padding:6px">到期日</th><th style="padding:6px">剩餘</th><th style="padding:6px">行事曆</th></tr></thead><tbody>';
+  items.forEach(function(it) {
+    var typeColor = it.type === 'inspection' ? '#0288D1' : (it.type === 'compulsory_renewal' ? '#E65100' : '#1565C0');
+    var daysColor = it.days_left < 0 ? '#C62828' : (it.days_left <= 3 ? '#E65100' : '#666');
+    var daysText = it.days_left < 0 ? ('已逾期 ' + Math.abs(it.days_left) + ' 天') : (it.days_left === 0 ? '今天' : ('剩 ' + it.days_left + ' 天'));
+    var calTitle, calDesc, uid;
+    if (it.type === 'inspection') {
+      calTitle = '驗車到期 — ' + (it.plate || '');
+      calDesc = '客戶：' + it.customer_name + (it.customer_phone ? '（' + it.customer_phone + '）' : '') + '\\n車牌：' + (it.plate || '');
+      uid = 'bopinan-inspection-' + it.id + '@bopinan.ego-intl.com';
+    } else if (it.type === 'compulsory_renewal') {
+      calTitle = '強制險到期 — ' + (it.insurer || '') + ' ' + (it.policy_number || '');
+      calDesc = '客戶：' + it.customer_name + '\\n車牌：' + (it.plate || '') + '\\n強制險保單號：' + (it.policy_number || '');
+      uid = 'bopinan-compulsory-' + it.id + '@bopinan.ego-intl.com';
+    } else {
+      calTitle = '保單到期 — ' + (it.insurer || '') + ' ' + (it.policy_number || '');
+      calDesc = '客戶：' + it.customer_name + '\\n車牌：' + (it.plate || '') + '\\n保單號：' + (it.policy_number || '');
+      uid = 'bopinan-policy-' + it.id + '@bopinan.ego-intl.com';
+    }
+    html += '<tr style="border-bottom:1px solid #f0f0f0">';
+    html += '<td style="padding:6px"><span style="color:' + typeColor + ';font-weight:600">' + it.type_label + '</span></td>';
+    html += '<td style="padding:6px"><b>' + (it.customer_name || '') + '</b>' + (it.customer_phone ? '<br><span style="color:#999;font-size:10px">' + it.customer_phone + '</span>' : '') + '</td>';
+    html += '<td style="padding:6px">' + (it.plate || '-') + (it.policy_number ? '<br><span style="color:#999;font-size:10px;font-family:monospace">' + it.policy_number + '</span>' : '') + '</td>';
+    html += '<td style="padding:6px">' + it.due_date + '</td>';
+    html += '<td style="padding:6px"><b style="color:' + daysColor + '">' + daysText + '</b></td>';
+    html += '<td style="padding:6px;white-space:nowrap">' + _calBtnHtml(calTitle, it.due_date, calDesc, uid) + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  box.innerHTML = html;
 }
 
 // === 整合 CSV 匯入 / 匯出 ===
@@ -1265,6 +1431,8 @@ var I18N = {
     qs_lbl_customer: '客戶: ',
     idle_warn_title: '⚠ 即將自動登出 - ',
     idle_logout_msg: '閒置超過 10 分鐘，已自動登出。',
+    todo_title: '待辦提醒中心（保單 / 驗車到期）',
+    btn_todo_refresh: '🔄 重新整理',
     csv_title: '資料匯入 / 匯出（客戶+車輛+保單一張表）',
     btn_csv_export: '⬇ 下載完整資料',
     btn_csv_template: '📥 下載空白範本',
@@ -1474,6 +1642,8 @@ var I18N = {
     qs_lbl_customer: 'Customer: ',
     idle_warn_title: '⚠ Auto-logout soon - ',
     idle_logout_msg: 'Idle over 10 minutes, you have been logged out.',
+    todo_title: 'To-Do Center (Policy / Inspection Due)',
+    btn_todo_refresh: '🔄 Refresh',
     csv_title: 'CSV Bulk Import / Export (Customer + Vehicle + Policy)',
     btn_csv_export: '⬇ Export All',
     btn_csv_template: '📥 Blank Template',
@@ -1745,6 +1915,7 @@ function _enterAdminUI(token, role, displayName) {
   document.getElementById('customer-bar').style.display = 'block';
   loadCustomerList();
   loadVehicles(); loadPolicies(); loadOverview();
+  loadAgentTasks();
   // 啟動閒置自動登出計時
   _bindIdleEvents();
   _resetIdleTimer();

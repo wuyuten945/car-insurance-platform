@@ -1627,6 +1627,135 @@ async def update_claim_progress(
 
 
 # ═══════════════════════════════════════════════════
+# 業務員待辦提醒中心：保單到期 + 驗車到期 依時間分群
+# ═══════════════════════════════════════════════════
+
+def _bucket_for(days: int) -> str:
+    """負數 = 已逾期；0 = 當天；1-3、4-7、8-30 各別分桶；30+ 不顯示"""
+    if days < 0:
+        return "overdue"
+    if days == 0:
+        return "today"
+    if days <= 3:
+        return "next_3d"
+    if days <= 7:
+        return "next_7d"
+    if days <= 30:
+        return "next_30d"
+    return "later"
+
+
+@router.get("/agent/tasks")
+async def agent_pending_tasks(
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    業務員待辦提醒：列出自己負責客戶的所有保單到期、驗車到期，依時間分桶。
+    桶：overdue（已逾期）/ today / next_3d / next_7d / next_30d
+    """
+    from datetime import date as _date
+    today = _date.today()
+    accessible = await get_accessible_customer_ids(admin, db)
+
+    # 撈保單
+    pol_q = select(Policy).options(selectinload(Policy.user), selectinload(Policy.vehicle))
+    if accessible is not None:
+        if not accessible:
+            policies: list[Policy] = []
+        else:
+            pol_q = pol_q.where(Policy.user_id.in_(accessible))
+            r = await db.execute(pol_q)
+            policies = list(r.scalars().unique().all())
+    else:
+        r = await db.execute(pol_q)
+        policies = list(r.scalars().unique().all())
+
+    # 撈車輛（驗車）
+    veh_q = select(UserVehicle).options(selectinload(UserVehicle.user)).where(UserVehicle.registration_expiry.isnot(None))
+    if accessible is not None:
+        if not accessible:
+            vehicles: list[UserVehicle] = []
+        else:
+            veh_q = veh_q.where(UserVehicle.user_id.in_(accessible))
+            r = await db.execute(veh_q)
+            vehicles = list(r.scalars().unique().all())
+    else:
+        r = await db.execute(veh_q)
+        vehicles = list(r.scalars().unique().all())
+
+    buckets: dict[str, list[dict]] = {
+        "overdue": [], "today": [], "next_3d": [], "next_7d": [], "next_30d": []
+    }
+
+    def _add(bucket: str, item: dict) -> None:
+        if bucket in buckets:
+            buckets[bucket].append(item)
+
+    # 保單（任意險到期 + 強制險到期）
+    for p in policies:
+        if p.status not in ("active", "expiring"):
+            continue
+        cust_name = p.user.name if p.user else ""
+        cust_phone = p.user.phone if p.user else ""
+        plate = p.vehicle.plate_number if p.vehicle else ""
+        if p.end_date:
+            d = (p.end_date - today).days
+            _add(_bucket_for(d), {
+                "type": "policy_renewal",
+                "type_label": "任意險到期",
+                "id": p.id,
+                "customer_id": p.user_id,
+                "customer_name": cust_name,
+                "customer_phone": cust_phone,
+                "plate": plate,
+                "insurer": p.insurer_name,
+                "policy_number": p.policy_number,
+                "due_date": str(p.end_date),
+                "days_left": d,
+            })
+        if p.compulsory_end_date:
+            d = (p.compulsory_end_date - today).days
+            _add(_bucket_for(d), {
+                "type": "compulsory_renewal",
+                "type_label": "強制險到期",
+                "id": p.id,
+                "customer_id": p.user_id,
+                "customer_name": cust_name,
+                "customer_phone": cust_phone,
+                "plate": plate,
+                "insurer": p.compulsory_insurer_name or "",
+                "policy_number": p.compulsory_policy_number or "",
+                "due_date": str(p.compulsory_end_date),
+                "days_left": d,
+            })
+
+    # 驗車到期
+    for v in vehicles:
+        if not v.registration_expiry:
+            continue
+        d = (v.registration_expiry - today).days
+        _add(_bucket_for(d), {
+            "type": "inspection",
+            "type_label": "驗車到期",
+            "id": v.id,
+            "customer_id": v.user_id,
+            "customer_name": v.user.name if v.user else "",
+            "customer_phone": v.user.phone if v.user else "",
+            "plate": v.plate_number,
+            "due_date": str(v.registration_expiry),
+            "days_left": d,
+        })
+
+    # 各桶內依 days_left 由小到大排序（更急的先出現）
+    for k in buckets:
+        buckets[k].sort(key=lambda x: x["days_left"])
+
+    counts = {k: len(v) for k, v in buckets.items()}
+    return APIResponse(data={"counts": counts, "buckets": buckets, "as_of": str(today)})
+
+
+# ═══════════════════════════════════════════════════
 # 整合 CSV 匯出 / 匯入（客戶 + 車輛 + 保單 一張表）
 # 給管理員 / 業務員大量上傳和下載用（百筆 / 千筆級）
 # ═══════════════════════════════════════════════════
