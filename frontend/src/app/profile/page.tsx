@@ -15,6 +15,7 @@ import api from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 
 type ProfileForm = {
   name: string;
@@ -49,6 +50,7 @@ const makeProfileSchema = (t: (k: string) => string) => z.object({
 
 export default function ProfilePage() {
   const { ready: __authReady } = useAuthGuard();
+  useIdleLogout();
   const router = useRouter();
   const { user, loadUser, logout, isAuthenticated } = useAuthStore();
   const { t } = useT();

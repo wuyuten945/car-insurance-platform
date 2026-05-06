@@ -12,6 +12,7 @@ import api from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 import VehicleFormModal, { type VehiclePayload } from '@/components/VehicleFormModal';
 import AddToCalendar from '@/components/AddToCalendar';
 
@@ -62,6 +63,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 
 export default function VehiclesPage() {
   const { ready: __authReady } = useAuthGuard();
+  useIdleLogout();
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const { t } = useT();

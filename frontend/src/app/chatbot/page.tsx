@@ -6,6 +6,7 @@ import { Send, Bot, Loader2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 
 interface Message {
   id?: string;
@@ -24,6 +25,7 @@ const QUICK_REPLIES = [
 
 export default function ChatbotPage() {
   const { ready: __authReady } = useAuthGuard();
+  useIdleLogout();
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([

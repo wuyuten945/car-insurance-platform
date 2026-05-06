@@ -1100,7 +1100,7 @@ var I18N = {
     qs_tag_claim: '理賠',
     qs_lbl_customer: '客戶: ',
     idle_warn_title: '⚠ 即將自動登出 - ',
-    idle_logout_msg: '閒置超過 5 分鐘，已自動登出。',
+    idle_logout_msg: '閒置超過 10 分鐘，已自動登出。',
     // Customer bar
     cur_customer_label: '操作客戶（新增車輛/保單時套用）：',
     btn_refresh_customers: '重新整理客戶清單',
@@ -1296,7 +1296,7 @@ var I18N = {
     qs_tag_claim: 'Clm.',
     qs_lbl_customer: 'Customer: ',
     idle_warn_title: '⚠ Auto-logout soon - ',
-    idle_logout_msg: 'Idle over 5 minutes, you have been logged out.',
+    idle_logout_msg: 'Idle over 10 minutes, you have been logged out.',
     cur_customer_label: 'Active customer (used for new vehicle / policy):',
     btn_refresh_customers: 'Refresh',
     h_upload_reg: 'Upload Reg. Card (auto-OCR)',
@@ -1495,9 +1495,9 @@ var LS_TOKEN_KEY = 'admin_token_v1';
 var LS_ROLE_KEY = 'admin_role_v1';
 var LS_NAME_KEY = 'admin_name_v1';
 
-// --- 閒置自動登出（5 分鐘無動作） ---
-var IDLE_TIMEOUT_MS = 5 * 60 * 1000;   // 5 分鐘
-var IDLE_WARN_MS    = 4 * 60 * 1000;   // 第 4 分鐘提醒（剩 1 分鐘）
+// --- 閒置自動登出（10 分鐘無動作） ---
+var IDLE_TIMEOUT_MS = 10 * 60 * 1000;  // 10 分鐘
+var IDLE_WARN_MS    =  9 * 60 * 1000;  // 第 9 分鐘提醒（剩 1 分鐘）
 var _idleTimer = null;
 var _idleWarnTimer = null;
 function _idleAutoLogout() {

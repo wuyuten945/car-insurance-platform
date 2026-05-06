@@ -11,6 +11,7 @@ import api from '@/lib/api-client';
 import { useEligibility } from '@/lib/useEligibility';
 import LockedFeatureNotice from '@/components/LockedFeatureNotice';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 
 interface NearbyResource {
   id: string;

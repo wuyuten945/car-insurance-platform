@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Loader2, CheckCheck, Car, Shield, Calendar, CircleCheck, CircleX, Clock, AlertTriangle } from 'lucide-react';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 
 interface PinnedItem {
   id: string;
@@ -43,6 +44,7 @@ interface Notification {
 
 export default function NotificationsPage() {
   const { ready: __authReady } = useAuthGuard();
+  useIdleLogout();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({

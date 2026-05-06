@@ -7,6 +7,7 @@ import api from '@/lib/api-client';
 import { CLAIM_STAGES } from '@/lib/constants';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 
 interface Claim {
   id: string;
@@ -31,6 +32,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function ClaimsPage() {
   const { ready: __authReady } = useAuthGuard();
+  useIdleLogout();
   const { t, lang } = useT();
   const CLAIM_TYPE_MAP: Record<string, string> = {
     collision: t('claims.type.collision'),

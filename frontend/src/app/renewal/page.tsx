@@ -7,6 +7,7 @@ import { ArrowLeft, Check, Star, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 
 interface RenewalQuote {
   id: string;
@@ -25,6 +26,7 @@ interface RenewalQuote {
 
 export default function RenewalPage() {
   const { ready: __authReady } = useAuthGuard();
+  useIdleLogout();
   if (!__authReady) return null;
 
   return (

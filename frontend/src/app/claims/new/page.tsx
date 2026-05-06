@@ -13,6 +13,7 @@ import { useT } from '@/lib/i18n/LanguageProvider';
 import { useEligibility } from '@/lib/useEligibility';
 import LockedFeatureNotice from '@/components/LockedFeatureNotice';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 
 const makeClaimSchema = (t: (k: string) => string) => z.object({
   policy_id: z.string().min(1, t('claimForm.err.policyRequired')),

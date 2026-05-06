@@ -9,6 +9,7 @@ import {
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 
 interface Station {
   id: string;
@@ -39,6 +40,7 @@ const TYPE_LABELS: Record<string, { label: string; color: string; bg: string }> 
 
 export default function InspectionPage() {
   const { ready: __authReady } = useAuthGuard();
+  useIdleLogout();
   const [keyword, setKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [selectedCity, setSelectedCity] = useState('');

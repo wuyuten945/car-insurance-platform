@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { KeyRound, ArrowRight, Loader2, Mail, Languages, AlertTriangle, Copy, Check, ShieldCheck, Lock } from 'lucide-react';
+import { KeyRound, ArrowRight, Loader2, Mail, Languages, AlertTriangle, Copy, Check, ShieldCheck, Lock, Clock } from 'lucide-react';
+import { useIdleLogoutBanner } from '@/lib/useIdleLogout';
 import Image from 'next/image';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api-client';
@@ -143,8 +144,18 @@ export default function LoginPage() {
     }
   };
 
+  const idleBanner = useIdleLogoutBanner();
+
   return (
     <div className="relative flex min-h-screen flex-col bg-gradient-to-b from-primary-500 to-primary-700">
+      {idleBanner && (
+        <div className="absolute top-0 left-0 right-0 z-20 bg-amber-100 border-b border-amber-300 px-4 py-3 flex items-center gap-2 shadow">
+          <Clock className="h-5 w-5 text-amber-700 shrink-0" />
+          <div className="flex-1 text-sm text-amber-900">
+            <span className="font-bold">已自動登出。</span>因為閒置超過 10 分鐘，為了帳號安全已將您登出，請重新登入。
+          </div>
+        </div>
+      )}
       {/* Top-right controls: 管理員入口 + 語言切換 */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <button

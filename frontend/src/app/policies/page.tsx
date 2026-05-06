@@ -7,6 +7,7 @@ import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 import PolicyFormModal, { type PolicyPayload } from '@/components/PolicyFormModal';
 import AddToCalendar from '@/components/AddToCalendar';
 
@@ -89,6 +90,7 @@ function hasTowInsurance(items: PolicyItem[]): boolean {
 
 export default function PoliciesPage() {
   const { ready: __authReady } = useAuthGuard();
+  useIdleLogout();
   const [activeTab, setActiveTab] = useState('all');
   const { t } = useT();
 
