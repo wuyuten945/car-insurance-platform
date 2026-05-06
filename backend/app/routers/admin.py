@@ -148,6 +148,10 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 <div class="header">
   <h1 data-i18n="header_title">BOPINAN — 管理控制台</h1>
   <small id="user-info"></small>
+  <a href="https://numerology-easing.ego-intl.com" target="_blank" rel="noopener" title="幫自己和客戶拿副好牌"
+     style="display:inline-block;background:linear-gradient(90deg,#9C27B0,#E91E63,#FF9800);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer;text-decoration:none">
+    <span data-i18n="btn_iching">✨ 幫自己和客戶拿副好牌</span>
+  </a>
   <button id="lang-toggle-btn" type="button" onclick="toggleAdminLang()" title="Toggle Language" style="background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">EN</button>
   <button id="change-pw-btn" type="button" onclick="openChangePwModal()" style="display:none;background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer" data-i18n="btn_change_password">變更密碼</button>
   <button class="btn danger" id="logout-btn" style="display:none;padding:4px 12px;font-size:12px;margin-left:10px" onclick="doLogout()" data-i18n="btn_logout">登出</button>
@@ -1968,6 +1972,7 @@ var I18N = {
     ph_choose: '請選擇', lbl_unnamed: '未命名',
     btn_choose_file: '選擇檔案', msg_no_file: '未選擇任何檔案',
     btn_change_password: '變更密碼',
+    btn_iching: '✨ 幫自己和客戶拿副好牌',
     cp_title: '變更密碼',
     cp_hint: '請先輸入當前密碼確認本人，再設定新密碼。',
     cp_current: '當前密碼', cp_new: '新密碼（至少 8 字元）', cp_confirm: '確認新密碼',
@@ -2178,6 +2183,7 @@ var I18N = {
     ph_choose: 'Choose', lbl_unnamed: 'Unnamed',
     btn_choose_file: 'Choose File', msg_no_file: 'No file chosen',
     btn_change_password: 'Change Password',
+    btn_iching: '✨ Lucky Cards (Numerology)',
     cp_title: 'Change Password',
     cp_hint: 'Enter your current password to confirm identity, then set a new password.',
     cp_current: 'Current Password', cp_new: 'New Password (≥ 8 chars)', cp_confirm: 'Confirm New Password',

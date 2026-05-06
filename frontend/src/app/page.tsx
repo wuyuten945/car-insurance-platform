@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle, FileText, ClipboardList, MessageCircle,
   ChevronRight, MapPin, Shield, Car, Calendar,
-  CircleCheck, CircleX,
+  CircleCheck, CircleX, Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
@@ -92,6 +92,25 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* 數字易經 — 跨系統入口 */}
+      <a
+        href="https://numerology-easing.ego-intl.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 p-4 shadow-md hover:shadow-lg transition active:scale-[0.98]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/25 backdrop-blur-sm">
+            <Sparkles className="h-6 w-6 text-white" />
+          </div>
+          <div className="flex-1 text-white">
+            <p className="text-base font-bold">🃏 幫人生拿副好牌</p>
+            <p className="text-xs opacity-90 mt-0.5">數字易經分析 · 用生日數字找出你的人生節奏</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-white opacity-80" />
+        </div>
+      </a>
 
       {/* 保單 */}
       <section>

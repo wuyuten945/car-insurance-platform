@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   User, LogOut, Loader2, Save, Car, Bell, MessageCircle, MapPin,
-  Mail, Phone, Calendar, IdCard, Home, FileText, Heart, Lock, ShieldCheck, Calculator,
+  Mail, Phone, Calendar, IdCard, Home, FileText, Heart, Lock, ShieldCheck, Calculator, Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
@@ -62,6 +62,7 @@ export default function ProfilePage() {
     { href: '/notifications', icon: Bell, label: t('profile.menu.notifications') },
     { href: '/chatbot', icon: MessageCircle, label: t('profile.menu.chatbot') },
     { href: '/inspection', icon: MapPin, label: t('profile.menu.inspection') },
+    { href: 'https://numerology-easing.ego-intl.com', icon: Sparkles, label: '幫人生拿副好牌（數字易經）', external: true },
   ];
 
   useEffect(() => {
@@ -154,6 +155,21 @@ export default function ProfilePage() {
       <div className="rounded-xl bg-white shadow-sm border border-gray-100 divide-y divide-gray-50">
         {MENU_ITEMS.map((item) => {
           const Icon = item.icon;
+          const isExt = 'external' in item && (item as { external?: boolean }).external;
+          if (isExt) {
+            return (
+              <a
+                key={item.href}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3.5"
+              >
+                <Icon className="h-5 w-5 text-primary-500" />
+                <span className="text-sm font-medium text-gray-700">{item.label}</span>
+              </a>
+            );
+          }
           return (
             <Link
               key={item.href}
