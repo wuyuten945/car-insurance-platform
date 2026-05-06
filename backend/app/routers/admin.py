@@ -2949,8 +2949,8 @@ async function closePolicyFormModal() {
   // 表單若有實質內容 → 詢問是否要先儲存（避免 user 按完成卻沒按建立保單就資料遺失）
   if (typeof _policyFormHasContent === 'function' && _policyFormHasContent()) {
     var ans = confirm(LANG === 'en'
-      ? 'You have unsaved policy data.\n\nOK = Save before closing\nCancel = Discard and close'
-      : '保單尚未儲存。\n\n[確定] = 儲存後關閉\n[取消] = 不儲存直接關閉');
+      ? 'You have unsaved policy data.\\n\\nOK = Save before closing\\nCancel = Discard and close'
+      : '保單尚未儲存。\\n\\n[確定] = 儲存後關閉\\n[取消] = 不儲存直接關閉');
     if (ans) {
       var ok = await createPolicy();
       if (!ok) return;  // 儲存失敗就停在 modal，不關閉
