@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   User, LogOut, Loader2, Save, Car, Bell, MessageCircle, MapPin,
-  Mail, Phone, Calendar, IdCard, Home, FileText, Heart, Lock, ShieldCheck,
+  Mail, Phone, Calendar, IdCard, Home, FileText, Heart, Lock, ShieldCheck, Calculator,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
@@ -57,6 +57,7 @@ export default function ProfilePage() {
 
   const MENU_ITEMS = [
     { href: '/vehicles', icon: Car, label: t('profile.menu.vehicles') },
+    { href: '/quote', icon: Calculator, label: '續保保費報價' },
     { href: '/notifications', icon: Bell, label: t('profile.menu.notifications') },
     { href: '/chatbot', icon: MessageCircle, label: t('profile.menu.chatbot') },
     { href: '/inspection', icon: MapPin, label: t('profile.menu.inspection') },

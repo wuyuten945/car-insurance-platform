@@ -114,3 +114,90 @@ class RenewalService:
 
         await self.db.flush()
         return quotes
+
+    # ───────────────── 給「續保保費報價」前台用的 estimator ─────────────────
+    # 不寫 DB，純記憶體計算，回傳 list[dict]
+    @staticmethod
+    def estimate_from_input(
+        *,
+        vehicle_type: str | None = None,
+        year: int | None = None,
+        engine_cc: int | None = None,
+        driver_age: int | None = None,
+        coverage_tier: str = "standard",  # 'basic' | 'standard' | 'premium'
+        include_compulsory: bool = True,
+    ) -> list[dict]:
+        """
+        粗估保費（指示性），不是正式報價。實際保費仍須業務員 / 保險公司核保。
+        回傳 list[{insurer_name, logo, quoted_premium, coverage_details, rating, claim_speed_days, features, valid_until}]
+        """
+        import random
+        from datetime import date as _date, timedelta as _td
+
+        # 基準費率：依排氣量大致估（小客車邏輯，機車 / 貨車後可微調）
+        cc = engine_cc or 1500
+        if cc < 1000:
+            base = 8000
+        elif cc < 1500:
+            base = 11000
+        elif cc < 2000:
+            base = 14000
+        elif cc < 3000:
+            base = 18000
+        else:
+            base = 24000
+
+        # 機車基準大幅調低
+        if vehicle_type and ("機車" in vehicle_type):
+            base = 3500 if cc < 250 else 5500
+
+        # 車齡折舊（出廠年越舊保費越低 — 影響車體險）
+        if year:
+            today = _date.today()
+            age = max(0, today.year - year)
+            base = int(base * max(0.55, 1 - 0.04 * age))
+
+        # 保障等級倍率
+        tier_mul = {"basic": 0.55, "standard": 1.0, "premium": 1.55}.get(coverage_tier, 1.0)
+        base = int(base * tier_mul)
+
+        # 駕駛人年齡：年輕 / 高齡略加費
+        if driver_age is not None:
+            if driver_age < 25:
+                base = int(base * 1.20)
+            elif driver_age >= 65:
+                base = int(base * 1.10)
+
+        # 各等級的保障項目組合
+        items_basic = ["強制汽車責任險", "第三人責任險（基本）"]
+        items_std = items_basic + ["第三人責任險（加強）", "超額責任險"]
+        items_premium = items_std + ["車體損失險（甲式）", "竊盜險", "道路救援"]
+        items_map = {"basic": items_basic, "standard": items_std, "premium": items_premium}
+        items = list(items_map.get(coverage_tier, items_std))
+        if not include_compulsory and items and items[0] == "強制汽車責任險":
+            items = items[1:]
+            base = int(base * 0.85)  # 不含強制險約打 85 折
+
+        valid_until = (_date.today() + _td(days=14)).isoformat()
+        out: list[dict] = []
+        for ins in MOCK_INSURERS:
+            variation = random.uniform(0.88, 1.12)
+            quoted = round(base * variation, -1)  # 取整到 10 元
+            out.append({
+                "insurer_name": ins["name"],
+                "logo": ins.get("logo"),
+                "quoted_premium": int(quoted),
+                "coverage_items": items,
+                "rating": ins["rating"],
+                "claim_speed_days": ins["speed"],
+                "features": ins["features"],
+                "valid_until": valid_until,
+                "is_recommended": False,
+            })
+        # 標記最低價為「最划算」
+        if out:
+            cheapest = min(out, key=lambda q: q["quoted_premium"])
+            cheapest["is_recommended"] = True
+        # 依保費由低到高排序
+        out.sort(key=lambda q: q["quoted_premium"])
+        return out
