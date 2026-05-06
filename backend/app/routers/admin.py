@@ -1423,10 +1423,12 @@ function closeCreateCustomerModal() {
 function _afterCustomerChosen(cid) {
   var sel = document.getElementById('cur-customer');
   if (sel) sel.value = cid;
+  // ★ 必須在 closeCreateCustomerModal() 前抓 callback —
+  //   close 內部會把 _pendingPickAction 清成 null（給「取消」按鈕用），
+  //   若先 close 再讀 callback，就永遠拿不到、變成無限迴圈彈 picker。
+  var fn = window._pendingPickAction;
   closeCreateCustomerModal();
-  if (typeof window._pendingPickAction === 'function') {
-    var fn = window._pendingPickAction;
-    window._pendingPickAction = null;
+  if (typeof fn === 'function') {
     setTimeout(fn, 50); // 等 modal 關閉動畫
   }
 }
