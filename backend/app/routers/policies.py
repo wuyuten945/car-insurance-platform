@@ -199,9 +199,9 @@ async def create_policy(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """建立新保單"""
+    """建立新保單（前台客戶自填，會標記 data_source='self'）"""
     svc = PolicyService(db)
-    policy = await svc.create_policy(current_user.id, data)
+    policy = await svc.create_policy(current_user.id, data, data_source="self")
     today = date.today()
     days_remaining = (policy.end_date - today).days if policy.end_date >= today else 0
     return APIResponse(
@@ -245,9 +245,9 @@ async def update_policy(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """更新保單"""
+    """更新保單（前台只能改自填的紀錄）"""
     svc = PolicyService(db)
-    policy = await svc.update_policy(current_user.id, policy_id, data)
+    policy = await svc.update_policy(current_user.id, policy_id, data, restrict_to_source="self")
     today = date.today()
     days_remaining = (policy.end_date - today).days if policy.end_date >= today else 0
     return APIResponse(
@@ -268,9 +268,9 @@ async def delete_policy(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """刪除保單"""
+    """刪除保單（前台只能刪自填的紀錄）"""
     svc = PolicyService(db)
-    await svc.delete_policy(current_user.id, policy_id)
+    await svc.delete_policy(current_user.id, policy_id, restrict_to_source="self")
     return APIResponse(message="保單已刪除")
 
 

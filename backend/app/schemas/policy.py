@@ -37,6 +37,7 @@ class PolicyOut(BaseModel):
     vehicle_brand: str | None = None
     vehicle_model: str | None = None
     days_remaining: int | None = None
+    data_source: str = "agent"  # 'agent' = 後台建檔；'self' = 客戶自填
     items: list[PolicyItemOut] = []
 
     model_config = {"from_attributes": True}

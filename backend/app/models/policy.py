@@ -30,6 +30,10 @@ class Policy(TimestampMixin, Base):
     total_premium = Column(Numeric(12, 2))
     document_url = Column(String(500))
 
+    # 資料來源：'agent' = 業務員/管理員建檔，'self' = 客戶自填
+    # 自填的保單可記錄但無法走理賠流程（前後端共同 gate）
+    data_source = Column(String(20), nullable=False, default="agent")
+
     user = relationship("User", back_populates="policies")
     vehicle = relationship("UserVehicle", back_populates="policies")
     items = relationship("PolicyItem", back_populates="policy", lazy="selectin")

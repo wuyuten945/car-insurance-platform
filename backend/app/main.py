@@ -53,6 +53,9 @@ async def _ensure_columns():
         ("policies",      "compulsory_insurer_name",  "VARCHAR(100)"),
         ("policies",      "compulsory_policy_number", "VARCHAR(50)"),
         ("policies",      "compulsory_premium",       "NUMERIC(12, 2)"),
+        # 資料來源（business/self），舊資料一律視為 agent
+        ("user_vehicles", "data_source", "VARCHAR(20) NOT NULL DEFAULT 'agent'"),
+        ("policies",      "data_source", "VARCHAR(20) NOT NULL DEFAULT 'agent'"),
     ]
     is_sqlite = "sqlite" in str(engine.url)
     try:

@@ -52,6 +52,44 @@ async def line_status(
     })
 
 
+@router.get("/eligibility", response_model=APIResponse)
+async def get_eligibility(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    使用者功能權限旗標。
+    - has_agent_policy：是否擁有業務員/平台建檔的保單；唯有此狀態才能使用理賠申請、事故照片上傳等流程
+    - 自填的車輛 / 保單仍可建立、編輯、追蹤到期提醒，但無法走理賠流程
+    """
+    from sqlalchemy import func
+    from app.config import settings
+    result = await db.execute(
+        select(func.count()).select_from(Policy).where(
+            Policy.user_id == current_user.id,
+            Policy.data_source == "agent",
+        )
+    )
+    has_agent_policy = (result.scalar() or 0) > 0
+
+    line_oa_id = settings.LINE_OFFICIAL_ID or ""
+    line_oa_url = f"https://line.me/R/ti/p/{line_oa_id}" if line_oa_id else ""
+
+    return APIResponse(data={
+        "has_agent_policy": has_agent_policy,
+        # 鎖定的功能（前後端共同 gate）
+        "can_file_claim": has_agent_policy,
+        "can_upload_accident_photo": has_agent_policy,
+        # 永遠開放
+        "can_self_register_vehicle": True,
+        "can_self_register_policy": True,
+        "can_use_reminders": True,
+        # CTA：客戶想正式投保 → 透過 LINE OA 聯繫
+        "line_oa_id": line_oa_id,
+        "line_oa_url": line_oa_url,
+    })
+
+
 @router.patch("/line/notify", response_model=APIResponse)
 async def toggle_line_notify(
     enabled: bool,
@@ -242,9 +280,9 @@ async def create_vehicle(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """新增車輛"""
+    """新增車輛（前台客戶自填，會標記 data_source='self'）"""
     svc = UserService(db)
-    vehicle = await svc.create_vehicle(current_user.id, data)
+    vehicle = await svc.create_vehicle(current_user.id, data, data_source="self")
     return APIResponse(data=VehicleOut.model_validate(vehicle), message="車輛已新增")
 
 
@@ -255,9 +293,9 @@ async def update_vehicle(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """更新車輛"""
+    """更新車輛（前台只能改自填的紀錄；業務員建檔的紀錄會被拒絕）"""
     svc = UserService(db)
-    vehicle = await svc.update_vehicle(current_user.id, vehicle_id, data)
+    vehicle = await svc.update_vehicle(current_user.id, vehicle_id, data, restrict_to_source="self")
     return APIResponse(data=VehicleOut.model_validate(vehicle), message="車輛已更新")
 
 
@@ -268,9 +306,9 @@ async def patch_vehicle(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """部分更新車輛（行照日期等）"""
+    """部分更新車輛（前台只能改自填的紀錄）"""
     svc = UserService(db)
-    vehicle = await svc.patch_vehicle(current_user.id, vehicle_id, data)
+    vehicle = await svc.patch_vehicle(current_user.id, vehicle_id, data, restrict_to_source="self")
     return APIResponse(data=VehicleOut.model_validate(vehicle), message="車輛已更新")
 
 
@@ -280,9 +318,9 @@ async def delete_vehicle(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """刪除車輛"""
+    """刪除車輛（前台只能刪自填的紀錄）"""
     svc = UserService(db)
-    await svc.delete_vehicle(current_user.id, vehicle_id)
+    await svc.delete_vehicle(current_user.id, vehicle_id, restrict_to_source="self")
     return APIResponse(message="車輛已刪除")
 
 

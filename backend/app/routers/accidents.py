@@ -1,12 +1,30 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, Query
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_db, get_current_user
+from app.exceptions import BadRequestError
 from app.models.user import User
+from app.models.policy import Policy
 from app.schemas.accident import AccidentCreate, AccidentOut, AccidentPhotoOut, NearbyResource
 from app.schemas.common import APIResponse
 from app.services.accident_service import AccidentService
 
 router = APIRouter()
+
+
+async def _assert_user_can_upload_accident_photo(db: AsyncSession, user_id: str) -> None:
+    """事故照片上傳：要求至少一張 agent 建檔的保單（前後端共同 gate）"""
+    res = await db.execute(
+        select(func.count()).select_from(Policy).where(
+            Policy.user_id == user_id, Policy.data_source == "agent"
+        )
+    )
+    if (res.scalar() or 0) == 0:
+        raise BadRequestError(
+            "事故照片上傳功能限投保客戶使用。您目前的保單為自行建檔，"
+            "理賠 / 事故流程需由業務員 / 平台建立正式保單後才能啟動。"
+            "請透過 LINE 官方帳號與我們聯繫。"
+        )
 
 
 @router.post("", response_model=APIResponse)
@@ -54,7 +72,8 @@ async def upload_photo(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """上傳事故照片"""
+    """上傳事故照片（限投保客戶 — 即名下需有 agent 建檔保單）"""
+    await _assert_user_can_upload_accident_photo(db, current_user.id)
     svc = AccidentService(db)
     photo = await svc.upload_photo(accident_id, file, photo_type, latitude, longitude)
     return APIResponse(data=AccidentPhotoOut.model_validate(photo), message="照片已上傳")

@@ -100,15 +100,31 @@ class UserService:
         )
         return list(result.scalars().all())
 
-    async def create_vehicle(self, user_id: str, data: VehicleCreate) -> UserVehicle:
-        vehicle = UserVehicle(user_id=user_id, **data.model_dump())
+    async def create_vehicle(
+        self, user_id: str, data: VehicleCreate, *, data_source: str = "agent"
+    ) -> UserVehicle:
+        # data_source: 'agent' = 後台/業務員建（預設保護既有 admin 流程不受影響）；
+        #              'self' = 客戶從前台自填
+        vehicle = UserVehicle(user_id=user_id, data_source=data_source, **data.model_dump())
         if data.is_primary:
             await self._clear_primary_vehicle(user_id)
         self.db.add(vehicle)
         await self.db.flush()
         return vehicle
 
-    async def update_vehicle(self, user_id: str, vehicle_id: str, data: VehicleCreate) -> UserVehicle:
+    @staticmethod
+    def _assert_can_edit_vehicle(vehicle: UserVehicle, restrict_to_source: str | None) -> None:
+        # restrict_to_source='self' → 只能改客戶自填的（前台呼叫用）
+        # None → 不限制（後台 / 業務員 admin 路徑用）
+        if restrict_to_source and (vehicle.data_source or "agent") != restrict_to_source:
+            raise BadRequestError(
+                "此車輛由業務員 / 平台建檔，不能直接修改。如需更正請聯繫您的業務員或透過 LINE 與我們聯繫。"
+            )
+
+    async def update_vehicle(
+        self, user_id: str, vehicle_id: str, data: VehicleCreate,
+        *, restrict_to_source: str | None = None,
+    ) -> UserVehicle:
         result = await self.db.execute(
             select(UserVehicle).where(
                 and_(UserVehicle.id == vehicle_id, UserVehicle.user_id == user_id)
@@ -117,6 +133,7 @@ class UserService:
         vehicle = result.scalar_one_or_none()
         if not vehicle:
             raise NotFoundError("車輛不存在")
+        self._assert_can_edit_vehicle(vehicle, restrict_to_source)
 
         update_data = data.model_dump(exclude_unset=True)
         if update_data.get("is_primary"):
@@ -126,7 +143,9 @@ class UserService:
         await self.db.flush()
         return vehicle
 
-    async def delete_vehicle(self, user_id: str, vehicle_id: str) -> None:
+    async def delete_vehicle(
+        self, user_id: str, vehicle_id: str, *, restrict_to_source: str | None = None
+    ) -> None:
         result = await self.db.execute(
             select(UserVehicle).where(
                 and_(UserVehicle.id == vehicle_id, UserVehicle.user_id == user_id)
@@ -135,9 +154,13 @@ class UserService:
         vehicle = result.scalar_one_or_none()
         if not vehicle:
             raise NotFoundError("車輛不存在")
+        self._assert_can_edit_vehicle(vehicle, restrict_to_source)
         await self.db.delete(vehicle)
 
-    async def patch_vehicle(self, user_id: str, vehicle_id: str, data: VehicleUpdate) -> UserVehicle:
+    async def patch_vehicle(
+        self, user_id: str, vehicle_id: str, data: VehicleUpdate,
+        *, restrict_to_source: str | None = None,
+    ) -> UserVehicle:
         """部分更新車輛欄位"""
         result = await self.db.execute(
             select(UserVehicle).where(
@@ -147,6 +170,7 @@ class UserService:
         vehicle = result.scalar_one_or_none()
         if not vehicle:
             raise NotFoundError("車輛不存在")
+        self._assert_can_edit_vehicle(vehicle, restrict_to_source)
         update_data = data.model_dump(exclude_unset=True)
         if update_data.get("is_primary"):
             await self._clear_primary_vehicle(user_id)

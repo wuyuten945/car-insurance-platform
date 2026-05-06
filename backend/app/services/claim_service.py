@@ -67,8 +67,15 @@ class ClaimService:
         pol = await self.db.execute(
             select(Policy).where(Policy.id == data.policy_id, Policy.user_id == user_id)
         )
-        if not pol.scalar_one_or_none():
+        policy = pol.scalar_one_or_none()
+        if not policy:
             raise BadRequestError("找不到此保單，或該保單不屬於您")
+        # 自填保單禁止走理賠（理賠需要平台與業務員核對的正式保單）
+        if (policy.data_source or "agent") != "agent":
+            raise BadRequestError(
+                "此保單為您自行建檔，理賠流程需由業務員 / 平台為您建立正式保單後才能啟動。"
+                "請透過 LINE 官方帳號與我們聯繫。"
+            )
 
         # 前台金額用 amount_claimed，後端欄位是 claimed_amount → 兩個都接，前者優先
         amount = data.claimed_amount if data.claimed_amount is not None else data.amount_claimed

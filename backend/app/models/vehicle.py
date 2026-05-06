@@ -27,5 +27,9 @@ class UserVehicle(TimestampMixin, Base):
     registration_expiry = Column(Date)             # 行照有效期限（= 驗車到期日）
     last_inspection_date = Column(Date)            # 上次驗車日期
 
+    # 資料來源：'agent' = 業務員/管理員建檔（後台），'self' = 客戶自填（前台）
+    # 'self' 紀錄可由本人前台編輯；理賠/事故照片上傳僅限 'agent' 紀錄使用
+    data_source = Column(String(20), nullable=False, default="agent")
+
     user = relationship("User", back_populates="vehicles")
     policies = relationship("Policy", back_populates="vehicle", lazy="noload")

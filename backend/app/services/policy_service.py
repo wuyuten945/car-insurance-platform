@@ -138,7 +138,9 @@ class PolicyService:
 
     # ===== Policy CRUD =====
 
-    async def create_policy(self, user_id: str, data: PolicyCreate) -> Policy:
+    async def create_policy(
+        self, user_id: str, data: PolicyCreate, *, data_source: str = "agent"
+    ) -> Policy:
         # 檢查保單號碼是否重複
         existing = await self.db.execute(
             select(Policy).where(Policy.policy_number == data.policy_number)
@@ -148,6 +150,7 @@ class PolicyService:
 
         policy = Policy(
             user_id=user_id,
+            data_source=data_source,
             vehicle_id=data.vehicle_id,
             insurer_name=data.insurer_name,
             policy_number=data.policy_number,
@@ -187,8 +190,15 @@ class PolicyService:
         # 重新載入含 items
         return await self.get_policy_detail(user_id, policy.id)
 
-    async def update_policy(self, user_id: str, policy_id: str, data: PolicyUpdate) -> Policy:
+    async def update_policy(
+        self, user_id: str, policy_id: str, data: PolicyUpdate,
+        *, restrict_to_source: str | None = None,
+    ) -> Policy:
         policy = await self.get_policy_detail(user_id, policy_id)
+        if restrict_to_source and (policy.data_source or "agent") != restrict_to_source:
+            raise BadRequestError(
+                "此保單由業務員 / 平台建檔，不能直接修改。如需更正請聯繫您的業務員或透過 LINE 與我們聯繫。"
+            )
         update_data = data.model_dump(exclude_unset=True)
 
         # 檢查保單號碼唯一性
@@ -227,8 +237,14 @@ class PolicyService:
         await self.db.refresh(policy)
         return policy
 
-    async def delete_policy(self, user_id: str, policy_id: str) -> None:
+    async def delete_policy(
+        self, user_id: str, policy_id: str, *, restrict_to_source: str | None = None
+    ) -> None:
         policy = await self.get_policy_detail(user_id, policy_id)
+        if restrict_to_source and (policy.data_source or "agent") != restrict_to_source:
+            raise BadRequestError(
+                "此保單由業務員 / 平台建檔，不能刪除。如需處理請聯繫您的業務員或透過 LINE 與我們聯繫。"
+            )
         # 刪除關聯的保障項目
         for item in policy.items:
             await self.db.delete(item)

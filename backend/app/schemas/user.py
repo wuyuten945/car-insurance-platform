@@ -143,6 +143,7 @@ class VehicleOut(BaseModel):
     reissue_date: date | None = None
     registration_expiry: date | None = None
     last_inspection_date: date | None = None
+    data_source: str = "agent"  # 'agent' = 後台建檔；'self' = 客戶自填
     created_at: datetime
 
     model_config = {"from_attributes": True}
