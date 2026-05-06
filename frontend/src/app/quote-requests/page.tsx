@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, FileText, Loader2, Star, Check, XCircle, Clock, MessageCircle } from 'lucide-react';
+import { ChevronLeft, FileText, Loader2, Star, Check, XCircle, Clock, MessageCircle, Plus, Calculator } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
 import { useEligibility } from '@/lib/useEligibility';
+import QuoteRequestModal from '@/components/QuoteRequestModal';
 
 interface QuoteResponseRow {
   id: string;
@@ -48,6 +50,7 @@ export default function QuoteRequestsPage() {
   useIdleLogout();
   const { eligibility } = useEligibility();
   const queryClient = useQueryClient();
+  const [modalOpen, setModalOpen] = useState(false);
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ['my-quote-requests'],
@@ -56,6 +59,25 @@ export default function QuoteRequestsPage() {
       return (res.data.data || []) as QuoteRequestRow[];
     },
     refetchOnWindowFocus: true,
+  });
+
+  // 載入車輛 + 保單給 modal 用
+  const { data: vehicles } = useQuery({
+    queryKey: ['my-vehicles'],
+    queryFn: async () => {
+      const res = await api.get('/api/v1/customers/vehicles');
+      return res.data.data as Array<{ id: string; plate_number: string; brand: string | null; model: string | null; year: number | null; vehicle_type: string | null; engine_cc: number | null }>;
+    },
+  });
+  const { data: policiesForModal } = useQuery({
+    queryKey: ['my-policies-for-quote-req'],
+    queryFn: async () => {
+      const res = await api.get('/api/v1/policies');
+      return (res.data.data || []) as Array<{
+        id: string; insurer_name: string; policy_number: string;
+        end_date?: string; vehicle_id?: string | null; data_source?: string;
+      }>;
+    },
   });
 
   const cancelMut = useMutation({
@@ -75,10 +97,17 @@ export default function QuoteRequestsPage() {
           <h1 className="text-lg font-bold text-gray-900">我的詢價工單</h1>
           <p className="text-xs text-gray-500">追蹤每張詢價單的處理狀態與服務人員回報的報價</p>
         </div>
-        <Link href="/quote" className="inline-flex items-center gap-1 rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white">
-          <FileText className="h-4 w-4" /> 新增詢價
-        </Link>
+        <button
+          onClick={() => setModalOpen(true)}
+          className="inline-flex items-center gap-1 rounded-lg bg-primary-500 hover:bg-primary-700 px-3 py-2 text-xs font-semibold text-white"
+        >
+          <Plus className="h-4 w-4" /> 新增詢價
+        </button>
       </div>
+
+      <Link href="/quote" className="flex items-center justify-center gap-1 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-2 text-xs text-gray-600">
+        <Calculator className="h-4 w-4" /> 想先自助試算保費？前往「續保保費報價」
+      </Link>
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary-500" /></div>
@@ -86,9 +115,12 @@ export default function QuoteRequestsPage() {
         <div className="rounded-2xl bg-gray-50 p-8 text-center">
           <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
           <p className="text-sm text-gray-500">尚無詢價工單</p>
-          <Link href="/quote" className="mt-3 inline-flex items-center gap-1 rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white">
-            送出第一張詢價
-          </Link>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="mt-3 inline-flex items-center gap-1 rounded-lg bg-primary-500 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white"
+          >
+            <Plus className="h-4 w-4" /> 送出第一張詢價
+          </button>
         </div>
       ) : (
         requests.map((qr) => {
@@ -198,6 +230,14 @@ export default function QuoteRequestsPage() {
           );
         })
       )}
+
+      <QuoteRequestModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmitted={() => queryClient.invalidateQueries({ queryKey: ['my-quote-requests'] })}
+        vehicles={vehicles ?? []}
+        policies={policiesForModal ?? []}
+      />
     </div>
   );
 }
