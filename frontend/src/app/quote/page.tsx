@@ -116,7 +116,7 @@ export default function QuotePage() {
       <div className="flex items-center gap-3">
         <Link href="/profile" className="p-1"><ChevronLeft className="h-5 w-5 text-gray-600" /></Link>
         <div className="flex-1">
-          <h1 className="text-lg font-bold text-gray-900">續保保費報價</h1>
+          <h1 className="text-lg font-bold text-gray-900">保費簡易試算（參考）</h1>
           <p className="text-xs text-gray-500">填寫車輛資訊，立即試算各家保險公司預估保費</p>
         </div>
         <Calculator className="h-6 w-6 text-primary-500" />
@@ -320,7 +320,7 @@ export default function QuotePage() {
           </div>
 
           <Link href="/quote-requests" className="block text-center text-xs text-primary-600 hover:underline pt-2">
-            → 我的詢價工單（追蹤進度）
+            → 我的車險續期保費詢價（追蹤進度）
           </Link>
         </div>
       )}

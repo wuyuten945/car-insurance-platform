@@ -94,7 +94,7 @@ export default function QuoteRequestsPage() {
       <div className="flex items-center gap-3">
         <Link href="/profile" className="p-1"><ChevronLeft className="h-5 w-5 text-gray-600" /></Link>
         <div className="flex-1">
-          <h1 className="text-lg font-bold text-gray-900">我的詢價工單</h1>
+          <h1 className="text-lg font-bold text-gray-900">我的車險續期保費詢價</h1>
           <p className="text-xs text-gray-500">追蹤每張詢價單的處理狀態與服務人員回報的報價</p>
         </div>
         <button
