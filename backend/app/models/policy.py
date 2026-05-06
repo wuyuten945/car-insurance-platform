@@ -12,11 +12,17 @@ class Policy(TimestampMixin, Base):
     insurer_name = Column(String(100), nullable=False)
     policy_number = Column(String(50), unique=True, nullable=False)
     status = Column(String(20), nullable=False, default="active")  # active, expiring, expired, cancelled
+    # 任意險 期間（一般車險：綜合險 / 第三人 / 車損 等）
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     # 起保 / 到期 的「時:分」精度（NULL = 整日，舊資料保留 NULL）
     start_time = Column(Time, nullable=True)
     end_time = Column(Time, nullable=True)
+    # 強制險 期間（汽車強制責任險，可與任意險期間不同；舊資料/未填皆為 NULL）
+    compulsory_start_date = Column(Date, nullable=True)
+    compulsory_end_date = Column(Date, nullable=True)
+    compulsory_start_time = Column(Time, nullable=True)
+    compulsory_end_time = Column(Time, nullable=True)
     total_premium = Column(Numeric(12, 2))
     document_url = Column(String(500))
 

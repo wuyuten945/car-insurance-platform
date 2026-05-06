@@ -484,22 +484,51 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           </div>
         </div>
         <div class="row">
-          <div>
-            <label data-i18n="lbl_start_date">起保日</label>
-            <div style="display:flex;gap:6px">
-              <input type="date" id="p-start" style="flex:1" oninput="autoComputePolicyEnd()">
-              <input type="time" id="p-start-time" lang="en-GB" step="60" placeholder="HH:MM" style="width:96px" oninput="autoComputePolicyEnd()">
-            </div>
-          </div>
-          <div>
-            <label data-i18n="lbl_end_date">到期日 <span style="font-size:10px;color:#999">（自動 = 起保 +1 年；可手動修正）</span></label>
-            <div style="display:flex;gap:6px">
-              <input type="date" id="p-end" style="flex:1" oninput="markPolicyEndManual()">
-              <input type="time" id="p-end-time" lang="en-GB" step="60" placeholder="HH:MM" style="width:96px" oninput="markPolicyEndManual()">
-            </div>
-          </div>
           <div><label data-i18n="lbl_premium">總保費</label><input type="number" id="p-premium" placeholder="18500"></div>
         </div>
+
+        <!-- 任意險 期間 -->
+        <div style="margin-top:14px;padding:12px;background:#E3F2FD;border-radius:8px;border-left:4px solid #1565C0">
+          <div style="font-size:13px;color:#1565C0;font-weight:bold;margin-bottom:8px" data-i18n="sec_voluntary_period">任意險 期間（綜合險 / 第三人責任 / 車體損失 等）</div>
+          <div class="row">
+            <div>
+              <label data-i18n="lbl_start_date">起保日</label>
+              <div style="display:flex;gap:6px">
+                <input type="date" id="p-start" style="flex:1" oninput="autoComputePolicyEnd()">
+                <input type="time" id="p-start-time" lang="en-GB" step="60" placeholder="HH:MM" style="width:96px" oninput="autoComputePolicyEnd()">
+              </div>
+            </div>
+            <div>
+              <label data-i18n="lbl_end_date">到期日 <span style="font-size:10px;color:#999">（自動 = 起保 +1 年；可手動修正）</span></label>
+              <div style="display:flex;gap:6px">
+                <input type="date" id="p-end" style="flex:1" oninput="markPolicyEndManual()">
+                <input type="time" id="p-end-time" lang="en-GB" step="60" placeholder="HH:MM" style="width:96px" oninput="markPolicyEndManual()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 強制險 期間 -->
+        <div style="margin-top:14px;padding:12px;background:#FFF3E0;border-radius:8px;border-left:4px solid #E65100">
+          <div style="font-size:13px;color:#E65100;font-weight:bold;margin-bottom:8px" data-i18n="sec_compulsory_period">強制險 期間（汽車強制責任險，可與任意險不同）</div>
+          <div class="row">
+            <div>
+              <label data-i18n="lbl_compulsory_start">強制險 起保日</label>
+              <div style="display:flex;gap:6px">
+                <input type="date" id="p-cstart" style="flex:1" oninput="autoComputeCompulsoryEnd()">
+                <input type="time" id="p-cstart-time" lang="en-GB" step="60" placeholder="HH:MM" style="width:96px" oninput="autoComputeCompulsoryEnd()">
+              </div>
+            </div>
+            <div>
+              <label data-i18n="lbl_compulsory_end">強制險 到期日 <span style="font-size:10px;color:#999">（自動 = 起保 +1 年；可手動修正）</span></label>
+              <div style="display:flex;gap:6px">
+                <input type="date" id="p-cend" style="flex:1" oninput="markCompulsoryEndManual()">
+                <input type="time" id="p-cend-time" lang="en-GB" step="60" placeholder="HH:MM" style="width:96px" oninput="markCompulsoryEndManual()">
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div style="margin-top:16px">
           <h3 style="font-size:14px;color:#666" data-i18n="h_coverage_items">保障項目</h3>
           <div id="p-items"></div>
@@ -546,6 +575,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
             <select id="pe-insurer" onchange="onInsurerChange('pe-insurer','pe-insurer-other')" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></select>
             <input type="text" id="pe-insurer-other" placeholder="保險公司名稱" data-i18n-placeholder="ph_insurer_other" style="display:none;margin-top:6px;width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
           </td></tr>
+          <tr><td colspan="2" style="padding:8px 6px 4px;color:#1565C0;font-weight:bold;font-size:13px;border-top:1px solid #eee" data-i18n="sec_voluntary_period">任意險 期間</td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_start_date">起保日</td><td>
             <div style="display:flex;gap:6px">
               <input type="date" id="pe-start" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:4px">
@@ -556,6 +586,19 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
             <div style="display:flex;gap:6px">
               <input type="date" id="pe-end" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:4px">
               <input type="time" id="pe-end-time" lang="en-GB" step="60" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:4px">
+            </div>
+          </td></tr>
+          <tr><td colspan="2" style="padding:8px 6px 4px;color:#E65100;font-weight:bold;font-size:13px;border-top:1px solid #eee" data-i18n="sec_compulsory_period">強制險 期間</td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_start">強制險起保日</td><td>
+            <div style="display:flex;gap:6px">
+              <input type="date" id="pe-cstart" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:4px">
+              <input type="time" id="pe-cstart-time" lang="en-GB" step="60" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:4px">
+            </div>
+          </td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_end">強制險到期日</td><td>
+            <div style="display:flex;gap:6px">
+              <input type="date" id="pe-cend" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:4px">
+              <input type="time" id="pe-cend-time" lang="en-GB" step="60" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:4px">
             </div>
           </td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_premium">總保費</td><td><input type="number" id="pe-premium" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
@@ -746,10 +789,11 @@ function _writeDatePair(dateInputId, dateVal, timeVal) {
   if (t) t.value = timeVal ? String(timeVal).slice(0, 5) : '';
 }
 
-// 需要顯示民國年小標的 input id（行照欄位 + 保單期間 + 編輯保單期間）
+// 需要顯示民國年小標的 input id（行照欄位 + 任意險 + 強制險，含手動 modal 與編輯 modal）
 var ROC_FIELDS = [
   've-year-month','ve-reg-date','ve-reissue-date','ve-expiry','ve-window-start','ve-window-end',
-  'p-start','p-end','pe-start','pe-end'
+  'p-start','p-end','pe-start','pe-end',
+  'p-cstart','p-cend','pe-cstart','pe-cend'
 ];
 
 function _attachRocLabel(inputId) {
@@ -925,6 +969,10 @@ var I18N = {
     lbl_status: '狀態',
     opt_active: '有效', opt_expiring: '即將到期', opt_expired: '已到期',
     lbl_start_date: '起保日', lbl_end_date: '到期日', lbl_premium: '總保費',
+    sec_voluntary_period: '任意險 期間（綜合險 / 第三人責任 / 車體損失 等）',
+    sec_compulsory_period: '強制險 期間（汽車強制責任險，可與任意險不同）',
+    lbl_compulsory_start: '強制險 起保日',
+    lbl_compulsory_end: '強制險 到期日',
     h_coverage_items: '保障項目',
     btn_add_item: '+ 新增項目',
     btn_create_policy: '建立保單',
@@ -1111,6 +1159,10 @@ var I18N = {
     lbl_status: 'Status',
     opt_active: 'Active', opt_expiring: 'Expiring', opt_expired: 'Expired',
     lbl_start_date: 'Start', lbl_end_date: 'End', lbl_premium: 'Premium',
+    sec_voluntary_period: 'Voluntary Coverage Period (Comprehensive / 3rd-Party / Collision etc.)',
+    sec_compulsory_period: 'Compulsory Coverage Period (CALI — may differ from voluntary)',
+    lbl_compulsory_start: 'Compulsory Start',
+    lbl_compulsory_end: 'Compulsory End',
     h_coverage_items: 'Coverage Items',
     btn_add_item: '+ Add Item',
     btn_create_policy: 'Create Policy',
@@ -2952,6 +3004,8 @@ async function createPolicy() {
   if (!insurer || !number) { showMsg('p-msg','err', LANG==='en' ? 'Insurer and policy number are required' : '請填寫保險公司和保單號碼'); return; }
   var sParts = _readDatePair('p-start');
   var eParts = _readDatePair('p-end');
+  var csParts = _readDatePair('p-cstart');
+  var ceParts = _readDatePair('p-cend');
   const body = {
     insurer_name: insurer,
     policy_number: number,
@@ -2961,6 +3015,10 @@ async function createPolicy() {
     end_date: eParts.date,
     start_time: sParts.time,
     end_time: eParts.time,
+    compulsory_start_date: csParts.date,
+    compulsory_end_date: ceParts.date,
+    compulsory_start_time: csParts.time,
+    compulsory_end_time: ceParts.time,
     total_premium: parseFloat(document.getElementById('p-premium').value) || null,
     items: []
   };
@@ -2995,8 +3053,10 @@ function _resetPolicyFormFields() {
   ['p-number','p-premium'].forEach(function(id){ document.getElementById(id).value = ''; });
   _writeDatePair('p-start', '', '');
   _writeDatePair('p-end', '', '');
+  _writeDatePair('p-cstart', '', '');
+  _writeDatePair('p-cend', '', '');
   // 清手動編輯標記，下次新建起保日仍能自動帶到期
-  ['p-end','p-end-time'].forEach(function(id){
+  ['p-end','p-end-time','p-cend','p-cend-time'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) delete el.dataset.manualEdit;
   });
@@ -3031,6 +3091,33 @@ function autoComputePolicyEnd() {
 function markPolicyEndManual() {
   var endD = document.getElementById('p-end');
   var endT = document.getElementById('p-end-time');
+  if (endD) endD.dataset.manualEdit = endD.value ? '1' : '0';
+  if (endT) endT.dataset.manualEdit = endT.value ? '1' : '0';
+}
+
+// === 強制險 期間 自動帶 +1 年（與任意險邏輯一致，獨立旗標） ===
+function autoComputeCompulsoryEnd() {
+  var startD = document.getElementById('p-cstart');
+  var startT = document.getElementById('p-cstart-time');
+  var endD = document.getElementById('p-cend');
+  var endT = document.getElementById('p-cend-time');
+  if (!startD || !endD) return;
+  if ((endD.dataset.manualEdit === '1') || (endT && endT.dataset.manualEdit === '1')) return;
+  var s = startD.value;
+  if (!s) return;
+  var d = new Date(s + 'T00:00:00');
+  if (isNaN(d.getTime())) return;
+  d.setFullYear(d.getFullYear() + 1);
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  endD.value = y + '-' + m + '-' + dd;
+  if (endT) endT.value = startT ? (startT.value || '') : '';
+  refreshRocLabels();
+}
+function markCompulsoryEndManual() {
+  var endD = document.getElementById('p-cend');
+  var endT = document.getElementById('p-cend-time');
   if (endD) endD.dataset.manualEdit = endD.value ? '1' : '0';
   if (endT) endT.dataset.manualEdit = endT.value ? '1' : '0';
 }
@@ -3215,6 +3302,8 @@ function editPolicyFromList(pid) {
   fillInsurerSelect('pe-insurer', 'pe-insurer-other', p.insurer_name || '');
   _writeDatePair('pe-start', p.start_date, p.start_time);
   _writeDatePair('pe-end', p.end_date, p.end_time);
+  _writeDatePair('pe-cstart', p.compulsory_start_date, p.compulsory_start_time);
+  _writeDatePair('pe-cend', p.compulsory_end_date, p.compulsory_end_time);
   document.getElementById('pe-premium').value = p.total_premium || '';
   document.getElementById('pe-status').value = p.status || 'active';
   document.getElementById('p-edit-modal').style.display = 'flex';
@@ -3230,6 +3319,8 @@ async function savePolicyEdit() {
   if (!pid) return;
   var pesParts = _readDatePair('pe-start');
   var peeParts = _readDatePair('pe-end');
+  var pcsParts = _readDatePair('pe-cstart');
+  var pceParts = _readDatePair('pe-cend');
   var body = {
     policy_number: document.getElementById('pe-number').value.trim(),
     insurer_name: getInsurerValue('pe-insurer', 'pe-insurer-other'),
@@ -3237,6 +3328,10 @@ async function savePolicyEdit() {
     end_date: peeParts.date,
     start_time: pesParts.time,
     end_time: peeParts.time,
+    compulsory_start_date: pcsParts.date,
+    compulsory_end_date: pceParts.date,
+    compulsory_start_time: pcsParts.time,
+    compulsory_end_time: pceParts.time,
     status: document.getElementById('pe-status').value,
   };
   var prem = document.getElementById('pe-premium').value;

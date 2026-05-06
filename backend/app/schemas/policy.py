@@ -25,6 +25,10 @@ class PolicyOut(BaseModel):
     end_date: date
     start_time: time | None = None
     end_time: time | None = None
+    compulsory_start_date: date | None = None
+    compulsory_end_date: date | None = None
+    compulsory_start_time: time | None = None
+    compulsory_end_time: time | None = None
     total_premium: Decimal | None = None
     vehicle_plate: str | None = None
     vehicle_brand: str | None = None
@@ -118,6 +122,10 @@ class PolicyCreate(BaseModel):
     end_date: date
     start_time: time | None = None
     end_time: time | None = None
+    compulsory_start_date: date | None = None
+    compulsory_end_date: date | None = None
+    compulsory_start_time: time | None = None
+    compulsory_end_time: time | None = None
     total_premium: Decimal | None = None
     document_url: str | None = None
     items: list[PolicyItemCreate] = []
@@ -132,5 +140,9 @@ class PolicyUpdate(BaseModel):
     end_date: date | None = None
     start_time: time | None = None
     end_time: time | None = None
+    compulsory_start_date: date | None = None
+    compulsory_end_date: date | None = None
+    compulsory_start_time: time | None = None
+    compulsory_end_time: time | None = None
     total_premium: Decimal | None = None
     document_url: str | None = None

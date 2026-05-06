@@ -156,6 +156,10 @@ class PolicyService:
             end_date=data.end_date,
             start_time=getattr(data, "start_time", None),
             end_time=getattr(data, "end_time", None),
+            compulsory_start_date=getattr(data, "compulsory_start_date", None),
+            compulsory_end_date=getattr(data, "compulsory_end_date", None),
+            compulsory_start_time=getattr(data, "compulsory_start_time", None),
+            compulsory_end_time=getattr(data, "compulsory_end_time", None),
             total_premium=data.total_premium,
             document_url=data.document_url,
         )

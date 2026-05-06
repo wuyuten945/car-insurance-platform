@@ -46,6 +46,10 @@ async def _ensure_columns():
         ("user_vehicles", "reissue_date",      "DATE"),
         ("policies",      "start_time",        "TIME"),
         ("policies",      "end_time",          "TIME"),
+        ("policies",      "compulsory_start_date", "DATE"),
+        ("policies",      "compulsory_end_date",   "DATE"),
+        ("policies",      "compulsory_start_time", "TIME"),
+        ("policies",      "compulsory_end_time",   "TIME"),
     ]
     is_sqlite = "sqlite" in str(engine.url)
     try:

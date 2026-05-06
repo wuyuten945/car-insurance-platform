@@ -582,6 +582,10 @@ async def get_all_policies(
             "end_date": str(p.end_date),
             "start_time": p.start_time.strftime("%H:%M") if p.start_time else None,
             "end_time": p.end_time.strftime("%H:%M") if p.end_time else None,
+            "compulsory_start_date": str(p.compulsory_start_date) if p.compulsory_start_date else None,
+            "compulsory_end_date": str(p.compulsory_end_date) if p.compulsory_end_date else None,
+            "compulsory_start_time": p.compulsory_start_time.strftime("%H:%M") if p.compulsory_start_time else None,
+            "compulsory_end_time": p.compulsory_end_time.strftime("%H:%M") if p.compulsory_end_time else None,
             "total_premium": float(p.total_premium) if p.total_premium else 0,
             "items": items,
         })
