@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Car, ChevronLeft, Upload, Camera, AlertTriangle, CheckCircle,
-  Clock, XCircle, Shield, Loader2, Calendar, FileText, Plus, Pencil, Trash2,
+  Clock, XCircle, Shield, Loader2, FileText, Plus, Pencil, Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
