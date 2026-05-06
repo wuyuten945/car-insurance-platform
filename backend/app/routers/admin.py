@@ -484,8 +484,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           </div>
         </div>
         <div class="row">
-          <div><label data-i18n="lbl_start_date">起保日</label><input type="datetime-local" id="p-start" oninput="autoComputePolicyEnd()"></div>
-          <div><label data-i18n="lbl_end_date">到期日 <span style="font-size:10px;color:#999">（自動 = 起保 +1 年；可手動修正）</span></label><input type="datetime-local" id="p-end" oninput="markPolicyEndManual()"></div>
+          <div><label data-i18n="lbl_start_date">起保日</label><input type="datetime-local" id="p-start" lang="en-GB" step="60" oninput="autoComputePolicyEnd()"></div>
+          <div><label data-i18n="lbl_end_date">到期日 <span style="font-size:10px;color:#999">（自動 = 起保 +1 年；可手動修正）</span></label><input type="datetime-local" id="p-end" lang="en-GB" step="60" oninput="markPolicyEndManual()"></div>
           <div><label data-i18n="lbl_premium">總保費</label><input type="number" id="p-premium" placeholder="18500"></div>
         </div>
         <div style="margin-top:16px">
@@ -534,8 +534,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
             <select id="pe-insurer" onchange="onInsurerChange('pe-insurer','pe-insurer-other')" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></select>
             <input type="text" id="pe-insurer-other" placeholder="保險公司名稱" data-i18n-placeholder="ph_insurer_other" style="display:none;margin-top:6px;width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
           </td></tr>
-          <tr><td style="padding:6px;color:#666" data-i18n="lbl_start_date">起保日</td><td><input type="datetime-local" id="pe-start" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
-          <tr><td style="padding:6px;color:#666" data-i18n="lbl_end_date">到期日</td><td><input type="datetime-local" id="pe-end" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_start_date">起保日</td><td><input type="datetime-local" id="pe-start" lang="en-GB" step="60" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_end_date">到期日</td><td><input type="datetime-local" id="pe-end" lang="en-GB" step="60" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_premium">總保費</td><td><input type="number" id="pe-premium" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_status">狀態</td><td>
             <select id="pe-status" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
