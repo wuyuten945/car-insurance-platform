@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   MapPin, Search, Navigation, Phone, ExternalLink,
@@ -50,8 +50,14 @@ export default function InspectionPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const requestLocation = useCallback(() => {
-    if (!navigator.geolocation) {
+    if (typeof window === 'undefined') return;
+    if (!('geolocation' in navigator)) {
       setLocError('您的瀏覽器不支援定位功能');
+      return;
+    }
+    // 必須在 HTTPS 才能用（iOS / Chrome 都會擋 HTTP 的 geolocation；localhost 例外）
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      setLocError('定位功能需要 HTTPS 安全連線');
       return;
     }
     setLocating(true);
@@ -63,17 +69,24 @@ export default function InspectionPage() {
         setLocating(false);
       },
       (err) => {
-        setLocError(err.code === 1 ? '請允許定位權限以顯示附近站點' : '無法取得位置');
+        // 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
+        let msg = '無法取得位置';
+        if (err.code === 1) {
+          msg = '已拒絕定位權限。請到瀏覽器網址列左側的鎖頭圖示 → 網站設定 → 把「位置」改成允許';
+        } else if (err.code === 2) {
+          msg = '定位服務暫時無法使用，請確認手機定位有開啟';
+        } else if (err.code === 3) {
+          msg = '定位逾時，請再試一次';
+        }
+        setLocError(msg);
         setLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      // 加 maximumAge 允許用 5 分鐘內的快取位置（手機上更快）；timeout 拉長一點避免 LINE 內建瀏覽器超時
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 300000 }
     );
   }, []);
 
-  // Auto-detect location on mount
-  useEffect(() => {
-    requestLocation();
-  }, [requestLocation]);
+  // 不自動 fire — 改成讓使用者明確點按鈕（瀏覽器對「無使用者手勢的 geolocation」越來越嚴）
 
   // Fetch cities
   const { data: cities } = useQuery({
@@ -220,30 +233,47 @@ export default function InspectionPage() {
         )}
       </div>
 
-      {/* Location bar */}
-      <div className="px-4 py-2 bg-white border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Navigation className="h-4 w-4 text-primary-500" />
-            {locating ? (
-              <span className="flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" /> 定位中...
-              </span>
-            ) : userLat ? (
-              <span>已定位 - 依距離排序</span>
-            ) : (
-              <span className="text-gray-400">{locError || '未定位'}</span>
-            )}
-          </div>
-          {!locating && (
+      {/* Location bar — 必須使用者主動按按鈕觸發（瀏覽器會擋自動 geolocation） */}
+      <div className="px-4 py-3 bg-white border-b border-gray-100">
+        {userLat ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-green-700">
+              <Navigation className="h-4 w-4" />
+              <span>已定位（{userLat.toFixed(4)}, {userLon?.toFixed(4)}）— 依距離排序</span>
+            </div>
             <button
               onClick={requestLocation}
-              className="text-xs text-primary-500 font-medium hover:underline"
+              disabled={locating}
+              className="text-xs text-primary-500 font-medium hover:underline disabled:opacity-50"
             >
-              {userLat ? '重新定位' : '開啟定位'}
+              {locating ? '定位中…' : '重新定位'}
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <button
+              onClick={requestLocation}
+              disabled={locating}
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+            >
+              {locating ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> 定位中⋯</>
+              ) : (
+                <><Navigation className="h-4 w-4" /> 📍 開啟定位顯示附近站點</>
+              )}
+            </button>
+            {locError && (
+              <div className="rounded-lg bg-red-50 p-2.5 text-xs text-red-600 leading-relaxed">
+                {locError}
+              </div>
+            )}
+            {!locError && (
+              <p className="text-[11px] text-gray-400 text-center">
+                定位後會自動依距離由近到遠排序站點
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Results count */}
