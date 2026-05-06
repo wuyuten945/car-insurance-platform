@@ -638,9 +638,13 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 
         <!-- 被保人（insured） -->
         <div style="margin-top:14px;padding:12px;background:#E8F5E9;border-radius:8px;border-left:4px solid #2E7D32">
-          <div style="font-size:13px;color:#1B5E20;font-weight:bold;margin-bottom:8px" data-i18n="sec_insured">被保人（受益對象，可與要保人不同）</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+            <span style="font-size:13px;color:#1B5E20;font-weight:bold" data-i18n="sec_insured">被保人（受益對象，應為車主）</span>
+            <span id="p-in-status" style="font-size:11px;color:#999"></span>
+            <button type="button" onclick="_alignInsured('p')" style="margin-left:auto;padding:4px 10px;font-size:11px;background:#2E7D32;color:#fff;border:0;border-radius:4px;cursor:pointer" data-i18n="btn_align_insured">📋 對齊車主</button>
+          </div>
           <div class="row">
-            <div><label data-i18n="lbl_in_name">姓名</label><input type="text" id="p-in-name" placeholder="留空則沿用要保人姓名"></div>
+            <div><label data-i18n="lbl_in_name">姓名</label><input type="text" id="p-in-name" placeholder="留空則沿用要保人姓名" oninput="_recheckInsuredAlignment('p')"></div>
             <div><label data-i18n="lbl_in_id">身分證字號</label><input type="text" id="p-in-id" placeholder="A123456789" maxlength="10" style="text-transform:uppercase"></div>
           </div>
           <div class="row">
@@ -714,8 +718,14 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_ph_phone">要保人電話</td><td><input type="tel" id="pe-ph-phone" placeholder="0912-345-678" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
 
           <!-- 被保人 -->
-          <tr><td colspan="2" style="padding:8px 6px 4px;color:#2E7D32;font-weight:bold;font-size:13px;border-top:1px solid #eee" data-i18n="sec_insured">被保人（受益對象，可與要保人不同）</td></tr>
-          <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_name">被保人姓名</td><td><input type="text" id="pe-in-name" placeholder="留空則沿用要保人姓名" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td colspan="2" style="padding:8px 6px 4px;color:#2E7D32;font-weight:bold;font-size:13px;border-top:1px solid #eee">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span data-i18n="sec_insured">被保人（受益對象，應為車主）</span>
+              <span id="pe-in-status" style="font-size:11px;font-weight:normal;color:#999"></span>
+              <button type="button" onclick="_alignInsured('pe')" style="margin-left:auto;padding:3px 10px;font-size:11px;background:#2E7D32;color:#fff;border:0;border-radius:4px;cursor:pointer" data-i18n="btn_align_insured">📋 對齊車主</button>
+            </div>
+          </td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_name">被保人姓名</td><td><input type="text" id="pe-in-name" placeholder="留空則沿用要保人姓名" oninput="_recheckInsuredAlignment('pe')" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_id">被保人身分證字號</td><td><input type="text" id="pe-in-id" placeholder="A123456789" maxlength="10" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;text-transform:uppercase"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_birth">被保人生日</td><td><input type="date" id="pe-in-birth" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_gender">被保人性別</td><td>
@@ -1038,6 +1048,57 @@ function _calBtnHtml(title, dateStr, desc, uid) {
   var common = 'data-cal-title="' + _attr(title) + '" data-cal-date="' + _attr(dateStr) + '" data-cal-desc="' + _attr(desc) + '" data-cal-uid="' + _attr(u) + '"';
   return '<button class="cal-btn" ' + common + ' style="margin-left:4px;padding:2px 6px;font-size:10px;background:#E3F2FD;color:#1565C0;border:1px solid #BBDEFB;border-radius:4px;cursor:pointer;white-space:nowrap" title="加入行事曆">📅 加入</button>'
        + '<button class="cal-cancel-btn" ' + common + ' style="margin-left:2px;padding:2px 6px;font-size:10px;background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A;border-radius:4px;cursor:pointer;white-space:nowrap" title="取消加入行事曆">✕</button>';
+}
+
+// === 被保人 ↔ 車主 對齊（防呆）===
+// 在台灣車險，被保人 (insured) 通常應為車輛登記車主，否則理賠時可能出狀況。
+// 取得目前 modal 對應的「客戶 / 車主」姓名（manual=p, edit=pe）
+function _getCustomerNameForPolicy(prefix) {
+  if (prefix === 'pe') {
+    // 編輯既有保單 → 取編輯 modal 內的客戶姓名欄位（可能被改過）
+    var el = document.getElementById('pe-customer-name');
+    return (el && el.value || '').trim();
+  } else {
+    // 手動新增（p）→ 取當前操作客戶下拉
+    var sel = document.getElementById('cur-customer');
+    if (sel && sel.selectedIndex >= 0) {
+      return (sel.options[sel.selectedIndex].text || '').split(' · ')[0].trim();
+    }
+    return '';
+  }
+}
+
+// 即時檢查被保人姓名 vs 車主姓名，更新狀態列
+function _recheckInsuredAlignment(prefix) {
+  var insEl = document.getElementById(prefix + '-in-name');
+  var statusEl = document.getElementById(prefix + '-in-status');
+  if (!insEl || !statusEl) return;
+  var insName = (insEl.value || '').trim();
+  var custName = _getCustomerNameForPolicy(prefix);
+  if (!insName) {
+    statusEl.innerHTML = '<span style="color:#999;font-size:11px">未填（點「對齊車主」自動帶入）</span>';
+    insEl.style.borderColor = '';
+    return;
+  }
+  if (custName && insName === custName) {
+    statusEl.innerHTML = '<span style="color:#2E7D32;font-size:11px;font-weight:600">✓ 與車主一致</span>';
+    insEl.style.borderColor = '#A5D6A7';
+  } else {
+    statusEl.innerHTML = '<span style="color:#D32F2F;font-size:11px;font-weight:600">⚠️ 與車主「' + (custName || '?') + '」不符</span>';
+    insEl.style.borderColor = '#EF9A9A';
+  }
+}
+
+// 一鍵對齊：把車主姓名 copy 到被保人姓名（其他欄位若客戶有也帶過去）
+function _alignInsured(prefix) {
+  var custName = _getCustomerNameForPolicy(prefix);
+  if (!custName) {
+    alert(LANG==='en' ? 'No customer selected' : '尚未選定客戶 / 車主');
+    return;
+  }
+  var nameEl = document.getElementById(prefix + '-in-name');
+  if (nameEl) nameEl.value = custName;
+  _recheckInsuredAlignment(prefix);
 }
 
 // === 業務員待辦提醒中心 ===
@@ -1596,6 +1657,7 @@ var I18N = {
     opt_active: '有效', opt_expiring: '即將到期', opt_expired: '已到期',
     lbl_start_date: '起保日', lbl_end_date: '到期日', lbl_premium: '總保費',
     hint_plate_readonly: '車牌與車輛主檔同步，請至「車輛 / 行照」分頁修改',
+    btn_align_insured: '📋 對齊車主',
     sec_policyholder: '要保人（可與客戶為不同人）',
     sec_insured: '被保人（受益對象，可與要保人不同）',
     lbl_ph_name: '要保人姓名', lbl_ph_id: '要保人身分證字號', lbl_ph_birth: '要保人生日', lbl_ph_gender: '要保人性別', lbl_ph_phone: '要保人電話',
@@ -1809,6 +1871,7 @@ var I18N = {
     opt_active: 'Active', opt_expiring: 'Expiring', opt_expired: 'Expired',
     lbl_start_date: 'Start', lbl_end_date: 'End', lbl_premium: 'Premium',
     hint_plate_readonly: 'Plate is synced with vehicle master record — edit it in the Vehicles tab',
+    btn_align_insured: '📋 Match Owner',
     sec_policyholder: 'Policyholder (may differ from customer)',
     sec_insured: 'Insured Person (beneficiary, may differ from policyholder)',
     lbl_ph_name: 'Policyholder Name', lbl_ph_id: 'Policyholder ID', lbl_ph_birth: 'Policyholder Birth', lbl_ph_gender: 'Policyholder Gender', lbl_ph_phone: 'Policyholder Phone',
@@ -3588,6 +3651,7 @@ function _doOpenManualPolicyFormForCurrent() {
   var msg = document.getElementById('p-msg');
   if (msg) { msg.textContent = ''; msg.className = 'msg'; }
   document.getElementById('p-form-modal').style.display = 'flex';
+  setTimeout(function(){ _recheckInsuredAlignment('p'); }, 0);
 }
 
 // 「+ 新增保單（上傳辨識）」入口
@@ -3719,6 +3783,12 @@ async function createPolicy() {
   const insurer = getInsurerValue('p-insurer', 'p-insurer-other');
   const number = document.getElementById('p-number').value.trim();
   if (!insurer || !number) { showMsg('p-msg','err', LANG==='en' ? 'Insurer and policy number are required' : '請填寫保險公司和保單號碼'); return; }
+  // 防呆：被保人 vs 車主姓名不一致 → 二次確認
+  var __pInName = (document.getElementById('p-in-name').value || '').trim();
+  var __pCustName = _getCustomerNameForPolicy('p');
+  if (__pInName && __pCustName && __pInName !== __pCustName) {
+    if (!confirm('⚠️ 被保人「' + __pInName + '」與車主「' + __pCustName + '」不一致。\\n\\n台灣車險被保人通常應為車輛登記車主，否則理賠時可能受影響。\\n\\n確定要繼續儲存嗎？')) return false;
+  }
   var sParts = _readDatePair('p-start');
   var eParts = _readDatePair('p-end');
   var csParts = _readDatePair('p-cstart');
@@ -4101,6 +4171,8 @@ function editPolicyFromList(pid) {
   document.getElementById('pe-in-birth').value  = p.insured_birth_date || '';
   document.getElementById('pe-in-gender').value = p.insured_gender || '';
   document.getElementById('pe-in-phone').value  = p.insured_phone || '';
+  // 被保人 ↔ 車主 對齊狀態
+  setTimeout(function(){ _recheckInsuredAlignment('pe'); }, 0);
   // 載入既有保障項目到 pe-items
   document.getElementById('pe-items').innerHTML = '';
   (p.items || []).forEach(function(it){
@@ -4123,6 +4195,12 @@ function closePolicyEdit() {
 async function savePolicyEdit() {
   var pid = window._editPolicyId;
   if (!pid) return;
+  // 防呆：被保人 vs 車主姓名不一致 → 二次確認
+  var __peInName = (document.getElementById('pe-in-name').value || '').trim();
+  var __peCustName = _getCustomerNameForPolicy('pe');
+  if (__peInName && __peCustName && __peInName !== __peCustName) {
+    if (!confirm('⚠️ 被保人「' + __peInName + '」與車主「' + __peCustName + '」不一致。\\n\\n台灣車險被保人通常應為車輛登記車主，否則理賠時可能受影響。\\n\\n確定要繼續儲存嗎？')) return;
+  }
   var pesParts = _readDatePair('pe-start');
   var peeParts = _readDatePair('pe-end');
   var pcsParts = _readDatePair('pe-cstart');
