@@ -3,10 +3,12 @@
 """
 import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, Request, Query, UploadFile, File
+from fastapi import APIRouter, Depends, Request, Query, UploadFile, File, Form
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select, and_, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+import io
 from pydantic import BaseModel
 
 from app.dependencies import get_db
@@ -1622,3 +1624,78 @@ async def update_claim_progress(
         "claim_number": updated.claim_number,
         "status": updated.status,
     }, message="進度已更新並推播")
+
+
+# ═══════════════════════════════════════════════════
+# 整合 CSV 匯出 / 匯入（客戶 + 車輛 + 保單 一張表）
+# 給管理員 / 業務員大量上傳和下載用（百筆 / 千筆級）
+# ═══════════════════════════════════════════════════
+
+@router.get("/export.csv")
+async def export_unified_csv(
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """匯出本人可見的客戶 + 車輛 + 保單 完整 CSV（utf-8-sig BOM 給 Excel）"""
+    from app.core.admin_csv import export_csv_for_customers
+    accessible = await get_accessible_customer_ids(admin, db)
+    csv_text = await export_csv_for_customers(db, list(accessible) if accessible is not None else None)
+    await log_action(db, admin, "export", "csv_unified", detail=f"{len(csv_text)} chars")
+    fname = f"bopinan_customers_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return StreamingResponse(
+        io.BytesIO(csv_text.encode("utf-8")),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )
+
+
+@router.get("/export-template.csv")
+async def export_csv_template(
+    admin: AdminUser = Depends(get_current_admin),
+):
+    """下載空白 CSV 範本（只有 header，幫助新手填寫）"""
+    from app.core.admin_csv import COLUMNS
+    text = "﻿" + ",".join(COLUMNS) + "\n"
+    return StreamingResponse(
+        io.BytesIO(text.encode("utf-8")),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="bopinan_csv_template.csv"'},
+    )
+
+
+@router.post("/import.csv")
+async def import_unified_csv(
+    file: UploadFile = File(..., description="CSV 檔（含 header）"),
+    dry_run: bool = Form(False, description="True=只試跑回報，不寫 DB"),
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """大量上傳客戶 + 車輛 + 保單。Idempotent：用 customer_id/phone/email + plate_number + policy_number upsert。"""
+    from app.core.admin_csv import import_csv as do_import
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        try:
+            text = raw.decode("big5")  # Excel 在 Windows 預設可能存 big5
+        except UnicodeDecodeError:
+            raise BadRequestError("CSV 編碼無法辨識，請存成 UTF-8 或 UTF-8 with BOM")
+
+    accessible = await get_accessible_customer_ids(admin, db)
+    accessible_list = list(accessible) if accessible is not None else None
+
+    summary = await do_import(db, text, dry_run=dry_run, accessible_customer_ids=accessible_list)
+    if not dry_run and summary.get("committed"):
+        await log_action(
+            db, admin, "import", "csv_unified",
+            detail=(
+                f"customers +{summary['customers_created']}/u{summary['customers_updated']} "
+                f"vehicles +{summary['vehicles_created']}/u{summary['vehicles_updated']} "
+                f"policies +{summary['policies_created']}/u{summary['policies_updated']}"
+            ),
+        )
+    return APIResponse(
+        data=summary,
+        message=("試跑完成（未寫入 DB）" if dry_run else
+                ("匯入成功" if summary.get("committed") else f"匯入失敗：{len(summary['errors'])} 筆錯誤")),
+    )

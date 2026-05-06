@@ -262,6 +262,20 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     <div id="qs-results" style="margin-top:10px"></div>
   </div>
 
+  <!-- 整合 CSV 匯入 / 匯出 -->
+  <div id="csv-bar" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:18px">📊</span>
+      <span style="font-size:13px;font-weight:600;color:#1565C0" data-i18n="csv_title">資料匯入 / 匯出（客戶+車輛+保單一張表）</span>
+      <button onclick="downloadUnifiedCsv()" style="background:#2E7D32;color:#fff;border:0;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;margin-left:auto" data-i18n="btn_csv_export">⬇ 下載完整資料</button>
+      <button onclick="downloadCsvTemplate()" style="background:#0288D1;color:#fff;border:0;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer" data-i18n="btn_csv_template">📥 下載空白範本</button>
+      <input type="file" id="csv-import-file" accept=".csv,text/csv" style="display:none" onchange="onCsvFileChosen(this)">
+      <button onclick="document.getElementById('csv-import-file').click()" style="background:#E65100;color:#fff;border:0;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer" data-i18n="btn_csv_import">⬆ 上傳大量匯入</button>
+    </div>
+    <div id="csv-msg" class="msg" style="margin-top:8px"></div>
+    <div id="csv-result" style="margin-top:8px;font-size:12px"></div>
+  </div>
+
   <div class="tabs">
     <button class="tab active" id="tab-btn-vehicles" onclick="switchTab('vehicles')" data-i18n="tab_vehicles">車輛 / 行照</button>
     <button class="tab" id="tab-btn-policies" onclick="switchTab('policies')" data-i18n="tab_policies">保單管理</button>
@@ -853,6 +867,90 @@ function _calBtnHtml(title, dateStr, desc) {
        + 'style="margin-left:4px;padding:2px 6px;font-size:10px;background:#E3F2FD;color:#1565C0;border:1px solid #BBDEFB;border-radius:4px;cursor:pointer;white-space:nowrap" title="加入行事曆">📅</button>';
 }
 
+// === 整合 CSV 匯入 / 匯出 ===
+async function downloadUnifiedCsv() {
+  showMsg('csv-msg', 'ok', LANG==='en' ? 'Preparing CSV...' : '正在準備 CSV…');
+  try {
+    var r = await fetch(CONSOLE_API + '/export.csv', { headers: consoleHeaders(false) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var blob = await r.blob();
+    var ts = new Date().toISOString().slice(0,16).replace(/[:T-]/g,'');
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'bopinan_export_' + ts + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    showMsg('csv-msg', 'ok', LANG==='en' ? 'Downloaded.' : '已下載。');
+  } catch(e) {
+    showMsg('csv-msg', 'err', (LANG==='en'?'Failed: ':'下載失敗：') + e.message);
+  }
+}
+
+async function downloadCsvTemplate() {
+  try {
+    var r = await fetch(CONSOLE_API + '/export-template.csv', { headers: consoleHeaders(false) });
+    var blob = await r.blob();
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'bopinan_csv_template.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  } catch(e) {
+    showMsg('csv-msg', 'err', (LANG==='en'?'Failed: ':'下載失敗：') + e.message);
+  }
+}
+
+async function onCsvFileChosen(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var doDryRun = confirm(LANG==='en'
+    ? 'Dry-run first? (Recommended)\\n\\nOK = Try without saving (preview)\\nCancel = Save directly'
+    : '是否先試跑（dry-run）？\\n\\n確定 = 試跑（不存檔）\\n取消 = 直接寫入');
+  showMsg('csv-msg', 'ok', LANG==='en' ? 'Uploading...' : '上傳中⋯');
+  document.getElementById('csv-result').innerHTML = '';
+
+  var fd = new FormData();
+  fd.append('file', file);
+  fd.append('dry_run', doDryRun ? 'true' : 'false');
+
+  try {
+    var r = await fetch(CONSOLE_API + '/import.csv', {
+      method:'POST',
+      headers:{'Authorization':'Bearer ' + ADMIN_TOKEN},
+      body: fd,
+    });
+    var d = await r.json();
+    var s = d.data || {};
+    var html = '<div style="background:'+(s.committed?'#E8F5E9':'#FFF3E0')+';padding:8px;border-radius:6px;border-left:3px solid '+(s.committed?'#2E7D32':'#E65100')+'">';
+    html += '<b>' + (d.message || '') + '</b><br>';
+    html += '處理列數：<b>' + (s.rows_total||0) + '</b>　|　';
+    html += '客戶 +' + (s.customers_created||0) + ' / 更新 ' + (s.customers_updated||0) + '　|　';
+    html += '車輛 +' + (s.vehicles_created||0) + ' / 更新 ' + (s.vehicles_updated||0) + '　|　';
+    html += '保單 +' + (s.policies_created||0) + ' / 更新 ' + (s.policies_updated||0);
+    if (s.errors && s.errors.length) {
+      html += '<br><br><b style="color:#D32F2F">錯誤 (' + s.errors.length + ' 筆)：</b><ul style="margin:4px 0;padding-left:20px;font-size:11px">';
+      s.errors.slice(0, 50).forEach(function(e){
+        html += '<li>第 ' + e.row + ' 列：' + e.msg + '</li>';
+      });
+      if (s.errors.length > 50) html += '<li>...（還有 ' + (s.errors.length - 50) + ' 筆未顯示）</li>';
+      html += '</ul>';
+    }
+    html += '</div>';
+    document.getElementById('csv-result').innerHTML = html;
+    showMsg('csv-msg', s.committed ? 'ok' : 'err', d.message || '');
+    // 重整列表
+    if (s.committed) {
+      if (typeof loadVehicles === 'function') loadVehicles();
+      if (typeof loadPolicies === 'function') loadPolicies();
+      if (typeof loadCustomerList === 'function') loadCustomerList();
+    }
+  } catch(e) {
+    showMsg('csv-msg', 'err', (LANG==='en'?'Upload failed: ':'上傳失敗：') + e.message);
+  } finally {
+    input.value = '';  // 讓同一檔案可以再選一次觸發
+  }
+}
+
 // === 客戶 cell hover popover：滑到客戶欄就浮現該客戶所有保單 / 車輛 ===
 // 共用 tooltip 容器（僅一個，重複利用）
 function _ensureCustHoverTip() {
@@ -1101,6 +1199,10 @@ var I18N = {
     qs_lbl_customer: '客戶: ',
     idle_warn_title: '⚠ 即將自動登出 - ',
     idle_logout_msg: '閒置超過 10 分鐘，已自動登出。',
+    csv_title: '資料匯入 / 匯出（客戶+車輛+保單一張表）',
+    btn_csv_export: '⬇ 下載完整資料',
+    btn_csv_template: '📥 下載空白範本',
+    btn_csv_import: '⬆ 上傳大量匯入',
     // Customer bar
     cur_customer_label: '操作客戶（新增車輛/保單時套用）：',
     btn_refresh_customers: '重新整理客戶清單',
@@ -1297,6 +1399,10 @@ var I18N = {
     qs_lbl_customer: 'Customer: ',
     idle_warn_title: '⚠ Auto-logout soon - ',
     idle_logout_msg: 'Idle over 10 minutes, you have been logged out.',
+    csv_title: 'CSV Bulk Import / Export (Customer + Vehicle + Policy)',
+    btn_csv_export: '⬇ Export All',
+    btn_csv_template: '📥 Blank Template',
+    btn_csv_import: '⬆ Bulk Import',
     cur_customer_label: 'Active customer (used for new vehicle / policy):',
     btn_refresh_customers: 'Refresh',
     h_upload_reg: 'Upload Reg. Card (auto-OCR)',
