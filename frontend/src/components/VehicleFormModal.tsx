@@ -75,9 +75,11 @@ export default function VehicleFormModal({ open, initial, onClose, onSaved }: Pr
       body.year = null;
       body.manufacture_month = null;
     }
-    // 清掉空字串 → null（後端 schema 用 None）
-    (Object.keys(body) as (keyof VehiclePayload)[]).forEach((k) => {
-      if (body[k] === '') (body as Record<string, unknown>)[k] = null;
+    // 清掉空字串 → null（後端 schema 用 None）— 透過 cast 把 body 視為 Record 走，避開
+    // VehiclePayload 各欄位是 string | number | null | undefined 混型造成 === '' 比較的 TS 報錯
+    const bag = body as Record<string, unknown>;
+    Object.keys(bag).forEach((k) => {
+      if (bag[k] === '') bag[k] = null;
     });
     setBusy(true);
     try {
