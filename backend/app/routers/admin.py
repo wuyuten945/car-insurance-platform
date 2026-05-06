@@ -753,13 +753,13 @@ function fillInsurerSelect(selectId, otherInputId, value) {
 // 純數字（含小數點）字串加千分位逗號；非數字字元一律剝掉
 function formatThousand(el) {
   if (!el) return;
-  var v = (el.value || '').replace(/[^\d.]/g, '');
+  var v = (el.value || '').replace(/[^\\d.]/g, '');
   // 只保留第一個小數點
   var firstDot = v.indexOf('.');
-  if (firstDot >= 0) v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
+  if (firstDot >= 0) v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\\./g, '');
   if (!v) { el.value = ''; return; }
   var parts = v.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  parts[0] = parts[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');
   el.value = parts.join('.');
 }
 // 帶逗號字串轉 number；空字串/非法 → null
