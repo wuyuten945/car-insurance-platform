@@ -10,6 +10,8 @@ import { ArrowLeft, Loader2, Send, CheckCircle } from 'lucide-react';
 import api from '@/lib/api-client';
 import { ACCIDENT_TYPES, MY_SITUATIONS } from '@/lib/constants';
 import { useT } from '@/lib/i18n/LanguageProvider';
+import { useEligibility } from '@/lib/useEligibility';
+import LockedFeatureNotice from '@/components/LockedFeatureNotice';
 
 const makeClaimSchema = (t: (k: string) => string) => z.object({
   policy_id: z.string().min(1, t('claimForm.err.policyRequired')),
@@ -44,6 +46,7 @@ export default function NewClaimPage() {
     { value: 'other', label: t('claims.type.other') },
   ];
   const [submitted, setSubmitted] = useState(false);
+  const { eligibility, isLoading: eligLoading } = useEligibility();
 
   const { data: policies } = useQuery({
     queryKey: ['policies-active'],
@@ -89,6 +92,19 @@ export default function NewClaimPage() {
       try { el.focus(); } catch {}
     }
   };
+
+  // 自填客戶 → 鎖定整頁，顯示「請聯繫 LINE」CTA
+  if (!eligLoading && !eligibility.can_file_claim) {
+    return (
+      <div className="px-4 py-5">
+        <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500 mb-4">
+          <ArrowLeft className="h-4 w-4" /> {t('claimForm.back')}
+        </button>
+        <h1 className="text-xl font-bold text-gray-900 mb-1">{t('claimForm.title')}</h1>
+        <LockedFeatureNotice fullPage lineOaUrl={eligibility.line_oa_url} />
+      </div>
+    );
+  }
 
   if (submitted) {
     return (

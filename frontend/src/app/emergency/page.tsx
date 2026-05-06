@@ -8,6 +8,8 @@ import {
   Camera, Upload, Check,
 } from 'lucide-react';
 import api from '@/lib/api-client';
+import { useEligibility } from '@/lib/useEligibility';
+import LockedFeatureNotice from '@/components/LockedFeatureNotice';
 
 interface NearbyResource {
   id: string;
@@ -85,6 +87,7 @@ export default function EmergencyPage() {
   const [uploadedPhotos, setUploadedPhotos] = useState<Record<string, string>>({});
   const [uploadingKey, setUploadingKey] = useState('');
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const { eligibility } = useEligibility();
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -378,7 +381,16 @@ export default function EmergencyPage() {
                     <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{s.desc}</p>
                   </div>
                 </div>
-                {s.isUpload && (
+                {s.isUpload && !eligibility.can_upload_accident_photo && (
+                  <div className="mt-3 ml-12">
+                    <LockedFeatureNotice
+                      title="事故照片上傳限投保客戶使用"
+                      description="此功能用於將照片連同事故報告送交您的理賠專員。您目前的保單為自行建檔，請先透過 LINE 與我們聯繫正式投保。"
+                      lineOaUrl={eligibility.line_oa_url}
+                    />
+                  </div>
+                )}
+                {s.isUpload && eligibility.can_upload_accident_photo && (
                   <div className="mt-3 ml-12 grid grid-cols-2 gap-2">
                     {PHOTO_SLOTS.map((slot) => {
                       const uploaded = uploadedPhotos[slot.key];
