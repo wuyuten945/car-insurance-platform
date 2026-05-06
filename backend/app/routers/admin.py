@@ -2102,7 +2102,7 @@ async function _saveNewVehicleManual() {
   var model = document.getElementById('ve-model').value.trim();
   if (model) body.model = model;
   var ym = document.getElementById('ve-year-month').value;
-  if (ym && /^\d{4}-\d{2}$/.test(ym)) {
+  if (ym && /^\\d{4}-\\d{2}$/.test(ym)) {
     var ymParts = ym.split('-');
     body.year = parseInt(ymParts[0]);
     body.manufacture_month = parseInt(ymParts[1]);
@@ -2168,7 +2168,7 @@ async function saveEditedVehicle() {
   if (model) body.model = model;
   // 出廠年月：解析 YYYY-MM 為 year + manufacture_month
   var ym = document.getElementById('ve-year-month').value;
-  if (ym && /^\d{4}-\d{2}$/.test(ym)) {
+  if (ym && /^\\d{4}-\\d{2}$/.test(ym)) {
     var ymParts = ym.split('-');
     body.year = parseInt(ymParts[0]);
     body.manufacture_month = parseInt(ymParts[1]);
