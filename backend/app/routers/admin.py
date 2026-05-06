@@ -484,7 +484,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           </div>
         </div>
         <div class="row">
-          <div><label data-i18n="lbl_premium">總保費</label><input type="number" id="p-premium" placeholder="18500"></div>
+          <div><label data-i18n="lbl_premium">總保費</label><input type="text" inputmode="decimal" id="p-premium" placeholder="18,500" oninput="formatThousand(this)"></div>
         </div>
 
         <!-- 任意險 期間 -->
@@ -525,7 +525,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           <div class="row">
             <div>
               <label data-i18n="lbl_compulsory_premium">強制險 保費</label>
-              <input type="number" id="p-cpremium" placeholder="1500">
+              <input type="text" inputmode="decimal" id="p-cpremium" placeholder="1,500" oninput="formatThousand(this)">
             </div>
             <div></div>
           </div>
@@ -612,7 +612,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
             <input type="text" id="pe-cinsurer-other" placeholder="保險公司名稱" data-i18n-placeholder="ph_insurer_other" style="display:none;margin-top:6px;width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
           </td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_policy_no">強制險 保單號碼</td><td><input type="text" id="pe-cnumber" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
-          <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_premium">強制險 保費</td><td><input type="number" id="pe-cpremium" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_premium">強制險 保費</td><td><input type="text" inputmode="decimal" id="pe-cpremium" oninput="formatThousand(this)" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_compulsory_start">強制險起保日</td><td>
             <div style="display:flex;gap:6px">
               <input type="date" id="pe-cstart" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:4px">
@@ -625,7 +625,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
               <input type="time" id="pe-cend-time" lang="en-GB" step="60" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:4px">
             </div>
           </td></tr>
-          <tr><td style="padding:6px;color:#666" data-i18n="lbl_premium">總保費</td><td><input type="number" id="pe-premium" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_premium">總保費</td><td><input type="text" inputmode="decimal" id="pe-premium" oninput="formatThousand(this)" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_status">狀態</td><td>
             <select id="pe-status" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
               <option value="active">active</option>
@@ -747,6 +747,35 @@ function fillInsurerSelect(selectId, otherInputId, value) {
     sel.value = '';
     if (other) { other.style.display = 'none'; other.value = ''; }
   }
+}
+
+// === 千分位數字輸入 helpers ===
+// 純數字（含小數點）字串加千分位逗號；非數字字元一律剝掉
+function formatThousand(el) {
+  if (!el) return;
+  var v = (el.value || '').replace(/[^\d.]/g, '');
+  // 只保留第一個小數點
+  var firstDot = v.indexOf('.');
+  if (firstDot >= 0) v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
+  if (!v) { el.value = ''; return; }
+  var parts = v.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  el.value = parts.join('.');
+}
+// 帶逗號字串轉 number；空字串/非法 → null
+function parseThousand(s) {
+  if (s == null || s === '') return null;
+  var raw = String(s).replace(/,/g, '').trim();
+  if (!raw) return null;
+  var n = parseFloat(raw);
+  return isNaN(n) ? null : n;
+}
+// 把純數字寫到 input 並加千分位
+function setNumberWithComma(id, val) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (val == null || val === '' || val === 0) { el.value = (val === 0) ? '0' : ''; return; }
+  el.value = Number(val).toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
 function getInsurerValue(selectId, otherInputId) {
@@ -3021,9 +3050,9 @@ function addItemRow() {
   div.id = 'item-'+itemCount;
   div.innerHTML =
     '<input placeholder="' + t('ph_item_name') + '" data-field="item_name">' +
-    '<input type="number" placeholder="' + t('ph_coverage_limit') + '" data-field="coverage_limit" style="max-width:120px">' +
-    '<input type="number" placeholder="' + t('ph_deductible') + '" data-field="deductible" style="max-width:100px">' +
-    '<input type="number" placeholder="' + t('ph_premium') + '" data-field="premium" style="max-width:100px">' +
+    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_coverage_limit') + '" data-field="coverage_limit" style="max-width:120px">' +
+    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_deductible') + '" data-field="deductible" style="max-width:100px">' +
+    '<input type="text" inputmode="decimal" oninput="formatThousand(this)" placeholder="' + t('ph_premium') + '" data-field="premium" style="max-width:100px">' +
     '<button class="btn danger" onclick="this.parentElement.remove()">X</button>';
   document.getElementById('p-items').appendChild(div);
 }
@@ -3047,22 +3076,25 @@ async function createPolicy() {
     end_time: eParts.time,
     compulsory_insurer_name: getInsurerValue('p-cinsurer','p-cinsurer-other') || null,
     compulsory_policy_number: (document.getElementById('p-cnumber').value || '').trim() || null,
-    compulsory_premium: parseFloat(document.getElementById('p-cpremium').value) || null,
+    compulsory_premium: parseThousand(document.getElementById('p-cpremium').value),
     compulsory_start_date: csParts.date,
     compulsory_end_date: ceParts.date,
     compulsory_start_time: csParts.time,
     compulsory_end_time: ceParts.time,
-    total_premium: parseFloat(document.getElementById('p-premium').value) || null,
+    total_premium: parseThousand(document.getElementById('p-premium').value),
     items: []
   };
-  // Collect items
+  // Collect items（金額欄位有千分位逗號 → 用 parseThousand）
   document.querySelectorAll('.item-row').forEach(row => {
     const item = {};
     row.querySelectorAll('input').forEach(inp => {
       const f = inp.dataset.field;
       if (f) {
         if (f === 'item_name') item[f] = inp.value;
-        else if (inp.value) item[f] = parseFloat(inp.value);
+        else if (inp.value) {
+          var n = parseThousand(inp.value);
+          if (n != null) item[f] = n;
+        }
       }
     });
     if (item.item_name) body.items.push(item);
@@ -3343,8 +3375,8 @@ function editPolicyFromList(pid) {
   _writeDatePair('pe-cend', p.compulsory_end_date, p.compulsory_end_time);
   fillInsurerSelect('pe-cinsurer', 'pe-cinsurer-other', p.compulsory_insurer_name || '');
   document.getElementById('pe-cnumber').value = p.compulsory_policy_number || '';
-  document.getElementById('pe-cpremium').value = p.compulsory_premium || '';
-  document.getElementById('pe-premium').value = p.total_premium || '';
+  setNumberWithComma('pe-cpremium', p.compulsory_premium);
+  setNumberWithComma('pe-premium', p.total_premium);
   document.getElementById('pe-status').value = p.status || 'active';
   document.getElementById('p-edit-modal').style.display = 'flex';
   refreshRocLabels();
@@ -3370,15 +3402,15 @@ async function savePolicyEdit() {
     end_time: peeParts.time,
     compulsory_insurer_name: getInsurerValue('pe-cinsurer','pe-cinsurer-other') || null,
     compulsory_policy_number: (document.getElementById('pe-cnumber').value || '').trim() || null,
-    compulsory_premium: parseFloat(document.getElementById('pe-cpremium').value) || null,
+    compulsory_premium: parseThousand(document.getElementById('pe-cpremium').value),
     compulsory_start_date: pcsParts.date,
     compulsory_end_date: pceParts.date,
     compulsory_start_time: pcsParts.time,
     compulsory_end_time: pceParts.time,
     status: document.getElementById('pe-status').value,
   };
-  var prem = document.getElementById('pe-premium').value;
-  if (prem) body.total_premium = parseFloat(prem);
+  var prem = parseThousand(document.getElementById('pe-premium').value);
+  if (prem != null) body.total_premium = prem;
 
   // ① 先更新保單欄位
   try {
