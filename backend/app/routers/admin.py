@@ -2945,7 +2945,17 @@ function closePolicyUploadModal() {
   var m = document.getElementById('p-upload-modal');
   if (m) m.style.display = 'none';
 }
-function closePolicyFormModal() {
+async function closePolicyFormModal() {
+  // 表單若有實質內容 → 詢問是否要先儲存（避免 user 按完成卻沒按建立保單就資料遺失）
+  if (typeof _policyFormHasContent === 'function' && _policyFormHasContent()) {
+    var ans = confirm(LANG === 'en'
+      ? 'You have unsaved policy data.\n\nOK = Save before closing\nCancel = Discard and close'
+      : '保單尚未儲存。\n\n[確定] = 儲存後關閉\n[取消] = 不儲存直接關閉');
+    if (ans) {
+      var ok = await createPolicy();
+      if (!ok) return;  // 儲存失敗就停在 modal，不關閉
+    }
+  }
   var m = document.getElementById('p-form-modal');
   if (m) m.style.display = 'none';
 }
@@ -3109,8 +3119,29 @@ async function createPolicy() {
       loadPolicies();
       // 留在 modal、清空表單，方便接續按「+新增此客戶另一張保單」或關閉
       _resetPolicyFormFields();
-    } else { showMsg('p-msg','err', (LANG==='en' ? 'Create failed: ' : '建立失敗：') + (d.detail||d.message)); }
-  } catch(e) { showMsg('p-msg','err', (LANG==='en' ? 'Create failed: ' : '建立失敗：') + e.message); }
+      return true;
+    } else {
+      showMsg('p-msg','err', (LANG==='en' ? 'Create failed: ' : '建立失敗：') + (d.detail||d.message));
+      return false;
+    }
+  } catch(e) {
+    showMsg('p-msg','err', (LANG==='en' ? 'Create failed: ' : '建立失敗：') + e.message);
+    return false;
+  }
+}
+
+// 偵測手動新增保單表單是否有實質內容（提醒未儲存用）
+function _policyFormHasContent() {
+  if (getInsurerValue('p-insurer','p-insurer-other')) return true;
+  if ((document.getElementById('p-number').value || '').trim()) return true;
+  if (parseThousand(document.getElementById('p-premium').value) != null) return true;
+  if (getInsurerValue('p-cinsurer','p-cinsurer-other')) return true;
+  if ((document.getElementById('p-cnumber').value || '').trim()) return true;
+  if (parseThousand(document.getElementById('p-cpremium').value) != null) return true;
+  if ((document.getElementById('p-start').value || '').trim()) return true;
+  if ((document.getElementById('p-cstart').value || '').trim()) return true;
+  if (document.querySelectorAll('.item-row').length > 0) return true;
+  return false;
 }
 
 function _resetPolicyFormFields() {
