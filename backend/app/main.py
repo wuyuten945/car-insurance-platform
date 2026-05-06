@@ -108,6 +108,23 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"auto-seed skipped: {e}")
 
+    # 監理站 / 驗車廠 全台資料自動補：count < 20 時跑全台 100+ 站完整 seed
+    # 不會清掉既有，只在資料明顯不足時補（給 Render PG 第一次啟動 / 之前只有 3 筆 minimal seed 的環境用）
+    try:
+        from sqlalchemy import select, func
+        from app.database import AsyncSessionLocal
+        from app.models.inspection import InspectionStation
+        async with AsyncSessionLocal() as db:
+            cnt = await db.execute(select(func.count()).select_from(InspectionStation))
+            current = cnt.scalar() or 0
+            if current < 20:
+                logger.info(f"InspectionStation count = {current}，跑完整 seed_inspection_data ...")
+                from app.tasks.seed_inspection_data import seed_inspection_data
+                await seed_inspection_data()
+                logger.info("inspection seed 完成")
+    except Exception as e:
+        logger.warning(f"inspection auto-seed skipped: {e}")
+
     # Bootstrap admin：env 設了 BOOTSTRAP_ADMIN_USERNAME + BOOTSTRAP_ADMIN_PASSWORD
     # 且該帳號不存在 → 自動建立 super_admin。Render ephemeral DB 重啟後也會重建。
     try:
