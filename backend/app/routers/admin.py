@@ -2802,7 +2802,11 @@ async function loadVehiclesForPolicySelect(cid) {
     var vs = d.data || [];
     for (var i = 0; i < vs.length; i++) {
       var v = vs[i];
-      var label = (v.plate_number || '?') + ' ' + (v.brand||'') + ' ' + (v.model||'');
+      // 此 endpoint 把車牌存成 v.plate（非 v.plate_number），先 plate 後 plate_number 兼容
+      var plate = v.plate || v.plate_number || (LANG==='en' ? '(no plate)' : '(無車牌)');
+      var brand = v.brand || '';
+      var model = v.model || '';
+      var label = plate + (brand || model ? ' — ' + (brand + ' ' + model).trim() : '');
       dd.innerHTML += '<option value="' + v.id + '">' + label + '</option>';
     }
   } catch(e) { /* ignore */ }
