@@ -154,6 +154,8 @@ class PolicyService:
             status=data.status,
             start_date=data.start_date,
             end_date=data.end_date,
+            start_time=getattr(data, "start_time", None),
+            end_time=getattr(data, "end_time", None),
             total_premium=data.total_premium,
             document_url=data.document_url,
         )

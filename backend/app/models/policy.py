@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, Date, DateTime, Numeric, Text, ForeignKey, Index, JSON
+from sqlalchemy import Column, String, Boolean, Date, DateTime, Time, Numeric, Text, ForeignKey, Index, JSON
 from sqlalchemy.orm import relationship
 from app.database import Base, TimestampMixin, generate_uuid
 
@@ -14,6 +14,9 @@ class Policy(TimestampMixin, Base):
     status = Column(String(20), nullable=False, default="active")  # active, expiring, expired, cancelled
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
+    # 起保 / 到期 的「時:分」精度（NULL = 整日，舊資料保留 NULL）
+    start_time = Column(Time, nullable=True)
+    end_time = Column(Time, nullable=True)
     total_premium = Column(Numeric(12, 2))
     document_url = Column(String(500))
 

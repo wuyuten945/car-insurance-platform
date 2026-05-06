@@ -484,8 +484,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           </div>
         </div>
         <div class="row">
-          <div><label data-i18n="lbl_start_date">起保日</label><input type="date" id="p-start" oninput="autoComputePolicyEnd()"></div>
-          <div><label data-i18n="lbl_end_date">到期日 <span style="font-size:10px;color:#999">（自動 = 起保日 +1 年；可手動修正）</span></label><input type="date" id="p-end" oninput="markPolicyEndManual()"></div>
+          <div><label data-i18n="lbl_start_date">起保日</label><input type="datetime-local" id="p-start" oninput="autoComputePolicyEnd()"></div>
+          <div><label data-i18n="lbl_end_date">到期日 <span style="font-size:10px;color:#999">（自動 = 起保 +1 年；可手動修正）</span></label><input type="datetime-local" id="p-end" oninput="markPolicyEndManual()"></div>
           <div><label data-i18n="lbl_premium">總保費</label><input type="number" id="p-premium" placeholder="18500"></div>
         </div>
         <div style="margin-top:16px">
@@ -534,8 +534,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
             <select id="pe-insurer" onchange="onInsurerChange('pe-insurer','pe-insurer-other')" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></select>
             <input type="text" id="pe-insurer-other" placeholder="保險公司名稱" data-i18n-placeholder="ph_insurer_other" style="display:none;margin-top:6px;width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
           </td></tr>
-          <tr><td style="padding:6px;color:#666" data-i18n="lbl_start_date">起保日</td><td><input type="date" id="pe-start" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
-          <tr><td style="padding:6px;color:#666" data-i18n="lbl_end_date">到期日</td><td><input type="date" id="pe-end" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_start_date">起保日</td><td><input type="datetime-local" id="pe-start" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_end_date">到期日</td><td><input type="datetime-local" id="pe-end" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_premium">總保費</td><td><input type="number" id="pe-premium" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_status">狀態</td><td>
             <select id="pe-status" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
@@ -685,18 +685,46 @@ function onInsurerChange(selectId, otherInputId) {
 }
 
 // === 民國年顯示輔助 ===
-// 西元 → 民國（同時保留月日）。範例：'2026-03-14' → '民國 115 年 (2026 年) 03 月 14 日'
+// 西元 → 民國（保留月日 + 時:分）。
+// 範例：'2026-03-14' → '民國 115 年 (2026 年) 03 月 14 日'
+//       '2026-03-14T12:00' → '民國 115 年 (2026 年) 03 月 14 日 12:00'
 function rocLabel(val) {
   if (!val) return '';
-  var p = String(val).split('-');
+  var s = String(val);
+  // 拆 datetime-local: 2026-03-14T12:00 → datePart=2026-03-14, timePart=12:00
+  var hasT = s.indexOf('T') >= 0;
+  var datePart = hasT ? s.split('T')[0] : s;
+  var timePart = hasT ? s.split('T')[1] : '';
+  var p = datePart.split('-');
   if (p.length < 2) return '';
   var y = parseInt(p[0]);
   if (isNaN(y) || y < 1912) return '';
   var roc = y - 1911;
   var mm = (p[1] || '').padStart(2, '0');
-  var s = '民國 ' + roc + ' 年 (' + y + ' 年) ' + mm + ' 月';
-  if (p.length >= 3 && p[2]) s += ' ' + p[2].padStart(2, '0') + ' 日';
-  return s;
+  var out = '民國 ' + roc + ' 年 (' + y + ' 年) ' + mm + ' 月';
+  if (p.length >= 3 && p[2]) out += ' ' + p[2].padStart(2, '0') + ' 日';
+  if (timePart) out += ' ' + timePart.slice(0, 5);  // 只取 HH:mm，丟掉秒
+  return out;
+}
+
+// datetime-local 拆 / 組（後端 start_date 是 date、start_time 是 time，分兩欄存）
+// '2026-03-14T12:30' → {date:'2026-03-14', time:'12:30'}
+// 純日期 '2026-03-14' → {date:'2026-03-14', time:null}
+// 空字串 → {date:null, time:null}
+function _splitDateTimeLocal(val) {
+  if (!val) return { date: null, time: null };
+  var s = String(val);
+  if (s.indexOf('T') < 0) return { date: s, time: null };
+  var p = s.split('T');
+  var t = (p[1] || '').slice(0, 5);  // HH:mm（丟掉秒）
+  return { date: p[0] || null, time: t || null };
+}
+
+// 後端回傳 (start_date='2026-03-14', start_time='12:30') → datetime-local 'YYYY-MM-DDTHH:mm'
+function _combineDateTimeLocal(d, t) {
+  if (!d) return '';
+  if (!t) return d;
+  return d + 'T' + String(t).slice(0, 5);
 }
 
 // 需要顯示民國年小標的 input id（行照欄位 + 保單期間 + 編輯保單期間）
@@ -2885,13 +2913,18 @@ async function createPolicy() {
   const insurer = getInsurerValue('p-insurer', 'p-insurer-other');
   const number = document.getElementById('p-number').value.trim();
   if (!insurer || !number) { showMsg('p-msg','err', LANG==='en' ? 'Insurer and policy number are required' : '請填寫保險公司和保單號碼'); return; }
+  // 拆 datetime-local 為 date + time（後端兩欄分開存）
+  var sParts = _splitDateTimeLocal(document.getElementById('p-start').value);
+  var eParts = _splitDateTimeLocal(document.getElementById('p-end').value);
   const body = {
     insurer_name: insurer,
     policy_number: number,
     vehicle_id: document.getElementById('p-vehicle').value || null,
     status: document.getElementById('p-status').value,
-    start_date: document.getElementById('p-start').value,
-    end_date: document.getElementById('p-end').value,
+    start_date: sParts.date,
+    end_date: eParts.date,
+    start_time: sParts.time,
+    end_time: eParts.time,
     total_premium: parseFloat(document.getElementById('p-premium').value) || null,
     items: []
   };
@@ -2934,22 +2967,29 @@ function _resetPolicyFormFields() {
   refreshRocLabels();
 }
 
-// 起保日變動 → 到期日 = 起保日 + 1 年（同月日；除非使用者手動編輯過到期日）
+// 起保日變動 → 到期日 = 起保日 + 1 年（含時:分；除非使用者手動編輯過到期日）
 function autoComputePolicyEnd() {
   var startEl = document.getElementById('p-start');
   var endEl = document.getElementById('p-end');
   if (!startEl || !endEl) return;
   var s = startEl.value;
   if (!s) return;
-  // 已被使用者手動改過 → 不覆蓋（尊重 2 年保單等特殊情境）
   if (endEl.dataset.manualEdit === '1') return;
-  var d = new Date(s + 'T00:00:00');
+  // value 可能是 datetime-local (2026-03-14T12:00) 或 date (2026-03-14)
+  var hasT = s.indexOf('T') >= 0;
+  var d = new Date(hasT ? s : (s + 'T00:00:00'));
   if (isNaN(d.getTime())) return;
   d.setFullYear(d.getFullYear() + 1);
   var y = d.getFullYear();
   var m = String(d.getMonth() + 1).padStart(2, '0');
   var dd = String(d.getDate()).padStart(2, '0');
-  endEl.value = y + '-' + m + '-' + dd;
+  if (hasT) {
+    var hh = String(d.getHours()).padStart(2, '0');
+    var mi = String(d.getMinutes()).padStart(2, '0');
+    endEl.value = y + '-' + m + '-' + dd + 'T' + hh + ':' + mi;
+  } else {
+    endEl.value = y + '-' + m + '-' + dd;
+  }
   refreshRocLabels();
 }
 
@@ -2992,7 +3032,7 @@ async function loadPolicies() {
     html += '<td style="font-family:monospace;font-size:11px">'+p.policy_number+'</td>';
     html += '<td>'+p.insurer_name+'</td>';
     html += '<td><span class="badge '+cls+'">'+label+'</span></td>';
-    html += '<td>'+(p.start_date||'-')+'</td><td>'+(p.end_date||'-')+'</td>';
+    html += '<td>'+(p.start_date||'-')+(p.start_time?' '+p.start_time:'')+'</td><td>'+(p.end_date||'-')+(p.end_time?' '+p.end_time:'')+'</td>';
     html += '<td>'+(p.total_premium?'$'+Number(p.total_premium).toLocaleString():'-')+'</td>';
     html += '<td>'+(p.items?p.items.length:0)+'項</td>';
     html += '<td style="white-space:nowrap" onclick="event.stopPropagation()">';
@@ -3138,8 +3178,8 @@ function editPolicyFromList(pid) {
   document.getElementById('pe-customer-email').value = p.customer_email || '';
   document.getElementById('pe-number').value = p.policy_number || '';
   fillInsurerSelect('pe-insurer', 'pe-insurer-other', p.insurer_name || '');
-  document.getElementById('pe-start').value = p.start_date || '';
-  document.getElementById('pe-end').value = p.end_date || '';
+  document.getElementById('pe-start').value = _combineDateTimeLocal(p.start_date, p.start_time);
+  document.getElementById('pe-end').value = _combineDateTimeLocal(p.end_date, p.end_time);
   document.getElementById('pe-premium').value = p.total_premium || '';
   document.getElementById('pe-status').value = p.status || 'active';
   document.getElementById('p-edit-modal').style.display = 'flex';
@@ -3153,11 +3193,15 @@ function closePolicyEdit() {
 async function savePolicyEdit() {
   var pid = window._editPolicyId;
   if (!pid) return;
+  var pesParts = _splitDateTimeLocal(document.getElementById('pe-start').value);
+  var peeParts = _splitDateTimeLocal(document.getElementById('pe-end').value);
   var body = {
     policy_number: document.getElementById('pe-number').value.trim(),
     insurer_name: getInsurerValue('pe-insurer', 'pe-insurer-other'),
-    start_date: document.getElementById('pe-start').value,
-    end_date: document.getElementById('pe-end').value,
+    start_date: pesParts.date,
+    end_date: peeParts.date,
+    start_time: pesParts.time,
+    end_time: peeParts.time,
     status: document.getElementById('pe-status').value,
   };
   var prem = document.getElementById('pe-premium').value;

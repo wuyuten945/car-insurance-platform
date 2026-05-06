@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
 
@@ -23,6 +23,8 @@ class PolicyOut(BaseModel):
     status: str
     start_date: date
     end_date: date
+    start_time: time | None = None
+    end_time: time | None = None
     total_premium: Decimal | None = None
     vehicle_plate: str | None = None
     vehicle_brand: str | None = None
@@ -114,6 +116,8 @@ class PolicyCreate(BaseModel):
     status: str = "active"
     start_date: date
     end_date: date
+    start_time: time | None = None
+    end_time: time | None = None
     total_premium: Decimal | None = None
     document_url: str | None = None
     items: list[PolicyItemCreate] = []
@@ -126,5 +130,7 @@ class PolicyUpdate(BaseModel):
     status: str | None = None
     start_date: date | None = None
     end_date: date | None = None
+    start_time: time | None = None
+    end_time: time | None = None
     total_premium: Decimal | None = None
     document_url: str | None = None

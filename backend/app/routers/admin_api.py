@@ -580,6 +580,8 @@ async def get_all_policies(
             "status": p.status,
             "start_date": str(p.start_date),
             "end_date": str(p.end_date),
+            "start_time": p.start_time.strftime("%H:%M") if p.start_time else None,
+            "end_time": p.end_time.strftime("%H:%M") if p.end_time else None,
             "total_premium": float(p.total_premium) if p.total_premium else 0,
             "items": items,
         })
