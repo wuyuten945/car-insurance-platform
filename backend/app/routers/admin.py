@@ -696,6 +696,10 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           <tr><td style="width:90px;padding:6px;color:#666" data-i18n="lbl_policyholder">要保人姓名</td><td><input type="text" id="pe-customer-name" placeholder="此保單所屬客戶（修改會轉移保單）" data-i18n-placeholder="ph_policyholder" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#fffbea"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_customer_email">客戶 Email</td><td><input type="email" id="pe-customer-email" placeholder="設定後客戶可用此 Email 登入並看到此保單" data-i18n-placeholder="ph_customer_email_short" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#e8f5e9"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_policy_number">保單號碼</td><td><input type="text" id="pe-number" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_covered_vehicle">承保車牌</td><td>
+            <div id="pe-vehicle-info" style="padding:6px 10px;background:#F5F5F5;border:1px solid #ddd;border-radius:4px;font-family:monospace;color:#333;font-weight:600">—</div>
+            <small style="color:#999;font-size:10px" data-i18n="hint_plate_readonly">車牌與車輛主檔同步，請至「車輛 / 行照」分頁修改</small>
+          </td></tr>
 
           <!-- 要保人 -->
           <tr><td colspan="2" style="padding:8px 6px 4px;color:#1565C0;font-weight:bold;font-size:13px;border-top:1px solid #eee" data-i18n="sec_policyholder">要保人（可與客戶為不同人）</td></tr>
@@ -1591,6 +1595,7 @@ var I18N = {
     lbl_status: '狀態',
     opt_active: '有效', opt_expiring: '即將到期', opt_expired: '已到期',
     lbl_start_date: '起保日', lbl_end_date: '到期日', lbl_premium: '總保費',
+    hint_plate_readonly: '車牌與車輛主檔同步，請至「車輛 / 行照」分頁修改',
     sec_policyholder: '要保人（可與客戶為不同人）',
     sec_insured: '被保人（受益對象，可與要保人不同）',
     lbl_ph_name: '要保人姓名', lbl_ph_id: '要保人身分證字號', lbl_ph_birth: '要保人生日', lbl_ph_gender: '要保人性別', lbl_ph_phone: '要保人電話',
@@ -1803,6 +1808,7 @@ var I18N = {
     lbl_status: 'Status',
     opt_active: 'Active', opt_expiring: 'Expiring', opt_expired: 'Expired',
     lbl_start_date: 'Start', lbl_end_date: 'End', lbl_premium: 'Premium',
+    hint_plate_readonly: 'Plate is synced with vehicle master record — edit it in the Vehicles tab',
     sec_policyholder: 'Policyholder (may differ from customer)',
     sec_insured: 'Insured Person (beneficiary, may differ from policyholder)',
     lbl_ph_name: 'Policyholder Name', lbl_ph_id: 'Policyholder ID', lbl_ph_birth: 'Policyholder Birth', lbl_ph_gender: 'Policyholder Gender', lbl_ph_phone: 'Policyholder Phone',
@@ -4063,6 +4069,18 @@ function editPolicyFromList(pid) {
   document.getElementById('pe-customer-name').value = p.customer_name || '';
   document.getElementById('pe-customer-email').value = p.customer_email || '';
   document.getElementById('pe-number').value = p.policy_number || '';
+  // 承保車牌（唯讀，僅顯示）— 跟車輛主檔連結
+  var plateInfo = document.getElementById('pe-vehicle-info');
+  if (plateInfo) {
+    if (p.vehicle_plate) {
+      plateInfo.textContent = p.vehicle_plate
+        + (p.vehicle_brand || p.vehicle_model ? '  （' + (p.vehicle_brand||'') + ' ' + (p.vehicle_model||'') + '）' : '');
+      plateInfo.style.color = '#333';
+    } else {
+      plateInfo.textContent = LANG === 'en' ? '— (not linked to a vehicle)' : '— （此保單未關聯車輛）';
+      plateInfo.style.color = '#999';
+    }
+  }
   fillInsurerSelect('pe-insurer', 'pe-insurer-other', p.insurer_name || '');
   _writeDatePair('pe-start', p.start_date, p.start_time);
   _writeDatePair('pe-end', p.end_date, p.end_time);
