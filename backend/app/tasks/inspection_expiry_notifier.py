@@ -27,7 +27,19 @@ from app.core.line_messaging import push_to_user
 
 PLATFORM_BASE = "https://bopinan.ego-intl.com"
 
+DEFAULT_INSPECTION_NOTIFY_DAYS = [60, 30, 14, 7, 1]
+
 logger = logging.getLogger(__name__)
+
+
+def _parse_notify_days(raw: str | None, default: list[int]) -> list[int]:
+    if not raw:
+        return default
+    try:
+        nums = sorted({int(d.strip()) for d in raw.split(',') if d.strip().isdigit()}, reverse=True)
+        return nums or default
+    except Exception:
+        return default
 
 
 async def check_inspection_expiry():
@@ -70,18 +82,21 @@ async def check_inspection_expiry():
 
                 if days_left < -30:
                     continue  # 逾期超過 30 天不再通知
-                elif days_left < 0:
+
+                # 已逾期區間（-30..-1）一律通知；尚未到期則依使用者偏好
+                if days_left < 0:
                     level = "overdue"
-                elif days_left <= 30:
-                    level = "urgent"
-                elif days_left <= 60:
-                    level = "early"
                 else:
-                    continue
+                    user_days = _parse_notify_days(
+                        getattr(user, 'inspection_notify_days', None), DEFAULT_INSPECTION_NOTIFY_DAYS
+                    )
+                    if days_left not in user_days:
+                        continue
+                    level = "urgent" if days_left <= 30 else "early"
 
                 await _send_inspection_notification(
                     db, user, vehicle, days_left, level, compulsory_info,
-                    notification_key=f"inspection_{level}_{vehicle.id}_{vehicle.registration_expiry}",
+                    notification_key=f"inspection_{days_left}d_{vehicle.id}_{vehicle.registration_expiry}",
                 )
 
             await db.commit()
@@ -244,7 +259,8 @@ async def _send_inspection_notification(
     ))
     if user.phone:
         await sms_gateway.send(user.phone, sms_msg)
-    if user.email:
+    # Email — 只有使用者開啟 email 通知偏好才寄
+    if user.email and getattr(user, 'notify_email_enabled', False):
         await email_service.send(user.email, email_subject, email_body)
     pushed = await push_to_user(user, f"🛡 BOPINAN {title}\n\n{body}")
     if not pushed:

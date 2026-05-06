@@ -786,6 +786,73 @@ function setNumberWithComma(id, val) {
   el.value = Number(val).toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
+// === 加入行事曆按鈕（業務員 / 自己的行事曆）===
+// 給業務員快速把客戶的保單到期、驗車到期同步到自己 Google / Apple / Outlook 行事曆
+function _icalBlobUrl(title, dateStr, desc, days) {
+  if (!dateStr) return '';
+  var dt = String(dateStr).replace(/-/g, '');
+  var n = new Date(dateStr + 'T00:00:00');
+  n.setDate(n.getDate() + 1);
+  var end = n.getFullYear() + String(n.getMonth() + 1).padStart(2,'0') + String(n.getDate()).padStart(2,'0');
+  var stamp = new Date().toISOString().replace(/[-:]/g,'').replace(/\\.\\d{3}/,'');
+  var alarms = (days || [30,14,7,1]).map(function(d){
+    return ['BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+title+' 倒數 '+d+' 天','TRIGGER:-PT'+(d*1440)+'M','END:VALARM'].join('\\r\\n');
+  }).join('\\r\\n');
+  var ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BOPINAN//Admin//ZH','CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT','UID:bopinan-admin-'+Date.now()+'@bopinan',
+    'DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+dt,'DTEND;VALUE=DATE:'+end,
+    'SUMMARY:'+title,'DESCRIPTION:'+(desc||'').replace(/\\n/g,'\\\\n'),
+    alarms,'END:VEVENT','END:VCALENDAR'].join('\\r\\n');
+  return URL.createObjectURL(new Blob([ics], {type:'text/calendar;charset=utf-8'}));
+}
+function _googleCalUrl(title, dateStr, desc) {
+  if (!dateStr) return '#';
+  var dt = String(dateStr).replace(/-/g, '');
+  var n = new Date(dateStr + 'T00:00:00');
+  n.setDate(n.getDate() + 1);
+  var end = n.getFullYear() + String(n.getMonth() + 1).padStart(2,'0') + String(n.getDate()).padStart(2,'0');
+  var p = new URLSearchParams({action:'TEMPLATE', text:title, dates:dt+'/'+end, details:desc||''});
+  return 'https://calendar.google.com/calendar/render?' + p.toString();
+}
+window._calOpen = function(btn, title, dateStr, desc){
+  // 移除既有 popover
+  var old = document.getElementById('_cal_pop'); if (old) old.remove();
+  var pop = document.createElement('div');
+  pop.id = '_cal_pop';
+  pop.style.cssText = 'position:absolute;z-index:10001;background:#fff;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);overflow:hidden;font-size:12px;min-width:160px';
+  pop.innerHTML = '<a href="'+_googleCalUrl(title,dateStr,desc)+'" target="_blank" rel="noopener" style="display:block;padding:6px 10px;text-decoration:none;color:#333;border-bottom:1px solid #eee">📅 Google 日曆</a>'
+                + '<a href="#" id="_cal_ics" style="display:block;padding:6px 10px;text-decoration:none;color:#333">🍎 Apple/Outlook (.ics)</a>';
+  document.body.appendChild(pop);
+  var r = btn.getBoundingClientRect();
+  pop.style.left = (r.right - pop.offsetWidth) + 'px';
+  pop.style.top = (r.bottom + window.scrollY + 4) + 'px';
+  // 修正：popover 寬度需先測量，重設 left
+  setTimeout(function(){ pop.style.left = (r.right + window.scrollX - pop.offsetWidth) + 'px'; }, 0);
+  document.getElementById('_cal_ics').onclick = function(e){
+    e.preventDefault();
+    var u = _icalBlobUrl(title,dateStr,desc);
+    var a = document.createElement('a'); a.href = u; a.download = title + '.ics';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
+    pop.remove();
+  };
+  // 點外面關閉
+  setTimeout(function(){
+    document.addEventListener('click', function _close(ev){
+      if (!pop.contains(ev.target) && ev.target !== btn) {
+        pop.remove(); document.removeEventListener('click', _close);
+      }
+    });
+  }, 0);
+};
+function _calBtnHtml(title, dateStr, desc) {
+  if (!dateStr) return '';
+  var titleEsc = String(title).replace(/'/g, "\\'");
+  var descEsc = String(desc||'').replace(/'/g, "\\'");
+  return '<button onclick="event.stopPropagation();_calOpen(this,\\'' + titleEsc + '\\',\\'' + dateStr + '\\',\\'' + descEsc + '\\')" '
+       + 'style="margin-left:4px;padding:2px 6px;font-size:10px;background:#E3F2FD;color:#1565C0;border:1px solid #BBDEFB;border-radius:4px;cursor:pointer;white-space:nowrap" title="加入行事曆">📅</button>';
+}
+
 // === 客戶 cell hover popover：滑到客戶欄就浮現該客戶所有保單 / 車輛 ===
 // 共用 tooltip 容器（僅一個，重複利用）
 function _ensureCustHoverTip() {
@@ -2199,7 +2266,9 @@ async function loadVehicles() {
         + '<td>' + (v.year||'-') + '</td>'
         + '<td>' + (v.color||'-') + '</td>'
         + '<td>' + (v.engine_cc ? v.engine_cc+'cc' : '-') + '</td>'
-        + '<td>' + (v.registration_expiry || '<span style="color:#999">-</span>') + '</td>'
+        + '<td>' + (v.registration_expiry || '<span style="color:#999">-</span>')
+        + (v.registration_expiry ? _calBtnHtml('驗車到期 — ' + (v.plate_number||''), v.registration_expiry, '車主：' + (v.customer_name||'') + '\\n品牌車型：' + (v.brand||'') + ' ' + (v.model||'') + '\\n車牌：' + (v.plate_number||'')) : '')
+        + '</td>'
         + '<td>' + windowCell + '</td>'
         + '<td>' + imgCell + '</td>'
         + '<td style="white-space:nowrap">'
@@ -3401,7 +3470,13 @@ async function loadPolicies() {
     html += '<td style="font-family:monospace;font-size:11px">'+p.policy_number+'</td>';
     html += '<td>'+p.insurer_name+'</td>';
     html += '<td><span class="badge '+cls+'">'+label+'</span></td>';
-    html += '<td>'+(p.start_date||'-')+(p.start_time?' '+p.start_time:'')+'</td><td>'+(p.end_date||'-')+(p.end_time?' '+p.end_time:'')+'</td>';
+    html += '<td>'+(p.start_date||'-')+(p.start_time?' '+p.start_time:'')+'</td>';
+    var endCell = (p.end_date||'-')+(p.end_time?' '+p.end_time:'');
+    if (p.end_date) {
+      endCell += _calBtnHtml('保單到期 — ' + (p.insurer_name||'') + ' ' + (p.policy_number||''), p.end_date,
+        '客戶：' + (p.customer_name||'') + '\\n保單號：' + (p.policy_number||'') + '\\n保險公司：' + (p.insurer_name||'') + '\\n承保車輛：' + (p.vehicle_plate||'-'));
+    }
+    html += '<td>'+endCell+'</td>';
     html += '<td>'+(p.total_premium?'$'+Number(p.total_premium).toLocaleString():'-')+'</td>';
     html += '<td>'+(p.items?p.items.length:0)+'項</td>';
     html += '<td style="white-space:nowrap" onclick="event.stopPropagation()">';

@@ -21,6 +21,12 @@ class UserOut(BaseModel):
     has_id_number: bool = False
     is_profile_complete: bool = False
 
+    # 通知偏好
+    policy_notify_days: str | None = None       # CSV，例 "60,30,14,7,1"
+    inspection_notify_days: str | None = None
+    line_notify_enabled: bool = True
+    notify_email_enabled: bool = False
+
     model_config = {"from_attributes": True}
 
     @classmethod
@@ -47,6 +53,12 @@ class UserProfileUpdate(BaseModel):
     emergency_contact_relation: str | None = None
     license_number: str | None = None
     license_expiry: datetime | None = None
+
+    # 通知偏好設定
+    policy_notify_days: str | None = None
+    inspection_notify_days: str | None = None
+    line_notify_enabled: bool | None = None
+    notify_email_enabled: bool | None = None
 
     @field_validator("id_number")
     @classmethod

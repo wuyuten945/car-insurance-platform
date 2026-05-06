@@ -163,6 +163,9 @@ export default function ProfilePage() {
         })}
       </div>
 
+      {/* 通知偏好 */}
+      <NotifyPreferenceSection />
+
       {/* LINE binding section */}
       <LineBindingSection />
 
@@ -491,6 +494,120 @@ function AdvancedPasswordSection() {
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+// === 通知偏好（保單到期 / 驗車到期）===
+const NOTIFY_PRESETS = [60, 30, 14, 7, 3, 1];
+
+function NotifyPreferenceSection() {
+  const [policy, setPolicy] = useState<number[]>([60, 30]);
+  const [inspection, setInspection] = useState<number[]>([60, 30, 14, 7, 1]);
+  const [emailEnabled, setEmailEnabled] = useState(false);
+  const [lineEnabled, setLineEnabled] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get('/api/v1/customers/profile');
+        const d = res.data?.data;
+        if (d) {
+          if (d.policy_notify_days) setPolicy(d.policy_notify_days.split(',').map((x: string) => parseInt(x, 10)).filter((n: number) => !isNaN(n)));
+          if (d.inspection_notify_days) setInspection(d.inspection_notify_days.split(',').map((x: string) => parseInt(x, 10)).filter((n: number) => !isNaN(n)));
+          setEmailEnabled(!!d.notify_email_enabled);
+          setLineEnabled(d.line_notify_enabled !== false);
+        }
+      } finally { setLoaded(true); }
+    })();
+  }, []);
+
+  const toggleDay = (list: number[], setList: (v: number[]) => void, day: number) => {
+    setList(list.includes(day) ? list.filter((d) => d !== day) : [...list, day].sort((a, b) => b - a));
+  };
+  const allOn = (list: number[]) => NOTIFY_PRESETS.every((d) => list.includes(d));
+  const toggleAll = (setList: (v: number[]) => void, currentAll: boolean) => {
+    setList(currentAll ? [] : [...NOTIFY_PRESETS]);
+  };
+
+  const save = async () => {
+    setBusy(true); setMsg('');
+    try {
+      await api.patch('/api/v1/customers/profile', {
+        policy_notify_days: policy.join(','),
+        inspection_notify_days: inspection.join(','),
+        notify_email_enabled: emailEnabled,
+        line_notify_enabled: lineEnabled,
+      });
+      setMsg('已儲存');
+      setTimeout(() => setMsg(''), 2500);
+    } catch (e: unknown) {
+      const errObj = e as { response?: { data?: { message?: string } } };
+      setMsg(errObj?.response?.data?.message || '儲存失敗');
+    } finally { setBusy(false); }
+  };
+
+  if (!loaded) return null;
+
+  const dayChip = (day: number, list: number[], setList: (v: number[]) => void) => {
+    const on = list.includes(day);
+    return (
+      <button key={day} type="button" onClick={() => toggleDay(list, setList, day)}
+        className={`rounded-full px-3 py-1 text-xs font-semibold border transition ${on ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-gray-600 border-gray-300 hover:border-primary-400'}`}>
+        {day} 天前
+      </button>
+    );
+  };
+
+  return (
+    <section className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
+      <h2 className="text-base font-bold text-gray-900 mb-1">🔔 通知偏好</h2>
+      <p className="text-xs text-gray-500 mb-4">保單到期 / 驗車到期會在指定天數前透過 LINE 或 Email 通知您。</p>
+
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold text-gray-700">📋 保單到期提醒</span>
+          <button type="button" onClick={() => toggleAll(setPolicy, allOn(policy))} className="text-xs text-primary-600 hover:underline">
+            {allOn(policy) ? '取消全選' : '全部都選'}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {NOTIFY_PRESETS.map((d) => dayChip(d, policy, setPolicy))}
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold text-gray-700">🚗 驗車到期提醒</span>
+          <button type="button" onClick={() => toggleAll(setInspection, allOn(inspection))} className="text-xs text-primary-600 hover:underline">
+            {allOn(inspection) ? '取消全選' : '全部都選'}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {NOTIFY_PRESETS.map((d) => dayChip(d, inspection, setInspection))}
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 pt-3 space-y-2">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input type="checkbox" checked={lineEnabled} onChange={(e) => setLineEnabled(e.target.checked)} className="h-4 w-4" />
+          <span className="text-sm text-gray-700">透過 LINE 通知（須先綁定 LINE 並加入官方帳號）</span>
+        </label>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input type="checkbox" checked={emailEnabled} onChange={(e) => setEmailEnabled(e.target.checked)} className="h-4 w-4" />
+          <span className="text-sm text-gray-700">透過 Email 通知</span>
+        </label>
+      </div>
+
+      <div className="mt-4 flex items-center gap-3">
+        <button type="button" onClick={save} disabled={busy} className="rounded-lg bg-primary-500 px-5 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50">
+          {busy ? '儲存中⋯' : '儲存通知偏好'}
+        </button>
+        {msg && <span className="text-xs text-green-600">{msg}</span>}
+      </div>
     </section>
   );
 }

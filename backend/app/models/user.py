@@ -35,6 +35,12 @@ class User(TimestampMixin, Base):
     # null 表示未啟用，登入維持單因子 OTP；有值（hashed）→ OTP + password 雙因子
     password_hash = Column(String(255), nullable=True)
 
+    # 通知偏好設定 ─ 提醒天數（CSV，例 "60,30,14,7,1"），空 = 用預設 [30,14,7,1]
+    policy_notify_days = Column(String(64), nullable=True)
+    inspection_notify_days = Column(String(64), nullable=True)
+    # Email 通知開關（LINE 開關沿用 line_notify_enabled）
+    notify_email_enabled = Column(Boolean, nullable=False, default=False)
+
     # Relationships
     consents = relationship("UserConsent", back_populates="user", lazy="selectin")
     vehicles = relationship("UserVehicle", back_populates="user", lazy="selectin")

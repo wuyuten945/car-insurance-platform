@@ -56,6 +56,10 @@ async def _ensure_columns():
         # 資料來源（business/self），舊資料一律視為 agent
         ("user_vehicles", "data_source", "VARCHAR(20) NOT NULL DEFAULT 'agent'"),
         ("policies",      "data_source", "VARCHAR(20) NOT NULL DEFAULT 'agent'"),
+        # 通知偏好（提醒天數 CSV + email 開關）
+        ("users",         "policy_notify_days",    "VARCHAR(64)"),
+        ("users",         "inspection_notify_days","VARCHAR(64)"),
+        ("users",         "notify_email_enabled",  "BOOLEAN NOT NULL DEFAULT FALSE"),
     ]
     is_sqlite = "sqlite" in str(engine.url)
     try:

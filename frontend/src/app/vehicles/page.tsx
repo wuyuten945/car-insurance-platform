@@ -13,6 +13,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import VehicleFormModal, { type VehiclePayload } from '@/components/VehicleFormModal';
+import AddToCalendar from '@/components/AddToCalendar';
 
 interface Vehicle {
   id: string;
@@ -259,7 +260,16 @@ function VehicleCard({ vehicle, onEdit }: { vehicle: Vehicle; onEdit: () => void
         {/* Registration info */}
         <div className="grid grid-cols-2 gap-2 text-xs mb-3">
           <div className="rounded-lg bg-gray-50 p-2.5">
-            <p className="text-gray-400 mb-0.5">{t('vehicles.regExpiry')}</p>
+            <div className="flex items-center justify-between mb-0.5 gap-1">
+              <p className="text-gray-400">{t('vehicles.regExpiry')}</p>
+              {vehicle.registration_expiry && (
+                <AddToCalendar
+                  title={`驗車到期 — ${vehicle.plate_number}`}
+                  date={vehicle.registration_expiry}
+                  description={`車牌：${vehicle.plate_number}\n品牌車型：${vehicle.brand || ''} ${vehicle.model || ''}\n（提醒：到期前 30 天 ~ 後 30 天可驗車）`}
+                />
+              )}
+            </div>
             <p className="font-semibold text-gray-700">
               {vehicle.registration_expiry || t('vehicles.notSet')}
             </p>

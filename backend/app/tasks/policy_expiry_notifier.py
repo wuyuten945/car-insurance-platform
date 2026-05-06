@@ -24,7 +24,21 @@ from app.core.line_messaging import push_to_user
 
 PLATFORM_BASE = "https://bopinan.ego-intl.com"
 
+# 預設提醒天數（保單）— 使用者沒設定 policy_notify_days 就用這個
+DEFAULT_POLICY_NOTIFY_DAYS = [60, 30]
+
 logger = logging.getLogger(__name__)
+
+
+def _parse_notify_days(raw: str | None, default: list[int]) -> list[int]:
+    """把 CSV 格式（例 '60,30,14,7,1'）轉成排序好的天數列表；失敗 → fallback 預設"""
+    if not raw:
+        return default
+    try:
+        nums = sorted({int(d.strip()) for d in raw.split(',') if d.strip().isdigit()}, reverse=True)
+        return nums or default
+    except Exception:
+        return default
 
 
 async def check_policy_expiry():
@@ -63,21 +77,20 @@ async def check_policy_expiry():
                 if not user:
                     continue
 
-                # 判斷通知類型
-                if 28 <= days_left <= 32:
-                    # 到期前 1 個月
-                    await _send_expiry_notification(
-                        db, user, policy, days_left,
-                        level="urgent",
-                        notification_key=f"expiry_1m_{policy.id}_{policy.end_date}",
-                    )
-                elif 58 <= days_left <= 62:
-                    # 到期前 2 個月
-                    await _send_expiry_notification(
-                        db, user, policy, days_left,
-                        level="early",
-                        notification_key=f"expiry_2m_{policy.id}_{policy.end_date}",
-                    )
+                # 依使用者偏好判斷今天該不該通知此保單
+                user_days = _parse_notify_days(
+                    getattr(user, 'policy_notify_days', None), DEFAULT_POLICY_NOTIFY_DAYS
+                )
+                if days_left not in user_days:
+                    continue
+
+                # 30 天內視為「緊急」，更早的視為「提早提醒」
+                level = "urgent" if days_left <= 30 else "early"
+                await _send_expiry_notification(
+                    db, user, policy, days_left,
+                    level=level,
+                    notification_key=f"expiry_{days_left}d_{policy.id}_{policy.end_date}",
+                )
 
             await db.commit()
             logger.info(f"[排程] 保單到期通知檢查完成")
@@ -175,8 +188,8 @@ async def _send_expiry_notification(
         await sms_gateway.send(user.phone, sms_msg)
         logger.info(f"[排程] SMS 已發送: {user.phone} - {policy.policy_number}")
 
-    # 3. Email 通知
-    if user.email:
+    # 3. Email 通知 — 只在使用者開啟 email 通知偏好才寄
+    if user.email and getattr(user, 'notify_email_enabled', False):
         await email_service.send(user.email, email_subject, email_body)
         logger.info(f"[排程] Email 已發送: {user.email} - {policy.policy_number}")
 

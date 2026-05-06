@@ -8,6 +8,7 @@ import api from '@/lib/api-client';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import PolicyFormModal, { type PolicyPayload } from '@/components/PolicyFormModal';
+import AddToCalendar from '@/components/AddToCalendar';
 
 interface PolicyItem {
   item_name: string;
@@ -218,8 +219,29 @@ export default function PoliciesPage() {
                     <p className="text-xs text-gray-400 mt-1">{policy.policy_number}</p>
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <span className="text-xs text-gray-500">
-                        {policy.start_date} ~ {policy.end_date}
+                        任意險：{policy.start_date} ~ {policy.end_date}
                       </span>
+                      {policy.end_date && (
+                        <AddToCalendar
+                          title={`保單到期 — ${policy.insurer_name} ${policy.policy_number}`}
+                          date={policy.end_date}
+                          description={`保單號：${policy.policy_number}\n保險公司：${policy.insurer_name}\n承保車輛：${policy.vehicle_plate || '-'}\n本次提醒由 BOPINAN 平台建立`}
+                        />
+                      )}
+                    </div>
+                    {policy.compulsory_end_date && (
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        <span className="text-xs text-amber-700">
+                          強制險：{policy.compulsory_start_date} ~ {policy.compulsory_end_date}
+                        </span>
+                        <AddToCalendar
+                          title={`強制險到期 — ${policy.compulsory_insurer_name || policy.insurer_name}`}
+                          date={policy.compulsory_end_date}
+                          description={`強制險保單號：${policy.compulsory_policy_number || ''}\n保險公司：${policy.compulsory_insurer_name || ''}\n承保車輛：${policy.vehicle_plate || '-'}`}
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                       {hasTowInsurance(policy.items || []) ? (
                         <span className="inline-flex items-center gap-0.5 rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-600">
                           <Truck className="h-3 w-3" /> {t('policies.hasTowing')}
