@@ -181,15 +181,24 @@ async def list_policies(
     result = []
     for p in policies:
         days_remaining = (p.end_date - today).days if p.end_date >= today else 0
-        result.append(PolicyOut(
-            id=p.id, insurer_name=p.insurer_name, policy_number=p.policy_number,
-            status=p.status, start_date=p.start_date, end_date=p.end_date,
-            total_premium=p.total_premium, days_remaining=days_remaining,
-            vehicle_plate=p.vehicle.plate_number if p.vehicle else None,
-            vehicle_brand=p.vehicle.brand if p.vehicle else None,
-            vehicle_model=p.vehicle.model if p.vehicle else None,
-            items=[PolicyItemOut.model_validate(i) for i in p.items],
-        ))
+        result.append(PolicyOut.model_validate({
+            "id": p.id, "insurer_name": p.insurer_name, "policy_number": p.policy_number,
+            "status": p.status, "start_date": p.start_date, "end_date": p.end_date,
+            "start_time": p.start_time, "end_time": p.end_time,
+            "compulsory_insurer_name": p.compulsory_insurer_name,
+            "compulsory_policy_number": p.compulsory_policy_number,
+            "compulsory_premium": p.compulsory_premium,
+            "compulsory_start_date": p.compulsory_start_date,
+            "compulsory_end_date": p.compulsory_end_date,
+            "compulsory_start_time": p.compulsory_start_time,
+            "compulsory_end_time": p.compulsory_end_time,
+            "total_premium": p.total_premium, "days_remaining": days_remaining,
+            "vehicle_plate": p.vehicle.plate_number if p.vehicle else None,
+            "vehicle_brand": p.vehicle.brand if p.vehicle else None,
+            "vehicle_model": p.vehicle.model if p.vehicle else None,
+            "data_source": p.data_source or "agent",
+            "items": [PolicyItemOut.model_validate(i) for i in p.items],
+        }))
     return APIResponse(data=result)
 
 

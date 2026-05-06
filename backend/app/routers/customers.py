@@ -331,7 +331,22 @@ async def upload_registration(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """上傳行照（JPG/PNG/PDF，立即回應，不等 OCR）"""
+    """上傳行照（JPG/PNG/PDF）— 前台只能改自填紀錄"""
+    # 防呆：先檢查此車輛是否屬於此用戶且為自填
+    veh_q = await db.execute(
+        select(UserVehicle).where(
+            UserVehicle.id == vehicle_id,
+            UserVehicle.user_id == current_user.id,
+        )
+    )
+    veh = veh_q.scalar_one_or_none()
+    if not veh:
+        raise NotFoundError("車輛不存在")
+    if (veh.data_source or "agent") != "self":
+        raise BadRequestError(
+            "此車輛由業務員 / 平台建檔，不能直接上傳行照。如需更新請聯繫您的業務員。"
+        )
+
     svc = UserService(db)
     vehicle = await svc.upload_registration(current_user.id, vehicle_id, file)
 
