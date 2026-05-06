@@ -96,11 +96,11 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 
   /* Modal 外層 padding 縮小、內層 card 改全寬 */
   #v-upload-modal, #v-edit-form, #create-customer-modal, #change-pw-modal,
-  #p-upload-modal, #p-form-modal, #p-edit-modal {
+  #p-upload-modal, #p-form-modal, #p-edit-modal, #csv-import-modal {
     padding: 10px !important;
   }
   #v-upload-modal > div, #v-edit-form > div, #create-customer-modal > div, #change-pw-modal > div,
-  #p-upload-modal > div, #p-form-modal > div, #p-edit-modal > div {
+  #p-upload-modal > div, #p-form-modal > div, #p-edit-modal > div, #csv-import-modal > div {
     padding: 16px 14px !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -272,12 +272,47 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <input type="file" id="csv-import-file" accept=".csv,text/csv" style="display:none" onchange="onCsvFileChosen(this)">
       <button onclick="onCsvImportClick()" style="background:#E65100;color:#fff;border:0;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer" data-i18n="btn_csv_import">⬆ 上傳大量匯入</button>
     </div>
-    <div style="margin-top:6px;padding:8px 10px;background:#FFF8E1;border-left:3px solid #FF9800;border-radius:4px;font-size:11px;line-height:1.7;color:#5D4037" data-i18n="csv_hint">
-      ⚠️ 上傳前請先點「📥 下載空白範本」取得本平台格式（中文表頭 + 第 2 列範例）。<br>
-      表頭欄位請保持不動；第 2 列示範資料填新資料時刪掉即可。匹配規則：先以「客戶ID / 客戶電話 / 客戶Email」找客戶，找不到才新建；車輛以「車牌號碼」配對；保單以「任意險保單號碼」配對 — Idempotent，可重複上傳同檔案不會建出重複資料。建議先勾「試跑」確認再正式匯入。
-    </div>
     <div id="csv-msg" class="msg" style="margin-top:8px"></div>
     <div id="csv-result" style="margin-top:8px;font-size:12px"></div>
+  </div>
+
+  <!-- 上傳大量匯入 — 說明 modal -->
+  <div id="csv-import-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
+    <div style="background:#fff;padding:22px 26px;border-radius:14px;max-width:600px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+      <button type="button" onclick="closeCsvImportModal()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888;line-height:1">×</button>
+      <h3 style="margin-top:0;margin-bottom:8px;color:#E65100" data-i18n="csv_import_title">⚠️ 上傳 CSV 大量匯入 — 上傳前必讀</h3>
+      <ol style="margin:8px 0 12px 20px;padding:0;font-size:13px;line-height:1.8;color:#333">
+        <li data-i18n="csv_step_1">必須使用本平台 CSV 範本格式（中文表頭）。如尚未下載，請點下方「📥 下載空白範本」按鈕。</li>
+        <li data-i18n="csv_step_2">表頭欄位請保持不動；範本第 2 列為示範資料，填新資料時可整列刪除。</li>
+        <li data-i18n="csv_step_3">
+          配對規則（idempotent，可重複上傳同檔案不會重複建立）：
+          <ul style="margin:4px 0 0 16px;padding:0;font-size:12px;color:#666">
+            <li>客戶：依「客戶ID」→「客戶電話」→「客戶Email」依序配對；都查無 → 新建</li>
+            <li>車輛：依「車牌號碼」於該客戶名下配對</li>
+            <li>保單：依「任意險保單號碼」（全平台唯一）配對</li>
+            <li>已存在欄位若提供新值會更新，空值不會覆蓋</li>
+          </ul>
+        </li>
+        <li data-i18n="csv_step_4">建議第一次先選「試跑（dry-run）」確認解析無誤再正式匯入；任一列失敗整批會自動 rollback。</li>
+        <li data-i18n="csv_step_5">業務員只能匯入自己負責的客戶；嘗試匯入到他人客戶會被拒絕並列為錯誤。</li>
+      </ol>
+
+      <div style="background:#FFF8E1;border-left:3px solid #FF9800;padding:10px 12px;border-radius:4px;margin-bottom:14px">
+        <button type="button" onclick="downloadCsvTemplate()" style="background:#0288D1;color:#fff;border:0;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer" data-i18n="btn_csv_template">📥 下載空白範本</button>
+        <span style="margin-left:8px;font-size:11px;color:#5D4037" data-i18n="csv_modal_dl_hint">點此下載最新格式範本</span>
+      </div>
+
+      <label style="display:flex;align-items:center;gap:8px;padding:10px;background:#F5F5F5;border-radius:6px;cursor:pointer;margin-bottom:12px">
+        <input type="checkbox" id="csv-confirm-cb" style="width:16px;height:16px;cursor:pointer" onchange="onCsvConfirmToggle()">
+        <span style="font-size:13px;font-weight:600;color:#333" data-i18n="csv_understood">我已了解上述說明，並確認使用本平台範本格式的 CSV 檔</span>
+      </label>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #eee;padding-top:12px">
+        <button type="button" onclick="closeCsvImportModal()" style="background:#999;color:#fff;border:0;border-radius:6px;padding:8px 16px;font-size:13px;cursor:pointer" data-i18n="btn_cancel">取消</button>
+        <button type="button" id="csv-pick-file-btn" onclick="document.getElementById('csv-import-file').click()" disabled
+                style="background:#E65100;color:#fff;border:0;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:not-allowed;opacity:0.5" data-i18n="btn_csv_pick_file">⬆ 選擇 CSV 檔案上傳</button>
+      </div>
+    </div>
   </div>
 
   <div class="tabs">
@@ -872,13 +907,29 @@ function _calBtnHtml(title, dateStr, desc) {
 }
 
 // === 整合 CSV 匯入 / 匯出 ===
+// 點「上傳大量匯入」→ 跳出說明 modal，使用者勾「我已了解」後才能選檔
 function onCsvImportClick() {
-  // 確保使用者知道要用本平台範本，避免上傳到不對格式
-  var ok = confirm(LANG==='en'
-    ? 'Please use the BOPINAN CSV template (Chinese headers).\\n\\nIf you have not downloaded it yet, click Cancel and use "📥 Blank Template" first.\\n\\nClick OK to proceed and select your CSV file.'
-    : '請使用 BOPINAN 平台的 CSV 範本格式（中文表頭）。\\n\\n如尚未下載範本，請按取消後先點「📥 下載空白範本」。\\n\\n按確定繼續選擇您的 CSV 檔。');
-  if (!ok) return;
-  document.getElementById('csv-import-file').click();
+  var cb = document.getElementById('csv-confirm-cb');
+  if (cb) cb.checked = false;
+  onCsvConfirmToggle();
+  document.getElementById('csv-import-modal').style.display = 'flex';
+}
+function closeCsvImportModal() {
+  document.getElementById('csv-import-modal').style.display = 'none';
+}
+function onCsvConfirmToggle() {
+  var cb = document.getElementById('csv-confirm-cb');
+  var btn = document.getElementById('csv-pick-file-btn');
+  if (!cb || !btn) return;
+  if (cb.checked) {
+    btn.disabled = false;
+    btn.style.cursor = 'pointer';
+    btn.style.opacity = '1';
+  } else {
+    btn.disabled = true;
+    btn.style.cursor = 'not-allowed';
+    btn.style.opacity = '0.5';
+  }
 }
 
 async function downloadUnifiedCsv() {
@@ -916,6 +967,8 @@ async function downloadCsvTemplate() {
 async function onCsvFileChosen(input) {
   var file = input.files && input.files[0];
   if (!file) return;
+  // 選好檔案 → 關掉說明 modal
+  closeCsvImportModal();
   var doDryRun = confirm(LANG==='en'
     ? 'Dry-run first? (Recommended)\\n\\nOK = Try without saving (preview)\\nCancel = Save directly'
     : '是否先試跑（dry-run）？\\n\\n確定 = 試跑（不存檔）\\n取消 = 直接寫入');
@@ -1213,10 +1266,18 @@ var I18N = {
     idle_warn_title: '⚠ 即將自動登出 - ',
     idle_logout_msg: '閒置超過 10 分鐘，已自動登出。',
     csv_title: '資料匯入 / 匯出（客戶+車輛+保單一張表）',
-    csv_hint: '⚠️ 上傳前請先點「📥 下載空白範本」取得本平台格式（中文表頭 + 第 2 列範例）。表頭欄位請保持不動；第 2 列示範資料填新資料時刪掉即可。匹配規則：先以「客戶ID / 客戶電話 / 客戶Email」找客戶，找不到才新建；車輛以「車牌號碼」配對；保單以「任意險保單號碼」配對 — Idempotent，可重複上傳同檔案不會建出重複資料。建議先勾「試跑」確認再正式匯入。',
     btn_csv_export: '⬇ 下載完整資料',
     btn_csv_template: '📥 下載空白範本',
     btn_csv_import: '⬆ 上傳大量匯入',
+    csv_import_title: '⚠️ 上傳 CSV 大量匯入 — 上傳前必讀',
+    csv_step_1: '必須使用本平台 CSV 範本格式（中文表頭）。如尚未下載，請點下方「📥 下載空白範本」按鈕。',
+    csv_step_2: '表頭欄位請保持不動；範本第 2 列為示範資料，填新資料時可整列刪除。',
+    csv_step_3: '配對規則（idempotent，可重複上傳同檔案不會重複建立）',
+    csv_step_4: '建議第一次先選「試跑（dry-run）」確認解析無誤再正式匯入；任一列失敗整批會自動 rollback。',
+    csv_step_5: '業務員只能匯入自己負責的客戶；嘗試匯入到他人客戶會被拒絕並列為錯誤。',
+    csv_modal_dl_hint: '點此下載最新格式範本',
+    csv_understood: '我已了解上述說明，並確認使用本平台範本格式的 CSV 檔',
+    btn_csv_pick_file: '⬆ 選擇 CSV 檔案上傳',
     // Customer bar
     cur_customer_label: '操作客戶（新增車輛/保單時套用）：',
     btn_refresh_customers: '重新整理客戶清單',
@@ -1414,10 +1475,18 @@ var I18N = {
     idle_warn_title: '⚠ Auto-logout soon - ',
     idle_logout_msg: 'Idle over 10 minutes, you have been logged out.',
     csv_title: 'CSV Bulk Import / Export (Customer + Vehicle + Policy)',
-    csv_hint: '⚠️ Before uploading, click "📥 Blank Template" to get the BOPINAN format (Chinese headers + sample row). Keep the header row intact; delete the sample row before adding real data. Matching rules: customer by ID / phone / email; vehicle by plate number; policy by voluntary policy number — idempotent, repeat uploads are safe. Try "dry-run" first.',
     btn_csv_export: '⬇ Export All',
     btn_csv_template: '📥 Blank Template',
     btn_csv_import: '⬆ Bulk Import',
+    csv_import_title: '⚠️ CSV Bulk Import — Read Before Upload',
+    csv_step_1: 'Use the BOPINAN CSV template (Chinese headers). Click "📥 Blank Template" below if you have not downloaded it.',
+    csv_step_2: 'Keep the header row unchanged. Row 2 in the template is sample data — delete it before adding real records.',
+    csv_step_3: 'Matching rules (idempotent — repeat uploads of the same file will not create duplicates)',
+    csv_step_4: 'Try "dry-run" first to verify parsing; any row failure rolls back the entire batch.',
+    csv_step_5: 'Agents can only import their assigned customers. Attempting to import others will be rejected and listed as errors.',
+    csv_modal_dl_hint: 'Click to download the latest template',
+    csv_understood: 'I understand and will use the BOPINAN template-format CSV',
+    btn_csv_pick_file: '⬆ Pick CSV File',
     cur_customer_label: 'Active customer (used for new vehicle / policy):',
     btn_refresh_customers: 'Refresh',
     h_upload_reg: 'Upload Reg. Card (auto-OCR)',
