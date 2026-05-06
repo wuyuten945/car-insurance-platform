@@ -1467,13 +1467,17 @@ async function doCreateCustomer() {
 }
 
 // === 手動新增車輛（不需上傳行照）===
+// 入口：每次按「+ 新增車輛（手動）」都先彈「選擇/新增客戶」 picker —
+// 即便 cur-customer 已預選，picker 也會幫使用者預選同一位，按「選此客戶」一鍵確認；
+// 這樣可避免儲存後再點「+ 新增車輛」誤套到剛剛的客戶身上、也防止操作者誤建到錯人。
 function openManualVehicleForm() {
+  openCreateCustomerModal(function() { _doOpenManualVehicleFormForCurrent(); });
+}
+
+// 內部：直接以目前 cur-customer 開啟手動新增表單（給「+新增此客戶另一輛車」等已選好客戶的場景使用）
+function _doOpenManualVehicleFormForCurrent() {
   var cid = currentCustomerId();
-  if (!cid) {
-    // 沒選客戶 → 直接彈出「選擇 / 新增客戶」modal，選好後接續開表單
-    openCreateCustomerModal(function() { openManualVehicleForm(); });
-    return;
-  }
+  if (!cid) return;
   var sel = document.getElementById('cur-customer');
   var custName = '';
   if (sel && sel.selectedIndex >= 0) {
@@ -1534,14 +1538,16 @@ function closeVehicleFormModal() {
   window._editIsNew = false;
 }
 
-// 「+ 新增車輛（上傳行照）」按鈕 → 開啟上傳行照 modal
+// 「+ 新增車輛（上傳行照）」按鈕 → 一律先彈出「選擇/新增客戶」 picker，再開上傳 modal
+// （理由同 openManualVehicleForm：每次新增都明確選定客戶，避免誤套到剛剛的客戶）
 function scrollToAddVehicle() {
-  // 沒選客戶 → 先彈出「選擇 / 新增客戶」modal，選好後再次觸發本函式
+  openCreateCustomerModal(function() { _doOpenVehicleUploadModalForCurrent(); });
+}
+
+// 內部：直接以目前 cur-customer 開啟上傳行照 modal
+function _doOpenVehicleUploadModalForCurrent() {
   var cid = currentCustomerId();
-  if (!cid) {
-    openCreateCustomerModal(function() { scrollToAddVehicle(); });
-    return;
-  }
+  if (!cid) return;
   // 確保編輯表單 modal 是關閉的（避免兩個 modal 疊加）
   closeVehicleFormModal();
   // 重置 vid 等狀態，避免上傳被誤導向舊車
@@ -1587,8 +1593,8 @@ function addAnotherVehicleSameCustomer() {
   var custSel = document.getElementById('cur-customer');
   if (custSel) custSel.value = uid;
   closeVehicleFormModal();
-  // 直接在 modal 鏈中接續開「手動新增車輛」表單（同一客戶）
-  setTimeout(function(){ openManualVehicleForm(); }, 50);
+  // 直接走內部入口（不再彈 picker，因為使用者已明確表態要「同客戶再加一輛」）
+  setTimeout(function(){ _doOpenManualVehicleFormForCurrent(); }, 50);
 }
 
 // v-select 切換 → 「+ 新增車輛」收起編輯表單，避免使用者誤把舊車輛資料當新增填入
