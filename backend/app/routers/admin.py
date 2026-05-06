@@ -618,6 +618,42 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           </div>
         </div>
 
+        <!-- 要保人（policyholder） -->
+        <div style="margin-top:14px;padding:12px;background:#E1F5FE;border-radius:8px;border-left:4px solid #0288D1">
+          <div style="font-size:13px;color:#01579B;font-weight:bold;margin-bottom:8px" data-i18n="sec_policyholder">要保人（可與客戶為不同人）</div>
+          <div class="row">
+            <div><label data-i18n="lbl_ph_name">姓名</label><input type="text" id="p-ph-name" placeholder="留空則沿用客戶姓名"></div>
+            <div><label data-i18n="lbl_ph_id">身分證字號</label><input type="text" id="p-ph-id" placeholder="A123456789" maxlength="10" style="text-transform:uppercase"></div>
+          </div>
+          <div class="row">
+            <div><label data-i18n="lbl_ph_birth">生日</label><input type="date" id="p-ph-birth"></div>
+            <div><label data-i18n="lbl_ph_gender">性別</label>
+              <select id="p-ph-gender">
+                <option value="">--</option><option value="男">男</option><option value="女">女</option><option value="其他">其他</option>
+              </select>
+            </div>
+            <div><label data-i18n="lbl_ph_phone">電話</label><input type="tel" id="p-ph-phone" placeholder="0912-345-678"></div>
+          </div>
+        </div>
+
+        <!-- 被保人（insured） -->
+        <div style="margin-top:14px;padding:12px;background:#E8F5E9;border-radius:8px;border-left:4px solid #2E7D32">
+          <div style="font-size:13px;color:#1B5E20;font-weight:bold;margin-bottom:8px" data-i18n="sec_insured">被保人（受益對象，可與要保人不同）</div>
+          <div class="row">
+            <div><label data-i18n="lbl_in_name">姓名</label><input type="text" id="p-in-name" placeholder="留空則沿用要保人姓名"></div>
+            <div><label data-i18n="lbl_in_id">身分證字號</label><input type="text" id="p-in-id" placeholder="A123456789" maxlength="10" style="text-transform:uppercase"></div>
+          </div>
+          <div class="row">
+            <div><label data-i18n="lbl_in_birth">生日</label><input type="date" id="p-in-birth"></div>
+            <div><label data-i18n="lbl_in_gender">性別</label>
+              <select id="p-in-gender">
+                <option value="">--</option><option value="男">男</option><option value="女">女</option><option value="其他">其他</option>
+              </select>
+            </div>
+            <div><label data-i18n="lbl_in_phone">電話</label><input type="tel" id="p-in-phone" placeholder="0912-345-678"></div>
+          </div>
+        </div>
+
         <div style="margin-top:16px">
           <h3 style="font-size:14px;color:#666" data-i18n="h_coverage_items">保障項目</h3>
           <div id="p-items"></div>
@@ -660,6 +696,30 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           <tr><td style="width:90px;padding:6px;color:#666" data-i18n="lbl_policyholder">要保人姓名</td><td><input type="text" id="pe-customer-name" placeholder="此保單所屬客戶（修改會轉移保單）" data-i18n-placeholder="ph_policyholder" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#fffbea"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_customer_email">客戶 Email</td><td><input type="email" id="pe-customer-email" placeholder="設定後客戶可用此 Email 登入並看到此保單" data-i18n-placeholder="ph_customer_email_short" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#e8f5e9"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_policy_number">保單號碼</td><td><input type="text" id="pe-number" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+
+          <!-- 要保人 -->
+          <tr><td colspan="2" style="padding:8px 6px 4px;color:#1565C0;font-weight:bold;font-size:13px;border-top:1px solid #eee" data-i18n="sec_policyholder">要保人（可與客戶為不同人）</td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_ph_name">要保人姓名</td><td><input type="text" id="pe-ph-name" placeholder="留空則沿用客戶姓名" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_ph_id">要保人身分證字號</td><td><input type="text" id="pe-ph-id" placeholder="A123456789" maxlength="10" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;text-transform:uppercase"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_ph_birth">要保人生日</td><td><input type="date" id="pe-ph-birth" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_ph_gender">要保人性別</td><td>
+            <select id="pe-ph-gender" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
+              <option value="">--</option><option value="男">男</option><option value="女">女</option><option value="其他">其他</option>
+            </select>
+          </td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_ph_phone">要保人電話</td><td><input type="tel" id="pe-ph-phone" placeholder="0912-345-678" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+
+          <!-- 被保人 -->
+          <tr><td colspan="2" style="padding:8px 6px 4px;color:#2E7D32;font-weight:bold;font-size:13px;border-top:1px solid #eee" data-i18n="sec_insured">被保人（受益對象，可與要保人不同）</td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_name">被保人姓名</td><td><input type="text" id="pe-in-name" placeholder="留空則沿用要保人姓名" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_id">被保人身分證字號</td><td><input type="text" id="pe-in-id" placeholder="A123456789" maxlength="10" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;text-transform:uppercase"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_birth">被保人生日</td><td><input type="date" id="pe-in-birth" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_gender">被保人性別</td><td>
+            <select id="pe-in-gender" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
+              <option value="">--</option><option value="男">男</option><option value="女">女</option><option value="其他">其他</option>
+            </select>
+          </td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_in_phone">被保人電話</td><td><input type="tel" id="pe-in-phone" placeholder="0912-345-678" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_insurer">保險公司</td><td>
             <select id="pe-insurer" onchange="onInsurerChange('pe-insurer','pe-insurer-other')" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></select>
             <input type="text" id="pe-insurer-other" placeholder="保險公司名稱" data-i18n-placeholder="ph_insurer_other" style="display:none;margin-top:6px;width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
@@ -1531,6 +1591,10 @@ var I18N = {
     lbl_status: '狀態',
     opt_active: '有效', opt_expiring: '即將到期', opt_expired: '已到期',
     lbl_start_date: '起保日', lbl_end_date: '到期日', lbl_premium: '總保費',
+    sec_policyholder: '要保人（可與客戶為不同人）',
+    sec_insured: '被保人（受益對象，可與要保人不同）',
+    lbl_ph_name: '要保人姓名', lbl_ph_id: '要保人身分證字號', lbl_ph_birth: '要保人生日', lbl_ph_gender: '要保人性別', lbl_ph_phone: '要保人電話',
+    lbl_in_name: '被保人姓名', lbl_in_id: '被保人身分證字號', lbl_in_birth: '被保人生日', lbl_in_gender: '被保人性別', lbl_in_phone: '被保人電話',
     sec_voluntary_period: '任意險 期間（綜合險 / 第三人責任 / 車體損失 等）',
     sec_compulsory_period: '強制險（汽車強制責任險，可能跟任意險不同家、不同保單號、不同期間）',
     lbl_compulsory_insurer: '強制險 保險公司',
@@ -1739,6 +1803,10 @@ var I18N = {
     lbl_status: 'Status',
     opt_active: 'Active', opt_expiring: 'Expiring', opt_expired: 'Expired',
     lbl_start_date: 'Start', lbl_end_date: 'End', lbl_premium: 'Premium',
+    sec_policyholder: 'Policyholder (may differ from customer)',
+    sec_insured: 'Insured Person (beneficiary, may differ from policyholder)',
+    lbl_ph_name: 'Policyholder Name', lbl_ph_id: 'Policyholder ID', lbl_ph_birth: 'Policyholder Birth', lbl_ph_gender: 'Policyholder Gender', lbl_ph_phone: 'Policyholder Phone',
+    lbl_in_name: 'Insured Name', lbl_in_id: 'Insured ID', lbl_in_birth: 'Insured Birth', lbl_in_gender: 'Insured Gender', lbl_in_phone: 'Insured Phone',
     sec_voluntary_period: 'Voluntary Coverage Period (Comprehensive / 3rd-Party / Collision etc.)',
     sec_compulsory_period: 'Compulsory (CALI — may have different insurer / policy # / period from voluntary)',
     lbl_compulsory_insurer: 'CALI Insurer',
@@ -3665,6 +3733,17 @@ async function createPolicy() {
     compulsory_end_date: ceParts.date,
     compulsory_start_time: csParts.time,
     compulsory_end_time: ceParts.time,
+    // 要保人 / 被保人
+    policyholder_name: (document.getElementById('p-ph-name').value || '').trim() || null,
+    policyholder_id_number: (document.getElementById('p-ph-id').value || '').trim().toUpperCase() || null,
+    policyholder_birth_date: document.getElementById('p-ph-birth').value || null,
+    policyholder_gender: document.getElementById('p-ph-gender').value || null,
+    policyholder_phone: (document.getElementById('p-ph-phone').value || '').trim() || null,
+    insured_name: (document.getElementById('p-in-name').value || '').trim() || null,
+    insured_id_number: (document.getElementById('p-in-id').value || '').trim().toUpperCase() || null,
+    insured_birth_date: document.getElementById('p-in-birth').value || null,
+    insured_gender: document.getElementById('p-in-gender').value || null,
+    insured_phone: (document.getElementById('p-in-phone').value || '').trim() || null,
     total_premium: parseThousand(document.getElementById('p-premium').value),
     items: []
   };
@@ -3721,7 +3800,9 @@ function _policyFormHasContent() {
 function _resetPolicyFormFields() {
   fillInsurerSelect('p-insurer', 'p-insurer-other', '');
   fillInsurerSelect('p-cinsurer', 'p-cinsurer-other', '');
-  ['p-number','p-premium','p-cnumber','p-cpremium'].forEach(function(id){
+  ['p-number','p-premium','p-cnumber','p-cpremium',
+   'p-ph-name','p-ph-id','p-ph-birth','p-ph-gender','p-ph-phone',
+   'p-in-name','p-in-id','p-in-birth','p-in-gender','p-in-phone'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -3991,6 +4072,17 @@ function editPolicyFromList(pid) {
   document.getElementById('pe-cnumber').value = p.compulsory_policy_number || '';
   setNumberWithComma('pe-cpremium', p.compulsory_premium);
   setNumberWithComma('pe-premium', p.total_premium);
+  // 要保人 / 被保人
+  document.getElementById('pe-ph-name').value   = p.policyholder_name || '';
+  document.getElementById('pe-ph-id').value     = p.policyholder_id_number || '';
+  document.getElementById('pe-ph-birth').value  = p.policyholder_birth_date || '';
+  document.getElementById('pe-ph-gender').value = p.policyholder_gender || '';
+  document.getElementById('pe-ph-phone').value  = p.policyholder_phone || '';
+  document.getElementById('pe-in-name').value   = p.insured_name || '';
+  document.getElementById('pe-in-id').value     = p.insured_id_number || '';
+  document.getElementById('pe-in-birth').value  = p.insured_birth_date || '';
+  document.getElementById('pe-in-gender').value = p.insured_gender || '';
+  document.getElementById('pe-in-phone').value  = p.insured_phone || '';
   // 載入既有保障項目到 pe-items
   document.getElementById('pe-items').innerHTML = '';
   (p.items || []).forEach(function(it){
@@ -4031,6 +4123,17 @@ async function savePolicyEdit() {
     compulsory_end_date: pceParts.date,
     compulsory_start_time: pcsParts.time,
     compulsory_end_time: pceParts.time,
+    // 要保人 / 被保人
+    policyholder_name: (document.getElementById('pe-ph-name').value || '').trim() || null,
+    policyholder_id_number: (document.getElementById('pe-ph-id').value || '').trim().toUpperCase() || null,
+    policyholder_birth_date: document.getElementById('pe-ph-birth').value || null,
+    policyholder_gender: document.getElementById('pe-ph-gender').value || null,
+    policyholder_phone: (document.getElementById('pe-ph-phone').value || '').trim() || null,
+    insured_name: (document.getElementById('pe-in-name').value || '').trim() || null,
+    insured_id_number: (document.getElementById('pe-in-id').value || '').trim().toUpperCase() || null,
+    insured_birth_date: document.getElementById('pe-in-birth').value || null,
+    insured_gender: document.getElementById('pe-in-gender').value || null,
+    insured_phone: (document.getElementById('pe-in-phone').value || '').trim() || null,
     status: document.getElementById('pe-status').value,
   };
   var prem = parseThousand(document.getElementById('pe-premium').value);

@@ -591,6 +591,17 @@ async def get_all_policies(
             "compulsory_end_date": str(p.compulsory_end_date) if p.compulsory_end_date else None,
             "compulsory_start_time": p.compulsory_start_time.strftime("%H:%M") if p.compulsory_start_time else None,
             "compulsory_end_time": p.compulsory_end_time.strftime("%H:%M") if p.compulsory_end_time else None,
+            # 要保人 / 被保人
+            "policyholder_name": p.policyholder_name,
+            "policyholder_id_number": p.policyholder_id_number,
+            "policyholder_birth_date": str(p.policyholder_birth_date) if p.policyholder_birth_date else None,
+            "policyholder_gender": p.policyholder_gender,
+            "policyholder_phone": p.policyholder_phone,
+            "insured_name": p.insured_name,
+            "insured_id_number": p.insured_id_number,
+            "insured_birth_date": str(p.insured_birth_date) if p.insured_birth_date else None,
+            "insured_gender": p.insured_gender,
+            "insured_phone": p.insured_phone,
             "total_premium": float(p.total_premium) if p.total_premium else 0,
             "items": items,
         })

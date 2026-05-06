@@ -60,6 +60,17 @@ async def _ensure_columns():
         ("users",         "policy_notify_days",    "VARCHAR(64)"),
         ("users",         "inspection_notify_days","VARCHAR(64)"),
         ("users",         "notify_email_enabled",  "BOOLEAN NOT NULL DEFAULT FALSE"),
+        # 要保人 / 被保人（保單獨立記錄；可能跟客戶 user 不同人）
+        ("policies",      "policyholder_name",       "VARCHAR(100)"),
+        ("policies",      "policyholder_id_number",  "VARCHAR(20)"),
+        ("policies",      "policyholder_birth_date", "DATE"),
+        ("policies",      "policyholder_gender",     "VARCHAR(10)"),
+        ("policies",      "policyholder_phone",      "VARCHAR(20)"),
+        ("policies",      "insured_name",       "VARCHAR(100)"),
+        ("policies",      "insured_id_number",  "VARCHAR(20)"),
+        ("policies",      "insured_birth_date", "DATE"),
+        ("policies",      "insured_gender",     "VARCHAR(10)"),
+        ("policies",      "insured_phone",      "VARCHAR(20)"),
     ]
     is_sqlite = "sqlite" in str(engine.url)
     try:

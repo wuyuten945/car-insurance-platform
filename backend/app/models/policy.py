@@ -34,6 +34,20 @@ class Policy(TimestampMixin, Base):
     # 自填的保單可記錄但無法走理賠流程（前後端共同 gate）
     data_source = Column(String(20), nullable=False, default="agent")
 
+    # 要保人（policyholder）— 可能跟客戶 user 不是同一人（例如父母保子女的車）
+    policyholder_name        = Column(String(100), nullable=True)
+    policyholder_id_number   = Column(String(20),  nullable=True)
+    policyholder_birth_date  = Column(Date,        nullable=True)
+    policyholder_gender      = Column(String(10),  nullable=True)  # 男 / 女 / 其他
+    policyholder_phone       = Column(String(20),  nullable=True)
+
+    # 被保人（insured）— 可能跟要保人 / 客戶都不同
+    insured_name        = Column(String(100), nullable=True)
+    insured_id_number   = Column(String(20),  nullable=True)
+    insured_birth_date  = Column(Date,        nullable=True)
+    insured_gender      = Column(String(10),  nullable=True)
+    insured_phone       = Column(String(20),  nullable=True)
+
     user = relationship("User", back_populates="policies")
     vehicle = relationship("UserVehicle", back_populates="policies")
     items = relationship("PolicyItem", back_populates="policy", lazy="selectin")

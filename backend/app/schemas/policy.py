@@ -32,6 +32,17 @@ class PolicyOut(BaseModel):
     compulsory_end_date: date | None = None
     compulsory_start_time: time | None = None
     compulsory_end_time: time | None = None
+    # 要保人 / 被保人
+    policyholder_name: str | None = None
+    policyholder_id_number: str | None = None
+    policyholder_birth_date: date | None = None
+    policyholder_gender: str | None = None
+    policyholder_phone: str | None = None
+    insured_name: str | None = None
+    insured_id_number: str | None = None
+    insured_birth_date: date | None = None
+    insured_gender: str | None = None
+    insured_phone: str | None = None
     total_premium: Decimal | None = None
     vehicle_plate: str | None = None
     vehicle_brand: str | None = None
@@ -133,6 +144,16 @@ class PolicyCreate(BaseModel):
     compulsory_end_date: date | None = None
     compulsory_start_time: time | None = None
     compulsory_end_time: time | None = None
+    policyholder_name: str | None = None
+    policyholder_id_number: str | None = None
+    policyholder_birth_date: date | None = None
+    policyholder_gender: str | None = None
+    policyholder_phone: str | None = None
+    insured_name: str | None = None
+    insured_id_number: str | None = None
+    insured_birth_date: date | None = None
+    insured_gender: str | None = None
+    insured_phone: str | None = None
     total_premium: Decimal | None = None
     document_url: str | None = None
     items: list[PolicyItemCreate] = []
@@ -154,6 +175,16 @@ class PolicyUpdate(BaseModel):
     compulsory_end_date: date | None = None
     compulsory_start_time: time | None = None
     compulsory_end_time: time | None = None
+    policyholder_name: str | None = None
+    policyholder_id_number: str | None = None
+    policyholder_birth_date: date | None = None
+    policyholder_gender: str | None = None
+    policyholder_phone: str | None = None
+    insured_name: str | None = None
+    insured_id_number: str | None = None
+    insured_birth_date: date | None = None
+    insured_gender: str | None = None
+    insured_phone: str | None = None
     total_premium: Decimal | None = None
     document_url: str | None = None
     # 整批 replace 保障項目；None = 不動，空陣列 = 全清掉
