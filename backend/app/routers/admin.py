@@ -95,10 +95,12 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   th, td { padding: 6px 8px; font-size: 12px; }
 
   /* Modal 外層 padding 縮小、內層 card 改全寬 */
-  #v-upload-modal, #v-edit-form, #create-customer-modal, #change-pw-modal {
+  #v-upload-modal, #v-edit-form, #create-customer-modal, #change-pw-modal,
+  #p-upload-modal, #p-form-modal, #p-edit-modal {
     padding: 10px !important;
   }
-  #v-upload-modal > div, #v-edit-form > div, #create-customer-modal > div, #change-pw-modal > div {
+  #v-upload-modal > div, #v-edit-form > div, #create-customer-modal > div, #change-pw-modal > div,
+  #p-upload-modal > div, #p-form-modal > div, #p-edit-modal > div {
     padding: 16px 14px !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -421,70 +423,94 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 
   <!-- Tab: Policies -->
   <div id="tab-policies" class="tab-content">
-    <div class="card">
-      <h2 data-i18n="h_upload_policy">上傳保單（AI 辨識）</h2>
-      <p style="color:#666;font-size:13px;margin-bottom:12px" data-i18n="upload_policy_hint">上傳保單圖片，系統自動辨識保險公司、保單號碼、起迄日、保障項目等，一鍵建立保單。</p>
-      <label data-i18n="lbl_policy_image">保單圖片 (JPG/PNG)</label>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-        <input type="file" id="p-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onPolicyFileChange()" style="display:none">
-        <button type="button" class="btn" style="padding:6px 16px;font-size:12px;background:#0288D1" onclick="document.getElementById('p-file').click()" data-i18n="btn_choose_file">選擇檔案</button>
-        <span id="p-file-name" style="font-size:12px;color:#666" data-i18n="msg_no_file">未選擇任何檔案</span>
-      </div>
-      <img id="p-preview" class="preview" style="display:none">
-      <button class="btn" id="p-upload-btn" onclick="uploadPolicy()" data-i18n="btn_upload_policy">上傳保單</button>
-      <button class="btn success" id="p-ocr-btn" style="display:none" onclick="runPolicyOcr()" data-i18n="btn_ocr_policy">AI 辨識保單</button>
-      <div id="p-upload-loading" style="display:none;margin-top:12px;color:#1565C0;font-size:14px">
-        <span style="display:inline-block;animation:spin 1s linear infinite;margin-right:8px">&#9696;</span>
-        <span id="p-loading-text" data-i18n="msg_uploading">上傳中...</span>
-      </div>
-      <div id="p-upload-msg" class="msg"></div>
-      <!-- OCR result for policy -->
-      <div id="p-ocr-result" style="display:none;margin-top:16px">
-        <h3 style="font-size:14px;color:#2E7D32;margin-bottom:8px" data-i18n="h_ocr_result_short">辨識結果</h3>
-        <table id="p-ocr-table" style="font-size:13px"><tbody></tbody></table>
+
+    <!-- ★★ 上傳保單 modal ★★ -->
+    <div id="p-upload-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9997;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
+      <div style="background:#fff;padding:22px 26px;border-radius:14px;max-width:680px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+        <button type="button" onclick="closePolicyUploadModal()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888;line-height:1">×</button>
+        <h2 style="margin-top:0;margin-bottom:6px" data-i18n="h_upload_policy">新增保單（上傳 AI 辨識）</h2>
+        <p style="color:#666;font-size:13px;margin-bottom:14px" data-i18n="upload_policy_hint">操作客戶：<b id="p-upload-modal-customer" style="color:#1565C0">—</b><br>上傳保單圖片/PDF，系統會自動辨識保險公司、保單號碼、起迄日、保障項目等並一鍵建立保單。</p>
+        <label data-i18n="lbl_policy_image">保單圖片 (JPG/PNG/PDF)</label>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <input type="file" id="p-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" onchange="onPolicyFileChange()" style="display:none">
+          <button type="button" class="btn" style="padding:6px 16px;font-size:12px;background:#0288D1" onclick="document.getElementById('p-file').click()" data-i18n="btn_choose_file">選擇檔案</button>
+          <span id="p-file-name" style="font-size:12px;color:#666" data-i18n="msg_no_file">未選擇任何檔案</span>
+        </div>
+        <img id="p-preview" class="preview" style="display:none">
+        <button class="btn" id="p-upload-btn" onclick="uploadPolicy()" data-i18n="btn_upload_policy">上傳保單</button>
+        <button class="btn success" id="p-ocr-btn" style="display:none" onclick="runPolicyOcr()" data-i18n="btn_ocr_policy">AI 辨識保單</button>
+        <div id="p-upload-loading" style="display:none;margin-top:12px;color:#1565C0;font-size:14px">
+          <span style="display:inline-block;animation:spin 1s linear infinite;margin-right:8px">&#9696;</span>
+          <span id="p-loading-text" data-i18n="msg_uploading">上傳中...</span>
+        </div>
+        <div id="p-upload-msg" class="msg"></div>
+        <!-- OCR result for policy -->
+        <div id="p-ocr-result" style="display:none;margin-top:16px">
+          <h3 style="font-size:14px;color:#2E7D32;margin-bottom:8px" data-i18n="h_ocr_result_short">辨識結果</h3>
+          <table id="p-ocr-table" style="font-size:13px"><tbody></tbody></table>
+        </div>
       </div>
     </div>
-    <div class="card">
-      <h2 data-i18n="h_manual_policy">手動新增保單</h2>
-      <div class="row">
-        <div>
-          <label data-i18n="lbl_insurer">保險公司</label>
-          <input type="text" id="p-insurer" placeholder="例：富邦產險" data-i18n-placeholder="ph_insurer">
+
+    <!-- ★★ 手動新增保單 modal ★★ -->
+    <div id="p-form-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
+      <div style="background:#fff;padding:22px 26px;border-radius:14px;max-width:760px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+        <button type="button" onclick="closePolicyFormModal()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888;line-height:1">×</button>
+        <h2 style="margin-top:0;margin-bottom:6px" data-i18n="h_manual_policy">手動新增保單</h2>
+        <p style="color:#666;font-size:13px;margin-bottom:12px">操作客戶：<b id="p-form-modal-customer" style="color:#1565C0">—</b></p>
+        <div class="row">
+          <div>
+            <label data-i18n="lbl_insurer">保險公司</label>
+            <select id="p-insurer" onchange="onInsurerChange('p-insurer','p-insurer-other')"></select>
+            <input type="text" id="p-insurer-other" placeholder="保險公司名稱" data-i18n-placeholder="ph_insurer_other" style="display:none;margin-top:6px">
+          </div>
+          <div>
+            <label data-i18n="lbl_policy_number">保單號碼</label>
+            <input type="text" id="p-number" placeholder="例：FBN-2026-001234" data-i18n-placeholder="ph_policy_number">
+          </div>
         </div>
-        <div>
-          <label data-i18n="lbl_policy_number">保單號碼</label>
-          <input type="text" id="p-number" placeholder="例：FBN-2026-001234" data-i18n-placeholder="ph_policy_number">
+        <div class="row">
+          <div>
+            <label data-i18n="lbl_covered_vehicle">承保車輛</label>
+            <select id="p-vehicle"><option value="" data-i18n="opt_unspecified">不指定</option></select>
+          </div>
+          <div>
+            <label data-i18n="lbl_status">狀態</label>
+            <select id="p-status">
+              <option value="active" data-i18n="opt_active">有效</option>
+              <option value="expiring" data-i18n="opt_expiring">即將到期</option>
+              <option value="expired" data-i18n="opt_expired">已到期</option>
+            </select>
+          </div>
         </div>
-      </div>
-      <div class="row">
-        <div>
-          <label data-i18n="lbl_covered_vehicle">承保車輛</label>
-          <select id="p-vehicle"><option value="" data-i18n="opt_unspecified">不指定</option></select>
+        <div class="row">
+          <div><label data-i18n="lbl_start_date">起保日</label><input type="date" id="p-start"></div>
+          <div><label data-i18n="lbl_end_date">到期日</label><input type="date" id="p-end"></div>
+          <div><label data-i18n="lbl_premium">總保費</label><input type="number" id="p-premium" placeholder="18500"></div>
         </div>
-        <div>
-          <label data-i18n="lbl_status">狀態</label>
-          <select id="p-status">
-            <option value="active" data-i18n="opt_active">有效</option>
-            <option value="expiring" data-i18n="opt_expiring">即將到期</option>
-            <option value="expired" data-i18n="opt_expired">已到期</option>
-          </select>
+        <div style="margin-top:16px">
+          <h3 style="font-size:14px;color:#666" data-i18n="h_coverage_items">保障項目</h3>
+          <div id="p-items"></div>
+          <button class="btn" style="background:#666;margin-top:8px" onclick="addItemRow()" data-i18n="btn_add_item">+ 新增項目</button>
         </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;border-top:1px solid #eee;padding-top:14px">
+          <button class="btn success" onclick="createPolicy()" data-i18n="btn_create_policy">建立保單</button>
+          <button class="btn" style="background:#0288D1" onclick="addAnotherPolicySameCustomer()" data-i18n="btn_add_another_policy">+ 新增此客戶另一張保單</button>
+          <button class="btn" style="background:#777;margin-left:auto" onclick="closePolicyFormModal()" data-i18n="btn_done_close">完成 / 關閉</button>
+        </div>
+        <div id="p-msg" class="msg"></div>
       </div>
-      <div class="row">
-        <div><label data-i18n="lbl_start_date">起保日</label><input type="date" id="p-start"></div>
-        <div><label data-i18n="lbl_end_date">到期日</label><input type="date" id="p-end"></div>
-        <div><label data-i18n="lbl_premium">總保費</label><input type="number" id="p-premium" placeholder="18500"></div>
-      </div>
-      <div style="margin-top:16px">
-        <h3 style="font-size:14px;color:#666" data-i18n="h_coverage_items">保障項目</h3>
-        <div id="p-items"></div>
-        <button class="btn" style="background:#666;margin-top:8px" onclick="addItemRow()" data-i18n="btn_add_item">+ 新增項目</button>
-      </div>
-      <button class="btn" onclick="createPolicy()" data-i18n="btn_create_policy">建立保單</button>
-      <div id="p-msg" class="msg"></div>
     </div>
+
+    <!-- 現有保單（唯一 inline card，按鈕在 header） -->
     <div class="card">
-      <h2 data-i18n="h_existing_policies">現有保單</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <h2 data-i18n="h_existing_policies" style="margin:0">現有保單</h2>
+        <div style="display:flex;gap:6px">
+          <button class="btn success" onclick="openManualPolicyForm()" style="padding:8px 16px;font-size:14px" data-i18n="btn_add_new_policy_manual">+ 新增保單（手動）</button>
+          <button class="btn" onclick="openPolicyUploadModal()" style="padding:8px 16px;font-size:14px;background:#0288D1" data-i18n="btn_add_new_policy_ocr">+ 新增保單（上傳辨識）</button>
+        </div>
+      </div>
       <p style="font-size:12px;color:#666;margin-bottom:8px" data-i18n="policy_list_hint">💡 點擊任一保單列可選取，<b>雙擊</b>查看承保項目明細</p>
       <!-- 隱藏 file input：給 row 上傳保單按鈕共用 -->
       <input type="file" id="row-policy-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" style="display:none" onchange="onPolicyFileSelectedRow()">
@@ -495,15 +521,19 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <tbody id="p-table"></tbody></table>
     </div>
 
-    <!-- 保單編輯彈窗 -->
+    <!-- 保單編輯彈窗（從 row 點編輯時用） -->
     <div id="p-edit-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
-      <div style="background:#fff;padding:24px;border-radius:12px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto">
+      <div style="background:#fff;padding:24px;border-radius:12px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;position:relative">
+        <button type="button" onclick="closePolicyEdit()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888;line-height:1">×</button>
         <h3 style="color:#1565C0;margin-bottom:14px" data-i18n="h_edit_policy">編輯保單</h3>
         <table style="width:100%"><tbody>
           <tr><td style="width:90px;padding:6px;color:#666" data-i18n="lbl_policyholder">要保人姓名</td><td><input type="text" id="pe-customer-name" placeholder="此保單所屬客戶（修改會轉移保單）" data-i18n-placeholder="ph_policyholder" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#fffbea"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_customer_email">客戶 Email</td><td><input type="email" id="pe-customer-email" placeholder="設定後客戶可用此 Email 登入並看到此保單" data-i18n-placeholder="ph_customer_email_short" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;background:#e8f5e9"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_policy_number">保單號碼</td><td><input type="text" id="pe-number" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
-          <tr><td style="padding:6px;color:#666" data-i18n="lbl_insurer">保險公司</td><td><input type="text" id="pe-insurer" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_insurer">保險公司</td><td>
+            <select id="pe-insurer" onchange="onInsurerChange('pe-insurer','pe-insurer-other')" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></select>
+            <input type="text" id="pe-insurer-other" placeholder="保險公司名稱" data-i18n-placeholder="ph_insurer_other" style="display:none;margin-top:6px;width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
+          </td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_start_date">起保日</td><td><input type="date" id="pe-start" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_end_date">到期日</td><td><input type="date" id="pe-end" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_premium">總保費</td><td><input type="number" id="pe-premium" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
@@ -597,6 +627,62 @@ var TOKEN = '';
 var ADMIN_TOKEN = '';
 var ADMIN_ROLE = '';
 var CONSOLE_API = '/api/v1/admin-console';
+
+// 台灣主要產險公司清單（含車險業務）— 後端會直接存字串，OCR 結果若不在此清單則自動切到「其他」手動輸入
+var TAIWAN_INSURERS = [
+  '富邦產險', '國泰世紀產險', '新光產險', '明台產險', '兆豐產險',
+  '第一產險', '華南產險', '旺旺友聯產險', '新安東京海上產險',
+  '泰安產險', '安達產險', '南山產險', '臺灣產險', '美亞產險',
+  '法國巴黎產險', '蘇黎世產險', '三井住友海上產險'
+];
+
+function fillInsurerSelect(selectId, otherInputId, value) {
+  var sel = document.getElementById(selectId);
+  if (!sel) return;
+  var html = '<option value="">' + (LANG==='en' ? '— Select Insurer —' : '— 請選擇保險公司 —') + '</option>';
+  for (var i = 0; i < TAIWAN_INSURERS.length; i++) {
+    html += '<option value="' + TAIWAN_INSURERS[i] + '">' + TAIWAN_INSURERS[i] + '</option>';
+  }
+  html += '<option value="__other__">' + (LANG==='en' ? 'Other (type in)' : '其他（手動輸入）') + '</option>';
+  sel.innerHTML = html;
+  var other = otherInputId ? document.getElementById(otherInputId) : null;
+  if (value) {
+    if (TAIWAN_INSURERS.indexOf(value) >= 0) {
+      sel.value = value;
+      if (other) { other.style.display = 'none'; other.value = ''; }
+    } else {
+      sel.value = '__other__';
+      if (other) { other.style.display = 'block'; other.value = value; }
+    }
+  } else {
+    sel.value = '';
+    if (other) { other.style.display = 'none'; other.value = ''; }
+  }
+}
+
+function getInsurerValue(selectId, otherInputId) {
+  var sel = document.getElementById(selectId);
+  if (!sel) return '';
+  var v = sel.value || '';
+  if (v === '__other__' && otherInputId) {
+    var other = document.getElementById(otherInputId);
+    return other ? (other.value || '').trim() : '';
+  }
+  return v;
+}
+
+function onInsurerChange(selectId, otherInputId) {
+  var sel = document.getElementById(selectId);
+  var other = otherInputId ? document.getElementById(otherInputId) : null;
+  if (!sel || !other) return;
+  if (sel.value === '__other__') {
+    other.style.display = 'block';
+    other.focus();
+  } else {
+    other.style.display = 'none';
+    other.value = '';
+  }
+}
 
 // --- i18n (中/英切換) ---
 var LANG = localStorage.getItem('admin_lang') || 'zh';
@@ -712,6 +798,10 @@ var I18N = {
     h_manual_policy: '手動新增保單',
     lbl_insurer: '保險公司',
     ph_insurer: '例：富邦產險',
+    ph_insurer_other: '保險公司名稱',
+    btn_add_new_policy_manual: '+ 新增保單（手動）',
+    btn_add_new_policy_ocr: '+ 新增保單（上傳辨識）',
+    btn_add_another_policy: '+ 新增此客戶另一張保單',
     lbl_policy_number: '保單號碼',
     ph_policy_number: '例：FBN-2026-001234',
     lbl_covered_vehicle: '承保車輛',
@@ -894,6 +984,10 @@ var I18N = {
     h_manual_policy: 'Manual New Policy',
     lbl_insurer: 'Insurer',
     ph_insurer: 'e.g., Fubon P&C',
+    ph_insurer_other: 'Insurer name',
+    btn_add_new_policy_manual: '+ Add Policy (Manual)',
+    btn_add_new_policy_ocr: '+ Add Policy (Upload OCR)',
+    btn_add_another_policy: '+ Add Another Policy for This Customer',
     lbl_policy_number: 'Policy #',
     ph_policy_number: 'e.g., FBN-2026-001234',
     lbl_covered_vehicle: 'Covered Vehicle',
@@ -2458,9 +2552,9 @@ async function uploadPolicy() {
 
 async function runPolicyOcr() {
   var fn = window._lastPolicyFilename;
-  if (!fn) { showMsg('p-upload-msg','err','請先上傳保單'); return; }
+  if (!fn) { showMsg('p-upload-msg','err', LANG==='en' ? 'Upload policy file first' : '請先上傳保單'); return; }
   var cid = currentCustomerId();
-  if (!cid) { showMsg('p-upload-msg','err','請先在頂部「操作客戶」選擇要建保單的對象'); return; }
+  if (!cid) { showMsg('p-upload-msg','err', LANG==='en' ? 'No customer context' : '找不到操作客戶'); return; }
   document.getElementById('p-ocr-btn').disabled = true;
   document.getElementById('p-upload-loading').style.display = 'block';
   document.getElementById('p-loading-text').textContent = 'AI 辨識中（首次約 15 秒，配額限制時最多 60 秒）...';
@@ -2615,6 +2709,105 @@ async function loadAccidentPhotos(accId) {
 }
 
 // --- Policies (Manual) ---
+
+// === 保單上傳/手動 modal 開關 ===
+function closePolicyUploadModal() {
+  var m = document.getElementById('p-upload-modal');
+  if (m) m.style.display = 'none';
+}
+function closePolicyFormModal() {
+  var m = document.getElementById('p-form-modal');
+  if (m) m.style.display = 'none';
+}
+
+// 「+ 新增保單（手動）」入口：一律先彈「選擇/新增客戶」 picker
+function openManualPolicyForm() {
+  openCreateCustomerModal(function() { _doOpenManualPolicyFormForCurrent(); });
+}
+function _doOpenManualPolicyFormForCurrent() {
+  var cid = currentCustomerId();
+  if (!cid) return;
+  closePolicyUploadModal();
+  // 客戶名稱顯示
+  var sel = document.getElementById('cur-customer');
+  var custName = '';
+  if (sel && sel.selectedIndex >= 0) {
+    custName = (sel.options[sel.selectedIndex].text || '').split(' · ')[0].trim();
+  }
+  var lbl = document.getElementById('p-form-modal-customer');
+  if (lbl) lbl.textContent = custName || '(未選擇)';
+  // 載入此客戶的車輛清單到 p-vehicle
+  loadVehiclesForPolicySelect(cid);
+  // 重置表單
+  _resetPolicyFormFields();
+  var msg = document.getElementById('p-msg');
+  if (msg) { msg.textContent = ''; msg.className = 'msg'; }
+  document.getElementById('p-form-modal').style.display = 'flex';
+}
+
+// 「+ 新增保單（上傳辨識）」入口
+function openPolicyUploadModal() {
+  openCreateCustomerModal(function() { _doOpenPolicyUploadModalForCurrent(); });
+}
+function _doOpenPolicyUploadModalForCurrent() {
+  var cid = currentCustomerId();
+  if (!cid) return;
+  closePolicyFormModal();
+  var sel = document.getElementById('cur-customer');
+  var custName = '';
+  if (sel && sel.selectedIndex >= 0) {
+    custName = (sel.options[sel.selectedIndex].text || '').split(' · ')[0].trim();
+  }
+  var lbl = document.getElementById('p-upload-modal-customer');
+  if (lbl) lbl.textContent = custName || '(未選擇)';
+  // 重置上傳區
+  document.getElementById('p-file').value = '';
+  var nameSpan = document.getElementById('p-file-name');
+  if (nameSpan) nameSpan.textContent = t('msg_no_file');
+  var preview = document.getElementById('p-preview');
+  if (preview) preview.style.display = 'none';
+  var ocrBtn = document.getElementById('p-ocr-btn');
+  if (ocrBtn) ocrBtn.style.display = 'none';
+  var loading = document.getElementById('p-upload-loading');
+  if (loading) loading.style.display = 'none';
+  var msg = document.getElementById('p-upload-msg');
+  if (msg) { msg.textContent = ''; msg.className = 'msg'; }
+  var ocrResult = document.getElementById('p-ocr-result');
+  if (ocrResult) ocrResult.style.display = 'none';
+  var upBtn = document.getElementById('p-upload-btn');
+  if (upBtn) upBtn.disabled = false;
+  document.getElementById('p-upload-modal').style.display = 'flex';
+}
+
+// 「+ 新增此客戶另一張保單」按鈕（modal 內）→ 不再彈 picker，直接重置表單繼續
+function addAnotherPolicySameCustomer() {
+  var cid = currentCustomerId();
+  if (!cid) {
+    showMsg('p-msg','err', LANG === 'en' ? 'No customer context' : '找不到目前操作客戶');
+    return;
+  }
+  _resetPolicyFormFields();
+  var msg = document.getElementById('p-msg');
+  if (msg) { msg.textContent = ''; msg.className = 'msg'; }
+}
+
+// 撈該客戶名下的車輛 → 填入 p-vehicle dropdown
+async function loadVehiclesForPolicySelect(cid) {
+  var dd = document.getElementById('p-vehicle');
+  if (!dd) return;
+  dd.innerHTML = '<option value="">' + (LANG==='en' ? 'Not specified' : '不指定') + '</option>';
+  try {
+    var r = await fetch(CONSOLE_API+'/customer/'+cid+'/vehicles', {headers: consoleHeaders(false)});
+    var d = await r.json();
+    var vs = d.data || [];
+    for (var i = 0; i < vs.length; i++) {
+      var v = vs[i];
+      var label = (v.plate_number || '?') + ' ' + (v.brand||'') + ' ' + (v.model||'');
+      dd.innerHTML += '<option value="' + v.id + '">' + label + '</option>';
+    }
+  } catch(e) { /* ignore */ }
+}
+
 let itemCount = 0;
 function addItemRow() {
   itemCount++;
@@ -2631,9 +2824,9 @@ function addItemRow() {
 }
 
 async function createPolicy() {
-  const insurer = document.getElementById('p-insurer').value.trim();
+  const insurer = getInsurerValue('p-insurer', 'p-insurer-other');
   const number = document.getElementById('p-number').value.trim();
-  if (!insurer || !number) { showMsg('p-msg','err','請填寫保險公司和保單號碼'); return; }
+  if (!insurer || !number) { showMsg('p-msg','err', LANG==='en' ? 'Insurer and policy number are required' : '請填寫保險公司和保單號碼'); return; }
   const body = {
     insurer_name: insurer,
     policy_number: number,
@@ -2657,19 +2850,27 @@ async function createPolicy() {
     if (item.item_name) body.items.push(item);
   });
   var cid = currentCustomerId();
-  if (!cid) { showMsg('p-msg','err','請先在頂部「操作客戶」選擇要建保單的對象'); return; }
+  if (!cid) { showMsg('p-msg','err', LANG==='en' ? 'No customer context' : '找不到操作客戶'); return; }
   try {
     const r = await fetch(CONSOLE_API+'/customer/'+cid+'/policies', {method:'POST', headers:consoleHeaders(true), body:JSON.stringify(body)});
     const d = await r.json();
     if (d.success) {
-      showMsg('p-msg','ok','保單建立成功: '+d.data.policy_number);
+      showMsg('p-msg','ok', (LANG==='en' ? 'Policy created: ' : '保單建立成功：') + d.data.policy_number);
       loadPolicies();
-      // Clear form
-      ['p-insurer','p-number','p-premium'].forEach(id => document.getElementById(id).value='');
-      document.getElementById('p-items').innerHTML = '';
-      itemCount = 0;
-    } else { showMsg('p-msg','err','建立失敗: '+(d.detail||d.message)); }
-  } catch(e) { showMsg('p-msg','err','建立失敗: '+e.message); }
+      // 留在 modal、清空表單，方便接續按「+新增此客戶另一張保單」或關閉
+      _resetPolicyFormFields();
+    } else { showMsg('p-msg','err', (LANG==='en' ? 'Create failed: ' : '建立失敗：') + (d.detail||d.message)); }
+  } catch(e) { showMsg('p-msg','err', (LANG==='en' ? 'Create failed: ' : '建立失敗：') + e.message); }
+}
+
+function _resetPolicyFormFields() {
+  fillInsurerSelect('p-insurer', 'p-insurer-other', '');
+  ['p-number','p-premium'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('p-start').value = '';
+  document.getElementById('p-end').value = '';
+  document.getElementById('p-status').value = 'active';
+  document.getElementById('p-items').innerHTML = '';
+  itemCount = 0;
 }
 
 // 全域保留最近一次抓的保單（雙擊展開時不再重新打 API）
@@ -2849,7 +3050,7 @@ function editPolicyFromList(pid) {
   document.getElementById('pe-customer-name').value = p.customer_name || '';
   document.getElementById('pe-customer-email').value = p.customer_email || '';
   document.getElementById('pe-number').value = p.policy_number || '';
-  document.getElementById('pe-insurer').value = p.insurer_name || '';
+  fillInsurerSelect('pe-insurer', 'pe-insurer-other', p.insurer_name || '');
   document.getElementById('pe-start').value = p.start_date || '';
   document.getElementById('pe-end').value = p.end_date || '';
   document.getElementById('pe-premium').value = p.total_premium || '';
@@ -2866,7 +3067,7 @@ async function savePolicyEdit() {
   if (!pid) return;
   var body = {
     policy_number: document.getElementById('pe-number').value.trim(),
-    insurer_name: document.getElementById('pe-insurer').value.trim(),
+    insurer_name: getInsurerValue('pe-insurer', 'pe-insurer-other'),
     start_date: document.getElementById('pe-start').value,
     end_date: document.getElementById('pe-end').value,
     status: document.getElementById('pe-status').value,
