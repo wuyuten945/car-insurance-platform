@@ -984,14 +984,14 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
         <div class="row">
           <div>
             <label>用途</label>
-            <select id="num-rec-purpose">
+            <select id="num-rec-purpose" onchange="numUpdateRecommendLimits()">
               <option value="phone">📱 電話</option>
               <option value="license">🚗 車牌</option>
               <option value="pin">🔢 PIN / 密碼</option>
             </select>
           </div>
           <div><label>長度</label><input type="number" id="num-rec-length" value="10" min="2" max="12" autocomplete="off"></div>
-          <div><label>開頭</label><input type="text" id="num-rec-prefix" value="09" placeholder="如 09 / ABC" autocomplete="off" data-form-type="other"></div>
+          <div><label>開頭</label><input type="text" id="num-rec-prefix" value="09" placeholder="如 09 / ABC" autocomplete="off" data-form-type="other" style="text-transform:uppercase"></div>
         </div>
         <button type="button" onclick="numRecommendSubmit()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🎯 產生 30 組吉祥號碼</button>
         <div id="num-rec-results" style="margin-top:10px;max-height:75vh;overflow-y:auto;padding-right:4px"></div>
@@ -1345,6 +1345,28 @@ function numSwitchTab(tab) {
   });
   document.querySelectorAll('.num-pane').forEach(function(p){ p.style.display = 'none'; });
   document.getElementById('num-tab-' + tab).style.display = '';
+}
+
+// 智能建議：依用途動態調整長度上限 + 開頭預設值（與前台一致）
+function numUpdateRecommendLimits() {
+  var p = document.getElementById('num-rec-purpose');
+  var lenEl = document.getElementById('num-rec-length');
+  var prefixEl = document.getElementById('num-rec-prefix');
+  if (!p || !lenEl || !prefixEl) return;
+  var purpose = p.value;
+  if (purpose === 'license') {
+    lenEl.max = 7;
+    if (parseInt(lenEl.value, 10) > 7) lenEl.value = 7;
+    prefixEl.value = '';
+    prefixEl.placeholder = '如 ABC、AAA（監理站發的英文字）';
+  } else if (purpose === 'phone') {
+    lenEl.max = 12;
+    if (!prefixEl.value) prefixEl.value = '09';
+    prefixEl.placeholder = '如 09';
+  } else {
+    lenEl.max = 12;
+    prefixEl.placeholder = '（可留空）';
+  }
 }
 
 // ─── 前台同款視覺元件（綜合儀表 + 年齡分區 + 磁場 bar chart）─────
@@ -1881,6 +1903,8 @@ async function numRecommendSubmit() {
   var purpose = document.getElementById('num-rec-purpose').value;
   var length = parseInt(document.getElementById('num-rec-length').value, 10) || 10;
   var prefix = document.getElementById('num-rec-prefix').value.trim();
+  // 含字母的 prefix 統一轉大寫送 API（與前台一致）
+  if (/[A-Za-z]/.test(prefix)) prefix = prefix.toUpperCase();
   var box = document.getElementById('num-rec-results');
 
   // 從個人分析快照中推導 exclude / require — 6 個欄位整合
