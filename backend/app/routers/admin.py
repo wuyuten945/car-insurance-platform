@@ -317,16 +317,16 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <div id="num-tab-personal" class="num-pane">
         <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">輸入客戶 / 自己的身分證、生日、電話、車牌（每項可填可不填，至少填一項）。同個人有兩支電話 / 兩台車可分別填入,會一起整合分析,結果會自動帶入智能建議避凶補吉。</div>
         <div class="row">
-          <div><label>身分證字號</label><input type="text" id="num-id" placeholder="A123456789" maxlength="10" style="text-transform:uppercase"></div>
-          <div><label>生日（西元）</label><input type="text" id="num-birthday" placeholder="1985/03/15" maxlength="10"></div>
+          <div><label>身分證字號</label><input type="text" id="num-id" placeholder="A123456789" maxlength="10" autocomplete="off" data-form-type="other" style="text-transform:uppercase"></div>
+          <div><label>生日（西元）</label><input type="text" id="num-birthday" placeholder="1985/03/15" maxlength="10" autocomplete="off" data-form-type="other"></div>
         </div>
         <div class="row">
-          <div><label>電話</label><input type="text" id="num-phone" placeholder="0912345678"></div>
-          <div><label>電話 2（選填）</label><input type="text" id="num-phone2" placeholder="0987654321"></div>
+          <div><label>電話</label><input type="text" id="num-phone" placeholder="0912345678" autocomplete="off" data-form-type="other"></div>
+          <div><label>電話 2（選填）</label><input type="text" id="num-phone2" placeholder="0987654321" autocomplete="off" data-form-type="other"></div>
         </div>
         <div class="row">
-          <div><label>車牌（含英文字也可）</label><input type="text" id="num-license" placeholder="如 ABC-1234" maxlength="12" style="text-transform:uppercase"></div>
-          <div><label>車牌 2（含英文字也可,選填）</label><input type="text" id="num-license2" placeholder="如 XYZ-5678" maxlength="12" style="text-transform:uppercase"></div>
+          <div><label>車牌（含英文字也可）</label><input type="text" id="num-license" placeholder="如 ABC-1234" maxlength="12" autocomplete="off" data-form-type="other" style="text-transform:uppercase"></div>
+          <div><label>車牌 2（含英文字也可,選填）</label><input type="text" id="num-license2" placeholder="如 XYZ-5678" maxlength="12" autocomplete="off" data-form-type="other" style="text-transform:uppercase"></div>
         </div>
         <button onclick="numAutoSubmit()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🔍 分析</button>
         <div id="num-personal-results" style="margin-top:10px"></div>
@@ -335,9 +335,9 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <!-- Tab: 進階分析 -->
       <div id="num-tab-advanced" class="num-pane" style="display:none">
         <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">1–3 組號碼任意分析，多組會合併計算交互作用（A1 天醫消絕命、A3 延年壓六煞、生氣消禍害等規則）。</div>
-        <div><label>號碼 1</label><input type="text" id="num-m1" placeholder="如 13311331"></div>
-        <div><label>號碼 2（選填）</label><input type="text" id="num-m2" placeholder="如 0912345678"></div>
-        <div><label>號碼 3（選填）</label><input type="text" id="num-m3" placeholder="如 A1234"></div>
+        <div><label>號碼 1</label><input type="text" id="num-m1" placeholder="如 13311331" autocomplete="off" data-form-type="other"></div>
+        <div><label>號碼 2（選填）</label><input type="text" id="num-m2" placeholder="如 0912345678" autocomplete="off" data-form-type="other"></div>
+        <div><label>號碼 3（選填）</label><input type="text" id="num-m3" placeholder="如 A1234" autocomplete="off" data-form-type="other"></div>
         <button onclick="numManualSubmit()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🔍 分析</button>
         <div id="num-manual-results" style="margin-top:10px"></div>
       </div>
@@ -354,8 +354,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
               <option value="pin">🔢 PIN / 密碼</option>
             </select>
           </div>
-          <div><label>長度</label><input type="number" id="num-rec-length" value="10" min="2" max="12"></div>
-          <div><label>開頭</label><input type="text" id="num-rec-prefix" value="09" placeholder="如 09 / ABC"></div>
+          <div><label>長度</label><input type="number" id="num-rec-length" value="10" min="2" max="12" autocomplete="off"></div>
+          <div><label>開頭</label><input type="text" id="num-rec-prefix" value="09" placeholder="如 09 / ABC" autocomplete="off" data-form-type="other"></div>
         </div>
         <button onclick="numRecommendSubmit()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🎯 產生 30 組吉祥號碼</button>
         <div id="num-rec-results" style="margin-top:10px;max-height:500px;overflow-y:auto"></div>
@@ -1276,21 +1276,24 @@ window._numPersonalSnapshot = null;  // 個人分析結果快取（給智能建�
 
 // ────── UI helpers ──────
 function _numClearAllInputs() {
-  // 防個資殘留：每次關 / 開都清空所有輸入和結果
-  ['num-id','num-birthday','num-phone','num-phone2','num-license','num-license2',
-   'num-m1','num-m2','num-m3','num-rec-prefix'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.value = '';
-  });
+  // 防個資殘留：每次關 / 開都清空 modal 內所有 input + 結果區
+  var modal = document.getElementById('numerology-modal');
+  if (modal) {
+    modal.querySelectorAll('input').forEach(function(el){
+      // 跳過 number 預設值;其他全清空
+      if (el.id === 'num-rec-length') el.value = '10';
+      else if (el.id === 'num-rec-prefix') el.value = '09';
+      else el.value = '';
+    });
+    modal.querySelectorAll('select').forEach(function(el){
+      // 智能建議用途下拉:回到預設第一個
+      if (el.id === 'num-rec-purpose') el.selectedIndex = 0;
+    });
+  }
   ['num-personal-results','num-manual-results','num-rec-results'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.innerHTML = '';
   });
-  // 重設智能建議的長度與開頭預設值
-  var lenEl = document.getElementById('num-rec-length');
-  if (lenEl) lenEl.value = 10;
-  var prefixEl = document.getElementById('num-rec-prefix');
-  if (prefixEl) prefixEl.value = '09';
   // 清掉個人分析快照
   window._numPersonalSnapshot = null;
 }
@@ -1305,6 +1308,8 @@ function openNumerologyModal() {
   _numClearAllInputs();   // 開啟前清空,避免上次操作的個資殘留
   document.getElementById('numerology-modal').style.display = 'flex';
   numSwitchTab('personal');
+  // 50ms 後再清一次,擊敗瀏覽器 autofill / autocomplete 還原
+  setTimeout(_numClearAllInputs, 50);
 }
 
 function closeNumerologyLoginRequired(goLogin) {
@@ -2882,6 +2887,8 @@ function doLogout() {
   // 停掉閒置計時 + 清空快速搜尋
   _stopIdleTimer();
   var qsBox = document.getElementById('qs-results'); if (qsBox) qsBox.innerHTML = '';
+  // 清空數字易經所有欄位 + 結果（防個資殘留）
+  if (typeof _numClearAllInputs === 'function') _numClearAllInputs();
   var qsIn = document.getElementById('qs-input'); if (qsIn) qsIn.value = '';
   document.title = document.title.replace(/^⚠[^-]*- /, '');
 }
