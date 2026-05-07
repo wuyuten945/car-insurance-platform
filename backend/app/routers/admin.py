@@ -299,25 +299,6 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   </div>
 
   <!-- 上傳大量匯入 — 說明 modal -->
-  <!-- 數字易經：未登入引導對話框 -->
-  <div id="numerology-login-required" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
-    <div style="background:#fff;padding:24px;border-radius:14px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)">
-      <div style="font-size:48px;margin-bottom:6px">🔒</div>
-      <h3 style="margin:0 0 10px;color:#333">請先登入</h3>
-      <p style="font-size:13px;color:#666;margin:0 0 18px;line-height:1.7">
-        「✨ 幫自己和客戶拿副好牌」是業務員專屬功能,<br>請先用您的管理員帳號密碼登入後再使用。
-      </p>
-      <button onclick="closeNumerologyLoginRequired(true)"
-        style="width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">
-        前往登入 →
-      </button>
-      <button onclick="closeNumerologyLoginRequired(false)"
-        style="margin-top:8px;width:100%;padding:8px;background:#f5f5f5;color:#666;border:0;border-radius:8px;font-size:12px;cursor:pointer">
-        取消
-      </button>
-    </div>
-  </div>
-
   <!-- 數字易經 modal -->
   <div id="numerology-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
     <div style="background:#fff;padding:22px 26px;border-radius:14px;max-width:760px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.3)">
@@ -1015,6 +996,25 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <table><thead><tr><th data-i18n="th_time">時間</th><th data-i18n="th_admin">管理員</th><th data-i18n="th_action_col">操作</th><th data-i18n="th_target">目標</th><th data-i18n="th_detail">說明</th><th data-i18n="th_ip">IP</th></tr></thead>
       <tbody id="logs-table"></tbody></table>
     </div>
+  </div>
+</div>
+
+<!-- 數字易經：未登入引導對話框（必須放在 admin-panel 之外,否則登出時 display:none 會吃掉它） -->
+<div id="numerology-login-required" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;padding:24px;border-radius:14px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+    <div style="font-size:48px;margin-bottom:6px">🔒</div>
+    <h3 style="margin:0 0 10px;color:#333">請先登入</h3>
+    <p style="font-size:13px;color:#666;margin:0 0 18px;line-height:1.7">
+      「✨ 幫自己和客戶拿副好牌」是業務員專屬功能,<br>請先用您的管理員帳號密碼登入後再使用。
+    </p>
+    <button onclick="closeNumerologyLoginRequired(true)"
+      style="width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">
+      前往登入 →
+    </button>
+    <button onclick="closeNumerologyLoginRequired(false)"
+      style="margin-top:8px;width:100%;padding:8px;background:#f5f5f5;color:#666;border:0;border-radius:8px;font-size:12px;cursor:pointer">
+      取消
+    </button>
   </div>
 </div>
 
