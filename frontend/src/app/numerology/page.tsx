@@ -55,6 +55,23 @@ interface RecommendOut {
   duplicate_marks?: string[];
 }
 
+interface AgeMappingOut {
+  id_decoded?: string;
+  primary_ranges?: { start: number; end: number; magnet: string }[];
+  timeline?: { age_start: number; age_end: number; pair: string; magnet: string; continues?: string }[];
+  error?: string;
+}
+
+interface AutoOut {
+  id?: AnalysisOut;
+  phone?: AnalysisOut;
+  license?: AnalysisOut;
+  id_error?: string;
+  phone_error?: string;
+  license_error?: string;
+  age_mapping?: AgeMappingOut;
+}
+
 // 凶星 → 對應吉星（用於智能建議避凶補吉，與原網站邏輯一致）
 const COUNTER_MAGNET: Record<string, string> = {
   絕命: '天醫',
@@ -118,6 +135,277 @@ export default function NumerologyPage() {
       <p className="text-[10px] text-gray-400 text-center pt-4 border-t border-gray-100">
         本系統僅供參考，不構成任何決策依據。
       </p>
+    </div>
+  );
+}
+
+// ───── 視覺組件 ─────
+
+/** 半圓指針儀表（吉星比例 0–100%） */
+function Gauge({ score, level, color }: { score: number; level: string; color: string }) {
+  const angleRad = Math.PI * (1 - score / 100);
+  const pointerLen = 78;
+  const px = 100 + pointerLen * Math.cos(angleRad);
+  const py = 110 - pointerLen * Math.sin(angleRad);
+  return (
+    <div className="flex flex-col items-center">
+      <svg viewBox="0 0 200 130" className="w-full max-w-[220px]">
+        <path d="M 22 110 A 78 78 0 0 1 178 110" stroke="#e6e8eb" strokeWidth="14" fill="none" strokeLinecap="round" />
+        <path d="M 22 110 A 78 78 0 0 1 60 41"   stroke="#dc2626" strokeWidth="14" fill="none" strokeLinecap="round" />
+        <path d="M 60 41 A 78 78 0 0 1 100 32"   stroke="#f59e0b" strokeWidth="14" fill="none" strokeLinecap="round" />
+        <path d="M 100 32 A 78 78 0 0 1 140 41"  stroke="#84cc16" strokeWidth="14" fill="none" strokeLinecap="round" />
+        <path d="M 140 41 A 78 78 0 0 1 178 110" stroke="#059669" strokeWidth="14" fill="none" strokeLinecap="round" />
+        <line x1="100" y1="110" x2={px.toFixed(1)} y2={py.toFixed(1)} stroke="#1a1d21" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="100" cy="110" r="7" fill="#1a1d21" />
+        <circle cx="100" cy="110" r="3" fill="#fff" />
+      </svg>
+      <div className="text-center -mt-3">
+        <div className="text-3xl font-extrabold" style={{ color }}>
+          {score}<span className="text-base">%</span>
+        </div>
+        <div className="text-sm font-bold" style={{ color }}>{level}</div>
+        <div className="text-[10px] text-gray-400">吉星比例</div>
+      </div>
+    </div>
+  );
+}
+
+/** 環形圖 — 吉/凶 比例 */
+function Donut({ goodSum, badSum }: { goodSum: number; badSum: number }) {
+  const total = Math.max(1, goodSum + badSum);
+  const goodPct = (goodSum / total) * 100;
+  return (
+    <div className="relative flex items-center justify-center">
+      <div
+        className="w-32 h-32 rounded-full"
+        style={{ background: `conic-gradient(#059669 0% ${goodPct}%, #dc2626 ${goodPct}% 100%)` }}
+      />
+      <div className="absolute w-20 h-20 rounded-full bg-white flex flex-col items-center justify-center shadow-inner">
+        <div className="text-sm font-bold text-gray-800">
+          <span className="text-green-700">{goodSum}</span>
+          <span className="text-gray-400 mx-1">/</span>
+          <span className="text-red-600">{badSum}</span>
+        </div>
+        <div className="text-[10px] text-gray-400">吉 / 凶</div>
+      </div>
+    </div>
+  );
+}
+
+/** 8 磁場 vol-bars（音量條） */
+function VolBars({ counts }: { counts: Record<string, number> }) {
+  const max = Math.max(1, ...ALL.map((m) => counts[m] || 0));
+  return (
+    <div className="grid grid-cols-8 gap-1">
+      {ALL.map((m) => {
+        const meta = MAGNET_INFO[m];
+        const n = counts[m] || 0;
+        const pct = (n / max) * 100;
+        return (
+          <div key={m} className="flex flex-col items-center">
+            <div className="relative h-20 w-full bg-gray-100 rounded overflow-hidden flex items-end">
+              <div
+                className="w-full transition-all"
+                style={{
+                  height: `${pct}%`,
+                  backgroundColor: meta.kind === '吉' ? '#059669' : '#dc2626',
+                  minHeight: n > 0 ? '4px' : '0',
+                }}
+              >
+                {n > 0 && <div className="text-[10px] text-white text-center font-bold pt-0.5">{n}</div>}
+              </div>
+            </div>
+            <div className="text-[10px] font-bold mt-1" style={{ color: meta.color }}>{m}</div>
+            <div className="text-[9px] text-gray-400">{meta.brief}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 8 磁場 bar chart（大長條圖，給每張 AnalysisCard 用） */
+function MagnetBarChart({ counts }: { counts: Record<string, number> }) {
+  const max = Math.max(1, ...ALL.map((m) => counts[m] || 0));
+  return (
+    <div className="flex items-end gap-1 h-24 px-1">
+      {ALL.map((m) => {
+        const meta = MAGNET_INFO[m];
+        const n = counts[m] || 0;
+        const pct = (n / max) * 100;
+        return (
+          <div key={m} className="flex-1 flex flex-col items-center gap-1">
+            <div className="text-[10px] font-bold text-gray-600">{n > 0 ? n : ''}</div>
+            <div className="w-full relative" style={{ height: `${Math.max(2, pct)}%`, minHeight: '4px' }}>
+              <div
+                className="absolute inset-0 rounded-t"
+                style={{ backgroundColor: meta.kind === '吉' ? '#059669' : '#dc2626' }}
+              />
+            </div>
+            <div className="text-[9px] text-gray-500">{m}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 重點摘要卡片 */
+function InsightCards({ counts }: { counts: Record<string, number> }) {
+  const goodList = GOOD.map((m) => ({ m, n: counts[m] || 0 })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
+  const badList = BAD.map((m) => ({ m, n: counts[m] || 0 })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
+  const sg = goodList[0];
+  const sb = badList[0];
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {sg && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded">最強吉星</span>
+            <span className="text-sm font-bold text-green-700">{sg.m} ×{sg.n}</span>
+          </div>
+          <p className="text-[11px] text-green-900">{MAGNET_INFO[sg.m].desc}</p>
+        </div>
+      )}
+      {sb && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">最需注意</span>
+            <span className="text-sm font-bold text-red-700">{sb.m} ×{sb.n}</span>
+          </div>
+          <p className="text-[11px] text-red-900">{MAGNET_INFO[sb.m].desc}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 綜合儀表面板 — 整合 id/phone/license 的磁場 */
+function PersonalSummaryCard({ data }: { data: AutoOut }) {
+  const total: Record<string, number> = {};
+  (['id', 'phone', 'license'] as const).forEach((k) => {
+    const c = (data[k]?.magnet_count) || {};
+    Object.entries(c).forEach(([m, n]) => {
+      if (m === '中性') return;
+      total[m] = (total[m] || 0) + (n as number);
+    });
+  });
+  const goodSum = GOOD.reduce((s, m) => s + (total[m] || 0), 0);
+  const badSum = BAD.reduce((s, m) => s + (total[m] || 0), 0);
+  const totalSum = goodSum + badSum;
+  if (totalSum === 0) return null;
+
+  const score = Math.round((goodSum / totalSum) * 100);
+  let level: string, color: string;
+  if (score >= 75) { level = '極佳';   color = '#059669'; }
+  else if (score >= 60) { level = '良好';   color = '#65a30d'; }
+  else if (score >= 45) { level = '持平';   color = '#9e9d24'; }
+  else if (score >= 30) { level = '偏弱';   color = '#ea580c'; }
+  else                  { level = '需注意'; color = '#dc2626'; }
+
+  return (
+    <div className="rounded-2xl bg-white border-2 border-purple-200 p-4 shadow-sm">
+      <div className="text-center mb-2">
+        <h3 className="font-bold text-gray-900">綜合磁場儀表</h3>
+        <p className="text-xs text-gray-500">身分證・電話・車牌 整合分析</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center mb-4">
+        <Gauge score={score} level={level} color={color} />
+        <Donut goodSum={goodSum} badSum={badSum} />
+      </div>
+
+      <div className="text-xs font-bold text-gray-600 mb-2">磁場強度</div>
+      <VolBars counts={total} />
+
+      <div className="text-xs font-bold text-gray-600 mt-4 mb-2">重點摘要</div>
+      <InsightCards counts={total} />
+    </div>
+  );
+}
+
+/** 年齡分區 — 從身分證解碼出來的人生時間軸 */
+function AgeMappingCard({ am }: { am: AgeMappingOut }) {
+  if (am.error) return <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{am.error}</div>;
+  const ranges = am.primary_ranges || [];
+  const timeline = (am.timeline || []).filter((e) => e.age_start <= 70);
+  if (ranges.length === 0 && timeline.length === 0) return null;
+
+  const maxAge = Math.max(70, ...ranges.map((r) => r.end));
+  const axisTicks = [0, 10, 20, 30, 40, 50, 60, 70].filter((a) => a <= maxAge);
+
+  return (
+    <div className="rounded-xl bg-white border border-gray-200 p-3 mb-3">
+      <h3 className="font-bold text-gray-900 text-sm">年齡分區</h3>
+      <p className="text-xs text-gray-500 mb-3">{am.id_decoded}</p>
+
+      {ranges.length > 0 && (
+        <>
+          <div className="text-[11px] font-bold text-gray-600 mb-1">主磁場影響範圍（可重疊）</div>
+          <div className="flex justify-between mb-1 px-12 text-[10px] text-gray-400">
+            {axisTicks.map((a) => <span key={a}>{a}</span>)}
+          </div>
+          <div className="space-y-1.5">
+            {ranges.map((r, i) => {
+              const left = (r.start / maxAge) * 100;
+              const width = ((r.end - r.start) / maxAge) * 100;
+              const meta = MAGNET_INFO[r.magnet];
+              if (!meta) return null;
+              return (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-20 shrink-0">
+                    <div className="text-[11px] font-bold" style={{ color: meta.color }}>{r.magnet}</div>
+                    <div className="text-[9px] text-gray-400">{meta.brief}</div>
+                  </div>
+                  <div className="flex-1 relative h-5 bg-gray-100 rounded">
+                    <div
+                      className="absolute top-0 h-full rounded text-[9px] text-white font-bold flex items-center justify-center"
+                      style={{
+                        left: `${left}%`, width: `${width}%`,
+                        backgroundColor: meta.kind === '吉' ? meta.color : meta.color,
+                      }}
+                    >
+                      {r.start}–{r.end}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {timeline.length > 0 && (
+        <>
+          <div className="text-[11px] font-bold text-gray-600 mt-3 mb-1">年齡細節</div>
+          <div className="overflow-x-auto -mx-1 px-1">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-left p-1 font-bold text-gray-600">年齡</th>
+                  <th className="text-left p-1 font-bold text-gray-600">數字組</th>
+                  <th className="text-left p-1 font-bold text-gray-600">磁場</th>
+                  <th className="text-left p-1 font-bold text-gray-600">說明</th>
+                </tr>
+              </thead>
+              <tbody>
+                {timeline.map((e, i) => {
+                  const meta = MAGNET_INFO[e.magnet];
+                  const note = e.magnet === '伏位' && e.continues ? `（延續${e.continues}）` : '';
+                  return (
+                    <tr key={i} className="border-t border-gray-100">
+                      <td className="p-1 whitespace-nowrap">{e.age_start}–{e.age_end} 歲</td>
+                      <td className="p-1 font-mono">{e.pair}</td>
+                      <td className="p-1 font-bold" style={{ color: meta?.color }}>{e.magnet}</td>
+                      <td className="p-1 text-gray-600">{meta?.desc}{note}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -200,6 +488,26 @@ function AnalysisCard({ label, result }: { label: string; result: AnalysisOut })
         })}
       </div>
 
+      {/* 8 磁場 bar chart */}
+      <div className="pt-2 border-t border-gray-100">
+        <div className="text-[10px] font-bold text-gray-500 mb-1">磁場分布</div>
+        <MagnetBarChart counts={counts} />
+      </div>
+
+      {/* 伏位細分 */}
+      {result.fuwei_breakdown && Object.keys(result.fuwei_breakdown).length > 0 && (
+        <div className="pt-2 border-t border-gray-100">
+          <div className="text-[10px] font-bold text-gray-500 mb-1">伏位細分</div>
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(result.fuwei_breakdown).map(([k, v]) => (
+              <span key={k} className="text-[10px] bg-gray-100 px-2 py-0.5 rounded">
+                {k === '純伏位' ? '純伏位' : `延續${k}`} <strong>×{v as number}</strong>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {result.duplicate_marks && result.duplicate_marks.length > 0 && (
         <div className="text-[10px] text-purple-700 bg-purple-50 rounded p-1.5">
           <b>重複磁場：</b>{result.duplicate_marks.join('、')}
@@ -217,7 +525,7 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
   const [license, setLicense] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const [result, setResult] = useState<{ id?: AnalysisOut; phone?: AnalysisOut; license?: AnalysisOut; id_error?: string; phone_error?: string; license_error?: string } | null>(null);
+  const [result, setResult] = useState<AutoOut | null>(null);
 
   const submit = async () => {
     if (!idNum.trim() && !phone.trim() && !license.trim()) {
@@ -274,8 +582,15 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
 
       {result && (
         <div>
+          {/* 綜合儀表面板（吉/凶比例 + 8 磁場強度 + 重點摘要） */}
+          {(result.id || result.phone || result.license) && <PersonalSummaryCard data={result} />}
+
           {result.id && <AnalysisCard label="身分證" result={result.id} />}
           {result.id_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">身分證：{result.id_error}</div>}
+
+          {/* 年齡分區（從身分證解碼出的人生時間軸） */}
+          {result.age_mapping && <AgeMappingCard am={result.age_mapping} />}
+
           {result.phone && <AnalysisCard label="電話" result={result.phone} />}
           {result.phone_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">電話：{result.phone_error}</div>}
           {result.license && <AnalysisCard label="車牌" result={result.license} />}
