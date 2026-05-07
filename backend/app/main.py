@@ -13,7 +13,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from app.config import settings
 from app.database import create_tables
-from app.routers import auth, customers, policies, renewal, accidents, claims, chatbot, notifications, rental, inspection, admin, oauth, admin_api, admin_console, line_bot, quote_requests
+from app.routers import auth, customers, policies, renewal, accidents, claims, chatbot, notifications, rental, inspection, admin, oauth, admin_api, admin_console, line_bot, quote_requests, numerology
 from app.tasks.policy_expiry_notifier import check_policy_expiry
 from app.tasks.inspection_expiry_notifier import check_inspection_expiry
 
@@ -267,6 +267,7 @@ app.include_router(admin_console.router, prefix="/admin-console", tags=["管理�
 app.include_router(inspection.router, prefix="/api/v1/inspection-stations", tags=["驗車"])
 app.include_router(line_bot.router, prefix="/api/v1/line-bot", tags=["LINE Bot"])
 app.include_router(quote_requests.router, prefix="/api/v1/quote-requests", tags=["詢價工單"])
+app.include_router(numerology.router, prefix="/api/v1/numerology", tags=["數字易經"])
 
 
 @app.get("/api/v1/health", tags=["系統"])

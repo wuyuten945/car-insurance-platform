@@ -310,60 +310,50 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <div style="display:flex;gap:4px;background:#F5F5F5;border-radius:8px;padding:4px;margin-bottom:12px">
         <button class="num-tab" data-tab="personal" onclick="numSwitchTab('personal')" style="flex:1;padding:8px;border:0;border-radius:6px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#9C27B0">個人分析</button>
         <button class="num-tab" data-tab="advanced" onclick="numSwitchTab('advanced')" style="flex:1;padding:8px;border:0;border-radius:6px;background:transparent;font-size:13px;font-weight:600;cursor:pointer;color:#666">進階分析</button>
-        <button class="num-tab" data-tab="recommend" onclick="numSwitchTab('recommend')" style="flex:1;padding:8px;border:0;border-radius:6px;background:transparent;font-size:13px;font-weight:600;cursor:pointer;color:#666">吉祥推薦 (30 組)</button>
+        <button class="num-tab" data-tab="recommend" onclick="numSwitchTab('recommend')" style="flex:1;padding:8px;border:0;border-radius:6px;background:transparent;font-size:13px;font-weight:600;cursor:pointer;color:#666">智能建議 (30 組)</button>
       </div>
 
-      <!-- Tab: Personal -->
+      <!-- Tab: 個人分析 -->
       <div id="num-tab-personal" class="num-pane">
-        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">填入客戶 / 自己的常用號碼，下方即時顯示分析。多輸入幾組可比較哪組能量最佳。</div>
+        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">輸入客戶 / 自己的身分證、電話、車牌（4 位數字），三項只填部分也可。分析結果會儲存到智能建議分頁，自動避凶補吉。</div>
         <div class="row">
-          <div><label>身分證字號</label><input type="text" id="num-id" placeholder="A123456789" maxlength="10" style="text-transform:uppercase" oninput="numRender()"></div>
-          <div><label>生日</label><input type="date" id="num-birth" oninput="numRender()"></div>
+          <div><label>身分證字號</label><input type="text" id="num-id" placeholder="A123456789" maxlength="10" style="text-transform:uppercase"></div>
+          <div><label>電話</label><input type="text" id="num-phone" placeholder="0912345678"></div>
         </div>
         <div class="row">
-          <div><label>手機 1</label><input type="tel" id="num-phone1" placeholder="0912-345-678" oninput="numRender()"></div>
-          <div><label>手機 2（選填）</label><input type="tel" id="num-phone2" oninput="numRender()"></div>
+          <div><label>車牌（4 位數字）</label><input type="text" id="num-license" placeholder="1234" maxlength="4"></div>
+          <div></div>
         </div>
-        <div class="row">
-          <div><label>汽車車牌 1</label><input type="text" id="num-car1" style="text-transform:uppercase" oninput="numRender()" placeholder="ABC-1234"></div>
-          <div><label>汽車車牌 2（選填）</label><input type="text" id="num-car2" style="text-transform:uppercase" oninput="numRender()"></div>
-        </div>
-        <div class="row">
-          <div><label>機車車牌 1（選填）</label><input type="text" id="num-moto1" style="text-transform:uppercase" oninput="numRender()"></div>
-          <div><label>機車車牌 2（選填）</label><input type="text" id="num-moto2" style="text-transform:uppercase" oninput="numRender()"></div>
-        </div>
+        <button onclick="numAutoSubmit()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🔍 分析</button>
         <div id="num-personal-results" style="margin-top:10px"></div>
       </div>
 
-      <!-- Tab: Advanced -->
+      <!-- Tab: 進階分析 -->
       <div id="num-tab-advanced" class="num-pane" style="display:none">
-        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">5 個自定號碼任意分析（信用卡末四、密碼、員工編號、銀行帳號…）</div>
-        <div id="num-adv-rows"></div>
-        <div id="num-adv-results" style="margin-top:10px"></div>
+        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">1–3 組號碼任意分析，多組會合併計算交互作用（A1 天醫消絕命、A3 延年壓六煞、生氣消禍害等規則）。</div>
+        <div><label>號碼 1</label><input type="text" id="num-m1" placeholder="如 13311331"></div>
+        <div><label>號碼 2（選填）</label><input type="text" id="num-m2" placeholder="如 0912345678"></div>
+        <div><label>號碼 3（選填）</label><input type="text" id="num-m3" placeholder="如 A1234"></div>
+        <button onclick="numManualSubmit()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🔍 分析</button>
+        <div id="num-manual-results" style="margin-top:10px"></div>
       </div>
 
-      <!-- Tab: Recommend -->
+      <!-- Tab: 智能建議 -->
       <div id="num-tab-recommend" class="num-pane" style="display:none">
-        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">產生 30 組高分吉祥號碼，業務員可從中挑選最合客戶的。</div>
+        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">產生 30 組高分號碼，自動讀取「個人分析」結果避凶補吉。請先到個人分析跑一次以提供參照。</div>
         <div class="row">
           <div>
-            <label>類型</label>
-            <select id="num-rec-type">
-              <option value="phone">📱 手機 (10 碼，09 開頭)</option>
-              <option value="plate_car">🚗 汽車車牌 (4 碼)</option>
-              <option value="plate_moto">🛵 機車車牌 (3 碼)</option>
-              <option value="pin">🔢 PIN 密碼 (6 碼)</option>
-              <option value="custom">✏️ 自訂長度</option>
+            <label>用途</label>
+            <select id="num-rec-purpose">
+              <option value="phone">📱 電話</option>
+              <option value="license">🚗 車牌</option>
+              <option value="pin">🔢 PIN / 密碼</option>
             </select>
           </div>
-          <div id="num-rec-custom-wrap" style="display:none">
-            <label>自訂長度</label>
-            <input type="number" id="num-rec-len" min="3" max="20" value="8">
-          </div>
+          <div><label>長度</label><input type="number" id="num-rec-length" value="10" min="2" max="12"></div>
+          <div><label>開頭</label><input type="text" id="num-rec-prefix" value="09" placeholder="如 09 / ABC"></div>
         </div>
-        <div style="margin-top:8px;font-size:11px;color:#666">偏好能量（多選 → 加分）：</div>
-        <div id="num-rec-energies" style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px"></div>
-        <button onclick="numRecommend()" style="width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🎯 產生 30 組吉祥號碼</button>
+        <button onclick="numRecommendSubmit()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🎯 產生 30 組吉祥號碼</button>
         <div id="num-rec-results" style="margin-top:10px;max-height:500px;overflow-y:auto"></div>
       </div>
 
@@ -1244,113 +1234,27 @@ function _alignInsured(prefix) {
 }
 
 // ════════════════════════════════════════════════
-// 數字易經（Number I-Ching）— 八宅遊星演算法
+// 數字易經（Number I-Ching）— 透過 BOPINAN 後端代理至 numerology-easing API
 // ════════════════════════════════════════════════
-var NUM_DIGIT_GUA = { '1':1,'2':2,'3':3,'4':4,'6':6,'7':7,'8':8,'9':9 };
-var NUM_TABLE = {
-  1: { 1:'伏位',2:'絕命',3:'天醫',4:'生氣',6:'六煞',7:'禍害',8:'五鬼',9:'延年' },
-  2: { 1:'絕命',2:'伏位',3:'禍害',4:'五鬼',6:'延年',7:'天醫',8:'生氣',9:'六煞' },
-  3: { 1:'天醫',2:'禍害',3:'伏位',4:'延年',6:'五鬼',7:'絕命',8:'六煞',9:'生氣' },
-  4: { 1:'生氣',2:'五鬼',3:'延年',4:'伏位',6:'禍害',7:'六煞',8:'絕命',9:'天醫' },
-  6: { 1:'六煞',2:'延年',3:'五鬼',4:'禍害',6:'伏位',7:'生氣',8:'天醫',9:'絕命' },
-  7: { 1:'禍害',2:'天醫',3:'絕命',4:'六煞',6:'生氣',7:'伏位',8:'延年',9:'五鬼' },
-  8: { 1:'五鬼',2:'生氣',3:'六煞',4:'絕命',6:'天醫',7:'延年',8:'伏位',9:'禍害' },
-  9: { 1:'延年',2:'六煞',3:'生氣',4:'天醫',6:'絕命',7:'五鬼',8:'禍害',9:'伏位' },
+var NUM_GOOD = ['天醫','生氣','延年','伏位'];
+var NUM_BAD  = ['絕命','五鬼','六煞','禍害'];
+var NUM_ALL = NUM_GOOD.concat(NUM_BAD);
+var NUM_INFO = {
+  '天醫': { kind:'吉', brief:'貴人財富', desc:'貴人相助、財運穩固、化險為夷', color:'#F9A825' },
+  '生氣': { kind:'吉', brief:'機會人緣', desc:'正能量、機會多、人緣亨通',     color:'#2E7D32' },
+  '延年': { kind:'吉', brief:'長久穩定', desc:'感情和諧、健康長壽、做事持久', color:'#388E3C' },
+  '伏位': { kind:'吉', brief:'平穩守成', desc:'按部就班、安守本分、穩中求進', color:'#558B2F' },
+  '絕命': { kind:'凶', brief:'破財損傷', desc:'破財、健康危機、意外損失',     color:'#B71C1C' },
+  '五鬼': { kind:'凶', brief:'是非小人', desc:'口舌官司、小人作祟、心神不寧', color:'#C62828' },
+  '六煞': { kind:'凶', brief:'感情糾葛', desc:'桃花是非、人際困擾、感情風波', color:'#D84315' },
+  '禍害': { kind:'凶', brief:'爭執病災', desc:'病災、爭執糾紛、運勢起伏',     color:'#E65100' },
 };
-var NUM_ENERGY_INFO = {
-  '生氣': { type:'A', emoji:'🌟', desc:'貴人相助、活力旺盛、事業突破', score:3, color:'#2E7D32' },
-  '延年': { type:'A', emoji:'💚', desc:'健康長壽、感情和諧、家業穩定', score:2, color:'#388E3C' },
-  '天醫': { type:'A', emoji:'💛', desc:'財運興旺、化解病災、貴人提拔', score:2, color:'#F9A825' },
-  '伏位': { type:'N', emoji:'⚪', desc:'守成穩定、無大起無大落',         score:0, color:'#757575' },
-  '禍害': { type:'B', emoji:'⚠️', desc:'病痛煩惱、健康警訊、易損財',     score:-1.5, color:'#E65100' },
-  '六煞': { type:'B', emoji:'🌀', desc:'感情糾葛、官非訴訟、煩惱多',     score:-2, color:'#D84315' },
-  '五鬼': { type:'B', emoji:'👻', desc:'口舌是非、小人糾纏、莫名破財',   score:-2, color:'#C62828' },
-  '絕命': { type:'B', emoji:'🔴', desc:'損失重大、感情破裂、意外傷害',   score:-3, color:'#B71C1C' },
-};
-var NUM_ENERGY_LIST = ['生氣','延年','天醫','伏位','禍害','六煞','五鬼','絕命'];
-
-function numDigitsOnly(s) { return (s || '').replace(/\\D+/g, ''); }
-
-function numAnalyze(input) {
-  var d = numDigitsOnly(input);
-  var pairs = [], energyCounts = {}, total = 0, aux = 0, inAux = 0;
-  for (var i = 0; i < d.length - 1; i++) {
-    var a = d[i], b = d[i+1];
-    var ag = NUM_DIGIT_GUA[a], bg = NUM_DIGIT_GUA[b];
-    if (!ag || !bg) continue;
-    var energy = NUM_TABLE[ag][bg];
-    pairs.push({ a:a, b:b, energy:energy });
-    energyCounts[energy] = (energyCounts[energy] || 0) + 1;
-    var meta = NUM_ENERGY_INFO[energy];
-    total += meta.score;
-    if (meta.type === 'A') aux++;
-    else if (meta.type === 'B') inAux++;
-  }
-  var rating, label, color;
-  if (total >= 5) { rating='excellent'; label='★★★ 大吉'; color='#2E7D32'; }
-  else if (total >= 1) { rating='good'; label='★★ 吉'; color='#558B2F'; }
-  else if (total >= -2) { rating='neutral'; label='★ 平'; color='#757575'; }
-  else { rating='bad'; label='凶 — 建議更換'; color='#C62828'; }
-  return { digits:d, pairs:pairs, energyCounts:energyCounts,
-           auspiciousCount:aux, inauspiciousCount:inAux,
-           totalScore:total, rating:rating, ratingLabel:label, ratingColor:color };
-}
-
-function _numComputeRecommend(opts) {
-  var out = [], seen = {}, attempts = 0;
-  var maxAttempts = Math.max(50000, opts.count * 800);
-  var minScore = opts.minScore != null ? opts.minScore : 2;
-  var pref = opts.preferredEnergies || [];
-  while (out.length < opts.count && attempts < maxAttempts) {
-    attempts++;
-    var num = opts.prefix || '';
-    while (num.length < opts.length) {
-      num += String(Math.floor(Math.random() * 10));
-    }
-    if (seen[num]) continue;
-    seen[num] = true;
-    var a = numAnalyze(num);
-    if (a.totalScore < minScore) continue;
-    var bonus = 0;
-    for (var i = 0; i < pref.length; i++) bonus += (a.energyCounts[pref[i]] || 0) * 1.5;
-    out.push({ number:num, analysis:a, bonus:bonus });
-  }
-  out.sort(function(x, y){ return (y.analysis.totalScore + y.bonus) - (x.analysis.totalScore + x.bonus); });
-  return out;
-}
+window._numPersonalSnapshot = null;  // 個人分析結果快取（給智能建議讀凶星）
 
 // ────── UI helpers ──────
-window._numCurrentTab = 'personal';
-window._numPreferred = ['生氣','延年','天醫'];
-
 function openNumerologyModal() {
   document.getElementById('numerology-modal').style.display = 'flex';
   numSwitchTab('personal');
-  // 進階分析的 5 列預設
-  if (!document.getElementById('num-adv-row-0')) {
-    var html = '';
-    for (var i = 0; i < 5; i++) {
-      html += '<div class="row" style="margin-bottom:6px"><div><input type="text" id="num-adv-label-'+i+'" placeholder="標籤" oninput="numRender()" value="自定 '+(i+1)+'"></div><div style="flex:2"><input type="text" id="num-adv-value-'+i+'" placeholder="號碼" oninput="numRender()" id="num-adv-row-'+i+'"></div></div>';
-    }
-    document.getElementById('num-adv-rows').innerHTML = html;
-  }
-  // 偏好能量按鈕
-  var energiesBox = document.getElementById('num-rec-energies');
-  if (energiesBox && !energiesBox.dataset.built) {
-    var hb = '';
-    NUM_ENERGY_LIST.filter(function(e){ return NUM_ENERGY_INFO[e].type !== 'B'; }).forEach(function(e){
-      hb += '<button onclick="numTogglePreferred(\\'' + e + '\\',this)" data-energy="' + e + '" style="padding:4px 10px;border:1px solid;border-radius:99px;font-size:11px;cursor:pointer">'
-          + NUM_ENERGY_INFO[e].emoji + ' ' + e + '</button>';
-    });
-    energiesBox.innerHTML = hb;
-    energiesBox.dataset.built = '1';
-    numUpdatePreferredUI();
-  }
-  // type select toggle
-  document.getElementById('num-rec-type').addEventListener('change', function(){
-    document.getElementById('num-rec-custom-wrap').style.display = this.value === 'custom' ? '' : 'none';
-  });
-  numRender();
 }
 
 function closeNumerologyModal() {
@@ -1358,7 +1262,6 @@ function closeNumerologyModal() {
 }
 
 function numSwitchTab(tab) {
-  window._numCurrentTab = tab;
   document.querySelectorAll('.num-tab').forEach(function(b){
     if (b.dataset.tab === tab) {
       b.style.background = '#fff'; b.style.color = '#9C27B0';
@@ -1368,123 +1271,234 @@ function numSwitchTab(tab) {
   });
   document.querySelectorAll('.num-pane').forEach(function(p){ p.style.display = 'none'; });
   document.getElementById('num-tab-' + tab).style.display = '';
-  numRender();
 }
 
-function numTogglePreferred(e, btn) {
-  var idx = window._numPreferred.indexOf(e);
-  if (idx >= 0) window._numPreferred.splice(idx, 1);
-  else window._numPreferred.push(e);
-  numUpdatePreferredUI();
-}
-function numUpdatePreferredUI() {
-  document.querySelectorAll('#num-rec-energies button').forEach(function(b){
-    var e = b.dataset.energy;
-    var on = window._numPreferred.indexOf(e) >= 0;
-    var meta = NUM_ENERGY_INFO[e];
-    if (on) {
-      b.style.background = meta.color + '30';
-      b.style.borderColor = meta.color;
-      b.style.color = meta.color;
-    } else {
-      b.style.background = '#fff'; b.style.borderColor = '#ddd'; b.style.color = '#999';
-    }
-  });
-}
-
-function _numAnalysisCardHtml(label, input) {
-  if (!input || !input.trim()) return '';
-  var a = numAnalyze(input);
-  if (a.digits.length < 2) {
-    return '<div style="background:#F5F5F5;padding:8px;border-radius:6px;font-size:11px;color:#999;margin:4px 0">'
-         + '<b>' + label + '</b>：' + input + ' — 字數不足' + '</div>';
+// 渲染 single 分析結果到 HTML
+function _numAnalysisCardHtml(label, result) {
+  if (!result) return '';
+  if (result.error) {
+    return '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px;margin:6px 0">'+label+'：'+result.error+'</div>';
   }
+  var counts = result.magnet_count || {};
+  var goodSum = 0, badSum = 0;
+  NUM_GOOD.forEach(function(m){ goodSum += counts[m] || 0; });
+  NUM_BAD.forEach(function(m){ badSum += counts[m] || 0; });
+  var total = goodSum + badSum;
+  var pct = total > 0 ? Math.round(goodSum / total * 100) : 0;
+  var level, levelColor;
+  if (pct >= 75) { level='極佳'; levelColor='#2E7D32'; }
+  else if (pct >= 60) { level='良好'; levelColor='#558B2F'; }
+  else if (pct >= 45) { level='持平'; levelColor='#9E9D24'; }
+  else if (pct >= 30) { level='偏弱'; levelColor='#E65100'; }
+  else { level='需注意'; levelColor='#C62828'; }
+
+  var pairs = (result.pairs || []).filter(function(p){ return !p.extended; });
+
   var html = '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:10px;margin:6px 0">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
-  html += '<div><div style="font-size:11px;color:#999">' + label + '</div><div style="font-family:monospace;font-weight:bold">' + input + '</div></div>';
-  html += '<div style="text-align:right"><b style="color:' + a.ratingColor + '">' + a.ratingLabel + '</b>';
-  html += '<div style="font-size:10px;color:#999">分數 ' + a.totalScore.toFixed(1) + ' · 吉 ' + a.auspiciousCount + ' / 凶 ' + a.inauspiciousCount + '</div></div>';
+  html += '<div><div style="font-size:11px;color:#999">'+label+'</div><div style="font-family:monospace;font-weight:bold">'+(result.input||'')+'</div></div>';
+  html += '<div style="text-align:right"><b style="color:'+levelColor+'">'+level+' '+pct+'%</b><div style="font-size:10px;color:#999">吉 '+goodSum+' · 凶 '+badSum+'</div></div>';
   html += '</div>';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
-  a.pairs.forEach(function(p){
-    var meta = NUM_ENERGY_INFO[p.energy];
-    html += '<span style="background:' + meta.color + '20;color:' + meta.color
-          + ';padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600" title="' + meta.desc + '">'
-          + p.a + p.b + meta.emoji + p.energy + '</span>';
+
+  if (pairs.length > 0) {
+    html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
+    pairs.forEach(function(p) {
+      var info = NUM_INFO[p.magnet];
+      if (!info) return;
+      var disp = (p.raw_pair && p.after_assimilation && p.raw_pair !== p.after_assimilation)
+                  ? p.raw_pair+'→'+p.after_assimilation : (p.raw_pair || '');
+      var note = (p.magnet === '伏位' && p.continues) ? ('（延續'+p.continues+'）') : '';
+      var op = (p.active === false) ? '0.4' : '1';
+      html += '<span style="background:'+info.color+'20;color:'+info.color+';padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;opacity:'+op+'" title="'+info.desc+'">'+disp+' '+p.magnet+note+'</span>';
+    });
+    html += '</div>';
+  }
+
+  // 8 磁場 grid
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-top:8px;padding-top:6px;border-top:1px solid #f0f0f0">';
+  NUM_ALL.forEach(function(m){
+    var info = NUM_INFO[m];
+    var n = counts[m] || 0;
+    var bg = n > 0 ? info.color + '15' : '#F5F5F5';
+    var c = n > 0 ? info.color : '#aaa';
+    html += '<div style="background:'+bg+';color:'+c+';text-align:center;padding:4px 2px;border-radius:4px;font-size:10px"><div style="font-weight:bold">'+m+'</div><div style="font-size:14px;font-weight:bold">'+n+'</div><div style="opacity:0.7;font-size:9px">'+info.brief+'</div></div>';
   });
-  html += '</div></div>';
+  html += '</div>';
+
+  if (result.duplicate_marks && result.duplicate_marks.length) {
+    html += '<div style="margin-top:6px;background:#F3E5F5;color:#6A1B9A;padding:4px 8px;border-radius:4px;font-size:10px"><b>重複磁場：</b>'+result.duplicate_marks.join('、')+'</div>';
+  }
+  html += '</div>';
   return html;
 }
 
-function numRender() {
-  if (window._numCurrentTab === 'personal') {
-    var box = document.getElementById('num-personal-results');
-    if (!box) return;
-    var html = '';
-    var fields = [
-      ['身分證字號', 'num-id'], ['生日', 'num-birth'],
-      ['手機 1', 'num-phone1'], ['手機 2', 'num-phone2'],
-      ['汽車車牌 1', 'num-car1'], ['汽車車牌 2', 'num-car2'],
-      ['機車車牌 1', 'num-moto1'], ['機車車牌 2', 'num-moto2'],
-    ];
-    fields.forEach(function(f){
-      var el = document.getElementById(f[1]);
-      if (el && el.value) html += _numAnalysisCardHtml(f[0], el.value);
+// ────── Tab 個人分析（API 一次回三項）──────
+async function numAutoSubmit() {
+  var idn = document.getElementById('num-id').value.trim();
+  var ph = document.getElementById('num-phone').value.trim();
+  var lic = document.getElementById('num-license').value.trim();
+  var box = document.getElementById('num-personal-results');
+  if (!idn && !ph && !lic) {
+    box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">請至少輸入一項</div>';
+    return;
+  }
+  box.innerHTML = '<div style="text-align:center;color:#999;padding:20px"><span style="display:inline-block;animation:spin 1s linear infinite">⏳</span> 分析中⋯（首次喚醒服務約 30 秒）</div>';
+  try {
+    var r = await fetch(CONSOLE_API.replace('/admin-console','') + '/numerology/auto', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN_TOKEN},
+      body: JSON.stringify({ id: idn, phone: ph, license: lic }),
     });
-    box.innerHTML = html || '<div style="color:#999;font-size:11px;padding:10px">填入號碼後即時顯示分析</div>';
-  } else if (window._numCurrentTab === 'advanced') {
-    var box = document.getElementById('num-adv-results');
-    if (!box) return;
-    var html = '';
-    for (var i = 0; i < 5; i++) {
-      var lblEl = document.getElementById('num-adv-label-' + i);
-      var valEl = document.getElementById('num-adv-value-' + i);
-      if (lblEl && valEl && valEl.value) {
-        html += _numAnalysisCardHtml(lblEl.value || ('自定 ' + (i+1)), valEl.value);
-      }
+    var d = await r.json();
+    if (!d.success) {
+      box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">'+(d.message||'分析失敗')+'</div>';
+      return;
     }
-    box.innerHTML = html || '<div style="color:#999;font-size:11px;padding:10px">填入號碼後即時顯示分析</div>';
+    var data = d.data || {};
+    window._numPersonalSnapshot = data;  // 儲存給智能建議用
+    var html = '';
+    if (data.id) html += _numAnalysisCardHtml('身分證', data.id);
+    if (data.id_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">身分證：'+data.id_error+'</div>';
+    if (data.phone) html += _numAnalysisCardHtml('電話', data.phone);
+    if (data.phone_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">電話：'+data.phone_error+'</div>';
+    if (data.license) html += _numAnalysisCardHtml('車牌', data.license);
+    if (data.license_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">車牌：'+data.license_error+'</div>';
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">錯誤：'+e.message+'</div>';
   }
 }
 
-function numRecommend() {
-  var typeVal = document.getElementById('num-rec-type').value;
-  var len, prefix, minScore;
-  if (typeVal === 'phone')      { len=10; prefix='09'; minScore=4; }
-  else if (typeVal === 'plate_car') { len=4; minScore=3; }
-  else if (typeVal === 'plate_moto') { len=3; minScore=2; }
-  else if (typeVal === 'pin')   { len=6; minScore=4; }
-  else { len = parseInt(document.getElementById('num-rec-len').value, 10) || 8; minScore=3; }
+// ────── Tab 進階分析 ──────
+async function numManualSubmit() {
+  var v1 = document.getElementById('num-m1').value.trim();
+  var v2 = document.getElementById('num-m2').value.trim();
+  var v3 = document.getElementById('num-m3').value.trim();
+  var inputs = [v1,v2,v3].filter(Boolean);
+  var box = document.getElementById('num-manual-results');
+  if (inputs.length === 0) {
+    box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">請至少輸入一組</div>';
+    return;
+  }
+  box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">分析中⋯</div>';
+  try {
+    var indiv = [];
+    for (var i = 0; i < inputs.length; i++) {
+      var rr = await fetch(CONSOLE_API.replace('/admin-console','') + '/numerology/analyze', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN_TOKEN},
+        body: JSON.stringify({ input: inputs[i], mode: 'general' }),
+      });
+      var dd = await rr.json();
+      indiv.push((dd.data || {}));
+    }
+    var combined = indiv[0];
+    if (inputs.length > 1) {
+      var rc = await fetch(CONSOLE_API.replace('/admin-console','') + '/numerology/analyze', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN_TOKEN},
+        body: JSON.stringify({ input: inputs.join(''), mode: 'general' }),
+      });
+      var dc = await rc.json();
+      combined = dc.data || {};
+    }
+    var html = '';
+    if (inputs.length > 1) {
+      html += '<p style="font-size:12px;font-weight:bold;color:#666;margin:6px 0">逐組分析：</p>';
+      indiv.forEach(function(r, i){ html += _numAnalysisCardHtml('號碼 '+(i+1), r); });
+      html += '<p style="font-size:12px;font-weight:bold;color:#666;margin:10px 0 6px">合併分析（含交互作用）：</p>';
+    }
+    html += _numAnalysisCardHtml(inputs.length > 1 ? '合併' : '分析', combined);
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">錯誤：'+e.message+'</div>';
+  }
+}
 
+// ────── Tab 智能建議（30 組）──────
+async function numRecommendSubmit() {
+  var purpose = document.getElementById('num-rec-purpose').value;
+  var length = parseInt(document.getElementById('num-rec-length').value, 10) || 10;
+  var prefix = document.getElementById('num-rec-prefix').value.trim();
   var box = document.getElementById('num-rec-results');
-  box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">產生中⋯</div>';
-  setTimeout(function(){
-    var res = _numComputeRecommend({ length:len, count:30, prefix:prefix,
-      minScore:minScore, preferredEnergies: window._numPreferred });
-    if (res.length === 0) {
-      box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">未能產生符合條件的號碼，請降低偏好限制或更換類型</div>';
+
+  // 從個人分析快照中推導 exclude / require
+  var exclude = [], require = [];
+  var COUNTER = { '絕命':'天醫', '五鬼':'生氣', '六煞':'延年', '禍害':'生氣' };
+  if (window._numPersonalSnapshot) {
+    var total = {};
+    ['id','phone','license'].forEach(function(k){
+      var c = (window._numPersonalSnapshot[k] || {}).magnet_count || {};
+      Object.keys(c).forEach(function(m){
+        if (m === '中性') return;
+        total[m] = (total[m] || 0) + c[m];
+      });
+    });
+    NUM_BAD.forEach(function(b){
+      if ((total[b] || 0) > 0) {
+        exclude.push(b);
+        var counter = COUNTER[b];
+        if (counter && require.indexOf(counter) < 0) require.push(counter);
+      }
+    });
+  }
+
+  box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">產生中⋯（首次喚醒服務約 30 秒）</div>';
+  try {
+    var r = await fetch(CONSOLE_API.replace('/admin-console','') + '/numerology/recommend', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN_TOKEN},
+      body: JSON.stringify({
+        purpose: purpose, length: length, prefix: prefix,
+        exclude_magnets: exclude, require_magnets: require,
+        top_n: 30,
+      }),
+    });
+    var d = await r.json();
+    if (!d.success) {
+      box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">'+(d.message||'失敗')+'</div>';
       return;
     }
-    var html = '<div style="font-size:11px;color:#666;margin-bottom:6px">共 ' + res.length + ' 組（依分數高到低）：</div>';
-    res.forEach(function(r, idx) {
-      html += '<div style="background:#fff;border:2px solid ' + r.analysis.ratingColor + ';border-radius:8px;padding:8px 10px;margin-bottom:6px">';
+    var recs = (d.data && d.data.recommendations) || [];
+    if (recs.length === 0) {
+      box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">未能產生符合條件的號碼，請放寬條件再試</div>';
+      return;
+    }
+    var html = '<div style="font-size:11px;color:#666;margin-bottom:6px">共 '+recs.length+' 組';
+    if (exclude.length) html += '　|　已避開：'+exclude.join('、');
+    if (require.length) html += '　|　強化：'+require.join('、');
+    html += '</div>';
+    recs.forEach(function(r){
+      var counts = r.magnet_count || {};
+      var goodSum = 0, badSum = 0;
+      NUM_GOOD.forEach(function(m){ goodSum += counts[m]||0; });
+      NUM_BAD.forEach(function(m){ badSum += counts[m]||0; });
+      html += '<div style="background:#fff;border:2px solid #E1BEE7;border-radius:8px;padding:8px 10px;margin-bottom:6px">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
-      html += '<div style="display:flex;align-items:center;gap:6px"><span style="background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:99px">#' + (idx+1) + '</span>';
-      html += '<span style="font-family:monospace;font-size:18px;font-weight:bold">' + r.number + '</span>';
-      html += '<button onclick="navigator.clipboard.writeText(\\''+r.number+'\\').then(function(){this.textContent=\\'已複製\\';}.bind(this))" style="padding:2px 8px;font-size:10px;background:#E3F2FD;color:#1565C0;border:0;border-radius:4px;cursor:pointer">複製</button></div>';
-      html += '<b style="color:' + r.analysis.ratingColor + ';font-size:12px">' + r.analysis.ratingLabel + ' (' + r.analysis.totalScore.toFixed(1) + ')</b>';
+      html += '<div style="display:flex;align-items:center;gap:6px">';
+      html += '<span style="background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:99px">#'+r.rank+'</span>';
+      html += '<span style="font-family:monospace;font-size:18px;font-weight:bold">'+r.number+'</span>';
+      html += '<button onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent=\\'已複製\\'" style="padding:2px 8px;font-size:10px;background:#E3F2FD;color:#1565C0;border:0;border-radius:4px;cursor:pointer">複製</button>';
+      html += '</div>';
+      html += '<span style="font-size:11px;color:#2E7D32;font-weight:bold">吉 '+goodSum+' · 凶 '+badSum+'</span>';
       html += '</div>';
       html += '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:4px">';
-      r.analysis.pairs.forEach(function(p){
-        var meta = NUM_ENERGY_INFO[p.energy];
-        html += '<span style="background:' + meta.color + '20;color:' + meta.color
-              + ';padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">'
-              + p.a + p.b + meta.emoji + p.energy + '</span>';
+      NUM_ALL.forEach(function(m){
+        var n = counts[m] || 0;
+        if (n === 0) return;
+        var info = NUM_INFO[m];
+        html += '<span style="background:'+info.color+'20;color:'+info.color+';padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">'+m+' ×'+n+'</span>';
       });
-      html += '</div></div>';
+      html += '</div>';
+      if (r.duplicate_marks && r.duplicate_marks.length) {
+        html += '<div style="font-size:10px;color:#6A1B9A;margin-top:3px">'+r.duplicate_marks.join('、')+'</div>';
+      }
+      html += '</div>';
     });
     box.innerHTML = html;
-  }, 30);
+  } catch (e) {
+    box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">錯誤：'+e.message+'</div>';
+  }
 }
 
 // === 詢價工單（admin/agent 端）===
