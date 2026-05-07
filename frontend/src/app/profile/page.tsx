@@ -62,7 +62,7 @@ export default function ProfilePage() {
     { href: '/notifications', icon: Bell, label: t('profile.menu.notifications') },
     { href: '/chatbot', icon: MessageCircle, label: t('profile.menu.chatbot') },
     { href: '/inspection', icon: MapPin, label: t('profile.menu.inspection') },
-    { href: 'https://numerology-easing.ego-intl.com', icon: Sparkles, label: '幫人生拿副好牌（數字易經）', external: true },
+    { href: '/numerology', icon: Sparkles, label: '幫人生拿副好牌（數字易經）' },
   ];
 
   useEffect(() => {

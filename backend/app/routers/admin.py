@@ -148,10 +148,10 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 <div class="header">
   <h1 data-i18n="header_title">BOPINAN — 管理控制台</h1>
   <small id="user-info"></small>
-  <a href="https://numerology-easing.ego-intl.com" target="_blank" rel="noopener" title="幫自己和客戶拿副好牌"
-     style="display:inline-block;background:linear-gradient(90deg,#9C27B0,#E91E63,#FF9800);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer;text-decoration:none">
+  <button type="button" onclick="openNumerologyModal()" title="幫自己和客戶拿副好牌"
+     style="display:inline-block;background:linear-gradient(90deg,#9C27B0,#E91E63,#FF9800);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">
     <span data-i18n="btn_iching">✨ 幫自己和客戶拿副好牌</span>
-  </a>
+  </button>
   <button id="lang-toggle-btn" type="button" onclick="toggleAdminLang()" title="Toggle Language" style="background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">EN</button>
   <button id="change-pw-btn" type="button" onclick="openChangePwModal()" style="display:none;background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer" data-i18n="btn_change_password">變更密碼</button>
   <button class="btn danger" id="logout-btn" style="display:none;padding:4px 12px;font-size:12px;margin-left:10px" onclick="doLogout()" data-i18n="btn_logout">登出</button>
@@ -299,6 +299,80 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   </div>
 
   <!-- 上傳大量匯入 — 說明 modal -->
+  <!-- 數字易經 modal -->
+  <div id="numerology-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
+    <div style="background:#fff;padding:22px 26px;border-radius:14px;max-width:760px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+      <button type="button" onclick="closeNumerologyModal()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888;line-height:1">×</button>
+      <h2 style="margin-top:0;background:linear-gradient(90deg,#9C27B0,#E91E63,#FF9800);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">✨ 數字易經 — 幫自己和客戶拿副好牌</h2>
+      <p style="font-size:11px;color:#666;margin-bottom:12px">八宅遊星 · 4 吉星（生氣/延年/天醫/伏位）vs 4 凶星（絕命/五鬼/六煞/禍害）</p>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:4px;background:#F5F5F5;border-radius:8px;padding:4px;margin-bottom:12px">
+        <button class="num-tab" data-tab="personal" onclick="numSwitchTab('personal')" style="flex:1;padding:8px;border:0;border-radius:6px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#9C27B0">個人分析</button>
+        <button class="num-tab" data-tab="advanced" onclick="numSwitchTab('advanced')" style="flex:1;padding:8px;border:0;border-radius:6px;background:transparent;font-size:13px;font-weight:600;cursor:pointer;color:#666">進階分析</button>
+        <button class="num-tab" data-tab="recommend" onclick="numSwitchTab('recommend')" style="flex:1;padding:8px;border:0;border-radius:6px;background:transparent;font-size:13px;font-weight:600;cursor:pointer;color:#666">吉祥推薦 (30 組)</button>
+      </div>
+
+      <!-- Tab: Personal -->
+      <div id="num-tab-personal" class="num-pane">
+        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">填入客戶 / 自己的常用號碼，下方即時顯示分析。多輸入幾組可比較哪組能量最佳。</div>
+        <div class="row">
+          <div><label>身分證字號</label><input type="text" id="num-id" placeholder="A123456789" maxlength="10" style="text-transform:uppercase" oninput="numRender()"></div>
+          <div><label>生日</label><input type="date" id="num-birth" oninput="numRender()"></div>
+        </div>
+        <div class="row">
+          <div><label>手機 1</label><input type="tel" id="num-phone1" placeholder="0912-345-678" oninput="numRender()"></div>
+          <div><label>手機 2（選填）</label><input type="tel" id="num-phone2" oninput="numRender()"></div>
+        </div>
+        <div class="row">
+          <div><label>汽車車牌 1</label><input type="text" id="num-car1" style="text-transform:uppercase" oninput="numRender()" placeholder="ABC-1234"></div>
+          <div><label>汽車車牌 2（選填）</label><input type="text" id="num-car2" style="text-transform:uppercase" oninput="numRender()"></div>
+        </div>
+        <div class="row">
+          <div><label>機車車牌 1（選填）</label><input type="text" id="num-moto1" style="text-transform:uppercase" oninput="numRender()"></div>
+          <div><label>機車車牌 2（選填）</label><input type="text" id="num-moto2" style="text-transform:uppercase" oninput="numRender()"></div>
+        </div>
+        <div id="num-personal-results" style="margin-top:10px"></div>
+      </div>
+
+      <!-- Tab: Advanced -->
+      <div id="num-tab-advanced" class="num-pane" style="display:none">
+        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">5 個自定號碼任意分析（信用卡末四、密碼、員工編號、銀行帳號…）</div>
+        <div id="num-adv-rows"></div>
+        <div id="num-adv-results" style="margin-top:10px"></div>
+      </div>
+
+      <!-- Tab: Recommend -->
+      <div id="num-tab-recommend" class="num-pane" style="display:none">
+        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">產生 30 組高分吉祥號碼，業務員可從中挑選最合客戶的。</div>
+        <div class="row">
+          <div>
+            <label>類型</label>
+            <select id="num-rec-type">
+              <option value="phone">📱 手機 (10 碼，09 開頭)</option>
+              <option value="plate_car">🚗 汽車車牌 (4 碼)</option>
+              <option value="plate_moto">🛵 機車車牌 (3 碼)</option>
+              <option value="pin">🔢 PIN 密碼 (6 碼)</option>
+              <option value="custom">✏️ 自訂長度</option>
+            </select>
+          </div>
+          <div id="num-rec-custom-wrap" style="display:none">
+            <label>自訂長度</label>
+            <input type="number" id="num-rec-len" min="3" max="20" value="8">
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:#666">偏好能量（多選 → 加分）：</div>
+        <div id="num-rec-energies" style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px"></div>
+        <button onclick="numRecommend()" style="width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🎯 產生 30 組吉祥號碼</button>
+        <div id="num-rec-results" style="margin-top:10px;max-height:500px;overflow-y:auto"></div>
+      </div>
+
+      <div style="margin-top:14px;text-align:right;border-top:1px solid #eee;padding-top:10px">
+        <button onclick="closeNumerologyModal()" style="background:#999;color:#fff;border:0;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer">關閉</button>
+      </div>
+    </div>
+  </div>
+
   <div id="csv-import-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
     <div style="background:#fff;padding:22px 26px;border-radius:14px;max-width:600px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
       <button type="button" onclick="closeCsvImportModal()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888;line-height:1">×</button>
@@ -1167,6 +1241,250 @@ function _alignInsured(prefix) {
   var nameEl = document.getElementById(prefix + '-in-name');
   if (nameEl) nameEl.value = custName;
   _recheckInsuredAlignment(prefix);
+}
+
+// ════════════════════════════════════════════════
+// 數字易經（Number I-Ching）— 八宅遊星演算法
+// ════════════════════════════════════════════════
+var NUM_DIGIT_GUA = { '1':1,'2':2,'3':3,'4':4,'6':6,'7':7,'8':8,'9':9 };
+var NUM_TABLE = {
+  1: { 1:'伏位',2:'絕命',3:'天醫',4:'生氣',6:'六煞',7:'禍害',8:'五鬼',9:'延年' },
+  2: { 1:'絕命',2:'伏位',3:'禍害',4:'五鬼',6:'延年',7:'天醫',8:'生氣',9:'六煞' },
+  3: { 1:'天醫',2:'禍害',3:'伏位',4:'延年',6:'五鬼',7:'絕命',8:'六煞',9:'生氣' },
+  4: { 1:'生氣',2:'五鬼',3:'延年',4:'伏位',6:'禍害',7:'六煞',8:'絕命',9:'天醫' },
+  6: { 1:'六煞',2:'延年',3:'五鬼',4:'禍害',6:'伏位',7:'生氣',8:'天醫',9:'絕命' },
+  7: { 1:'禍害',2:'天醫',3:'絕命',4:'六煞',6:'生氣',7:'伏位',8:'延年',9:'五鬼' },
+  8: { 1:'五鬼',2:'生氣',3:'六煞',4:'絕命',6:'天醫',7:'延年',8:'伏位',9:'禍害' },
+  9: { 1:'延年',2:'六煞',3:'生氣',4:'天醫',6:'絕命',7:'五鬼',8:'禍害',9:'伏位' },
+};
+var NUM_ENERGY_INFO = {
+  '生氣': { type:'A', emoji:'🌟', desc:'貴人相助、活力旺盛、事業突破', score:3, color:'#2E7D32' },
+  '延年': { type:'A', emoji:'💚', desc:'健康長壽、感情和諧、家業穩定', score:2, color:'#388E3C' },
+  '天醫': { type:'A', emoji:'💛', desc:'財運興旺、化解病災、貴人提拔', score:2, color:'#F9A825' },
+  '伏位': { type:'N', emoji:'⚪', desc:'守成穩定、無大起無大落',         score:0, color:'#757575' },
+  '禍害': { type:'B', emoji:'⚠️', desc:'病痛煩惱、健康警訊、易損財',     score:-1.5, color:'#E65100' },
+  '六煞': { type:'B', emoji:'🌀', desc:'感情糾葛、官非訴訟、煩惱多',     score:-2, color:'#D84315' },
+  '五鬼': { type:'B', emoji:'👻', desc:'口舌是非、小人糾纏、莫名破財',   score:-2, color:'#C62828' },
+  '絕命': { type:'B', emoji:'🔴', desc:'損失重大、感情破裂、意外傷害',   score:-3, color:'#B71C1C' },
+};
+var NUM_ENERGY_LIST = ['生氣','延年','天醫','伏位','禍害','六煞','五鬼','絕命'];
+
+function numDigitsOnly(s) { return (s || '').replace(/\\D+/g, ''); }
+
+function numAnalyze(input) {
+  var d = numDigitsOnly(input);
+  var pairs = [], energyCounts = {}, total = 0, aux = 0, inAux = 0;
+  for (var i = 0; i < d.length - 1; i++) {
+    var a = d[i], b = d[i+1];
+    var ag = NUM_DIGIT_GUA[a], bg = NUM_DIGIT_GUA[b];
+    if (!ag || !bg) continue;
+    var energy = NUM_TABLE[ag][bg];
+    pairs.push({ a:a, b:b, energy:energy });
+    energyCounts[energy] = (energyCounts[energy] || 0) + 1;
+    var meta = NUM_ENERGY_INFO[energy];
+    total += meta.score;
+    if (meta.type === 'A') aux++;
+    else if (meta.type === 'B') inAux++;
+  }
+  var rating, label, color;
+  if (total >= 5) { rating='excellent'; label='★★★ 大吉'; color='#2E7D32'; }
+  else if (total >= 1) { rating='good'; label='★★ 吉'; color='#558B2F'; }
+  else if (total >= -2) { rating='neutral'; label='★ 平'; color='#757575'; }
+  else { rating='bad'; label='凶 — 建議更換'; color='#C62828'; }
+  return { digits:d, pairs:pairs, energyCounts:energyCounts,
+           auspiciousCount:aux, inauspiciousCount:inAux,
+           totalScore:total, rating:rating, ratingLabel:label, ratingColor:color };
+}
+
+function _numComputeRecommend(opts) {
+  var out = [], seen = {}, attempts = 0;
+  var maxAttempts = Math.max(50000, opts.count * 800);
+  var minScore = opts.minScore != null ? opts.minScore : 2;
+  var pref = opts.preferredEnergies || [];
+  while (out.length < opts.count && attempts < maxAttempts) {
+    attempts++;
+    var num = opts.prefix || '';
+    while (num.length < opts.length) {
+      num += String(Math.floor(Math.random() * 10));
+    }
+    if (seen[num]) continue;
+    seen[num] = true;
+    var a = numAnalyze(num);
+    if (a.totalScore < minScore) continue;
+    var bonus = 0;
+    for (var i = 0; i < pref.length; i++) bonus += (a.energyCounts[pref[i]] || 0) * 1.5;
+    out.push({ number:num, analysis:a, bonus:bonus });
+  }
+  out.sort(function(x, y){ return (y.analysis.totalScore + y.bonus) - (x.analysis.totalScore + x.bonus); });
+  return out;
+}
+
+// ────── UI helpers ──────
+window._numCurrentTab = 'personal';
+window._numPreferred = ['生氣','延年','天醫'];
+
+function openNumerologyModal() {
+  document.getElementById('numerology-modal').style.display = 'flex';
+  numSwitchTab('personal');
+  // 進階分析的 5 列預設
+  if (!document.getElementById('num-adv-row-0')) {
+    var html = '';
+    for (var i = 0; i < 5; i++) {
+      html += '<div class="row" style="margin-bottom:6px"><div><input type="text" id="num-adv-label-'+i+'" placeholder="標籤" oninput="numRender()" value="自定 '+(i+1)+'"></div><div style="flex:2"><input type="text" id="num-adv-value-'+i+'" placeholder="號碼" oninput="numRender()" id="num-adv-row-'+i+'"></div></div>';
+    }
+    document.getElementById('num-adv-rows').innerHTML = html;
+  }
+  // 偏好能量按鈕
+  var energiesBox = document.getElementById('num-rec-energies');
+  if (energiesBox && !energiesBox.dataset.built) {
+    var hb = '';
+    NUM_ENERGY_LIST.filter(function(e){ return NUM_ENERGY_INFO[e].type !== 'B'; }).forEach(function(e){
+      hb += '<button onclick="numTogglePreferred(\\'' + e + '\\',this)" data-energy="' + e + '" style="padding:4px 10px;border:1px solid;border-radius:99px;font-size:11px;cursor:pointer">'
+          + NUM_ENERGY_INFO[e].emoji + ' ' + e + '</button>';
+    });
+    energiesBox.innerHTML = hb;
+    energiesBox.dataset.built = '1';
+    numUpdatePreferredUI();
+  }
+  // type select toggle
+  document.getElementById('num-rec-type').addEventListener('change', function(){
+    document.getElementById('num-rec-custom-wrap').style.display = this.value === 'custom' ? '' : 'none';
+  });
+  numRender();
+}
+
+function closeNumerologyModal() {
+  document.getElementById('numerology-modal').style.display = 'none';
+}
+
+function numSwitchTab(tab) {
+  window._numCurrentTab = tab;
+  document.querySelectorAll('.num-tab').forEach(function(b){
+    if (b.dataset.tab === tab) {
+      b.style.background = '#fff'; b.style.color = '#9C27B0';
+    } else {
+      b.style.background = 'transparent'; b.style.color = '#666';
+    }
+  });
+  document.querySelectorAll('.num-pane').forEach(function(p){ p.style.display = 'none'; });
+  document.getElementById('num-tab-' + tab).style.display = '';
+  numRender();
+}
+
+function numTogglePreferred(e, btn) {
+  var idx = window._numPreferred.indexOf(e);
+  if (idx >= 0) window._numPreferred.splice(idx, 1);
+  else window._numPreferred.push(e);
+  numUpdatePreferredUI();
+}
+function numUpdatePreferredUI() {
+  document.querySelectorAll('#num-rec-energies button').forEach(function(b){
+    var e = b.dataset.energy;
+    var on = window._numPreferred.indexOf(e) >= 0;
+    var meta = NUM_ENERGY_INFO[e];
+    if (on) {
+      b.style.background = meta.color + '30';
+      b.style.borderColor = meta.color;
+      b.style.color = meta.color;
+    } else {
+      b.style.background = '#fff'; b.style.borderColor = '#ddd'; b.style.color = '#999';
+    }
+  });
+}
+
+function _numAnalysisCardHtml(label, input) {
+  if (!input || !input.trim()) return '';
+  var a = numAnalyze(input);
+  if (a.digits.length < 2) {
+    return '<div style="background:#F5F5F5;padding:8px;border-radius:6px;font-size:11px;color:#999;margin:4px 0">'
+         + '<b>' + label + '</b>：' + input + ' — 字數不足' + '</div>';
+  }
+  var html = '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:10px;margin:6px 0">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
+  html += '<div><div style="font-size:11px;color:#999">' + label + '</div><div style="font-family:monospace;font-weight:bold">' + input + '</div></div>';
+  html += '<div style="text-align:right"><b style="color:' + a.ratingColor + '">' + a.ratingLabel + '</b>';
+  html += '<div style="font-size:10px;color:#999">分數 ' + a.totalScore.toFixed(1) + ' · 吉 ' + a.auspiciousCount + ' / 凶 ' + a.inauspiciousCount + '</div></div>';
+  html += '</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
+  a.pairs.forEach(function(p){
+    var meta = NUM_ENERGY_INFO[p.energy];
+    html += '<span style="background:' + meta.color + '20;color:' + meta.color
+          + ';padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600" title="' + meta.desc + '">'
+          + p.a + p.b + meta.emoji + p.energy + '</span>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function numRender() {
+  if (window._numCurrentTab === 'personal') {
+    var box = document.getElementById('num-personal-results');
+    if (!box) return;
+    var html = '';
+    var fields = [
+      ['身分證字號', 'num-id'], ['生日', 'num-birth'],
+      ['手機 1', 'num-phone1'], ['手機 2', 'num-phone2'],
+      ['汽車車牌 1', 'num-car1'], ['汽車車牌 2', 'num-car2'],
+      ['機車車牌 1', 'num-moto1'], ['機車車牌 2', 'num-moto2'],
+    ];
+    fields.forEach(function(f){
+      var el = document.getElementById(f[1]);
+      if (el && el.value) html += _numAnalysisCardHtml(f[0], el.value);
+    });
+    box.innerHTML = html || '<div style="color:#999;font-size:11px;padding:10px">填入號碼後即時顯示分析</div>';
+  } else if (window._numCurrentTab === 'advanced') {
+    var box = document.getElementById('num-adv-results');
+    if (!box) return;
+    var html = '';
+    for (var i = 0; i < 5; i++) {
+      var lblEl = document.getElementById('num-adv-label-' + i);
+      var valEl = document.getElementById('num-adv-value-' + i);
+      if (lblEl && valEl && valEl.value) {
+        html += _numAnalysisCardHtml(lblEl.value || ('自定 ' + (i+1)), valEl.value);
+      }
+    }
+    box.innerHTML = html || '<div style="color:#999;font-size:11px;padding:10px">填入號碼後即時顯示分析</div>';
+  }
+}
+
+function numRecommend() {
+  var typeVal = document.getElementById('num-rec-type').value;
+  var len, prefix, minScore;
+  if (typeVal === 'phone')      { len=10; prefix='09'; minScore=4; }
+  else if (typeVal === 'plate_car') { len=4; minScore=3; }
+  else if (typeVal === 'plate_moto') { len=3; minScore=2; }
+  else if (typeVal === 'pin')   { len=6; minScore=4; }
+  else { len = parseInt(document.getElementById('num-rec-len').value, 10) || 8; minScore=3; }
+
+  var box = document.getElementById('num-rec-results');
+  box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">產生中⋯</div>';
+  setTimeout(function(){
+    var res = _numComputeRecommend({ length:len, count:30, prefix:prefix,
+      minScore:minScore, preferredEnergies: window._numPreferred });
+    if (res.length === 0) {
+      box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">未能產生符合條件的號碼，請降低偏好限制或更換類型</div>';
+      return;
+    }
+    var html = '<div style="font-size:11px;color:#666;margin-bottom:6px">共 ' + res.length + ' 組（依分數高到低）：</div>';
+    res.forEach(function(r, idx) {
+      html += '<div style="background:#fff;border:2px solid ' + r.analysis.ratingColor + ';border-radius:8px;padding:8px 10px;margin-bottom:6px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
+      html += '<div style="display:flex;align-items:center;gap:6px"><span style="background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:99px">#' + (idx+1) + '</span>';
+      html += '<span style="font-family:monospace;font-size:18px;font-weight:bold">' + r.number + '</span>';
+      html += '<button onclick="navigator.clipboard.writeText(\\''+r.number+'\\').then(function(){this.textContent=\\'已複製\\';}.bind(this))" style="padding:2px 8px;font-size:10px;background:#E3F2FD;color:#1565C0;border:0;border-radius:4px;cursor:pointer">複製</button></div>';
+      html += '<b style="color:' + r.analysis.ratingColor + ';font-size:12px">' + r.analysis.ratingLabel + ' (' + r.analysis.totalScore.toFixed(1) + ')</b>';
+      html += '</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:4px">';
+      r.analysis.pairs.forEach(function(p){
+        var meta = NUM_ENERGY_INFO[p.energy];
+        html += '<span style="background:' + meta.color + '20;color:' + meta.color
+              + ';padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">'
+              + p.a + p.b + meta.emoji + p.energy + '</span>';
+      });
+      html += '</div></div>';
+    });
+    box.innerHTML = html;
+  }, 30);
 }
 
 // === 詢價工單（admin/agent 端）===

@@ -94,10 +94,8 @@ export default function DashboardPage() {
       </div>
 
       {/* 數字易經 — 跨系統入口 */}
-      <a
-        href="https://numerology-easing.ego-intl.com"
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        href="/numerology"
         className="block rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 p-4 shadow-md hover:shadow-lg transition active:scale-[0.98]"
       >
         <div className="flex items-center gap-3">
@@ -110,7 +108,7 @@ export default function DashboardPage() {
           </div>
           <ChevronRight className="h-5 w-5 text-white opacity-80" />
         </div>
-      </a>
+      </Link>
 
       {/* 保單 */}
       <section>
