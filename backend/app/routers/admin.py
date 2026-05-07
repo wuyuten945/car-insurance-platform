@@ -1347,6 +1347,207 @@ function numSwitchTab(tab) {
   document.getElementById('num-tab-' + tab).style.display = '';
 }
 
+// ─── 前台同款視覺元件（綜合儀表 + 年齡分區 + 磁場 bar chart）─────
+
+// 8 磁場大長條圖（每張分析卡內用）
+function _numMagnetBarChartHtml(counts) {
+  var maxCount = 1;
+  NUM_ALL.forEach(function(m){ if ((counts[m]||0) > maxCount) maxCount = counts[m]; });
+  var html = '<div style="display:flex;align-items:flex-end;gap:3px;height:80px;padding:0 4px">';
+  NUM_ALL.forEach(function(m){
+    var info = NUM_INFO[m];
+    var n = counts[m] || 0;
+    var pct = (n / maxCount) * 100;
+    html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end">' +
+      '<div style="font-size:10px;font-weight:bold;color:#4b5563;height:14px">' + (n > 0 ? n : '') + '</div>' +
+      '<div style="width:100%;height:' + Math.max(2, pct) + '%;min-height:' + (n > 0 ? '4px' : '2px') + ';border-radius:3px 3px 0 0;background:' + (info.kind === '吉' ? '#059669' : '#dc2626') + ';opacity:' + (n > 0 ? 1 : 0.15) + '"></div>' +
+      '<div style="font-size:9px;color:#6b7280;margin-top:2px">' + m + '</div>' +
+    '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// 綜合磁場儀表卡（所有欄位整合 + 半圓指針 + 環形圖 + 8 磁場音量條 + 重點摘要）
+function _numSummaryCardHtml(data) {
+  // 從 6 欄位整合磁場
+  var total = {};
+  ['id','birthday','phone','phone2','license','license2'].forEach(function(k){
+    var c = (data[k] || {}).magnet_count || {};
+    Object.keys(c).forEach(function(m){
+      if (m === '中性') return;
+      total[m] = (total[m] || 0) + c[m];
+    });
+  });
+  var goodSum = 0, badSum = 0;
+  NUM_GOOD.forEach(function(m){ goodSum += total[m] || 0; });
+  NUM_BAD.forEach(function(m){ badSum += total[m] || 0; });
+  var totalSum = goodSum + badSum;
+  if (totalSum === 0) return '';
+
+  var score = Math.round(goodSum / totalSum * 100);
+  var level, color;
+  if (score >= 75)      { level = '極佳';   color = '#059669'; }
+  else if (score >= 60) { level = '良好';   color = '#65a30d'; }
+  else if (score >= 45) { level = '持平';   color = '#9e9d24'; }
+  else if (score >= 30) { level = '偏弱';   color = '#ea580c'; }
+  else                  { level = '需注意'; color = '#dc2626'; }
+
+  // SVG 半圓指針儀表
+  var angleRad = Math.PI * (1 - score / 100);
+  var pointerLen = 78;
+  var px = (100 + pointerLen * Math.cos(angleRad)).toFixed(1);
+  var py = (110 - pointerLen * Math.sin(angleRad)).toFixed(1);
+
+  var gaugeSvg = '<svg viewBox="0 0 200 130" style="width:100%;max-width:200px;height:auto">' +
+    '<path d="M 22 110 A 78 78 0 0 1 178 110" stroke="#e6e8eb" stroke-width="14" fill="none" stroke-linecap="round"/>' +
+    '<path d="M 22 110 A 78 78 0 0 1 60 41"   stroke="#dc2626" stroke-width="14" fill="none" stroke-linecap="round"/>' +
+    '<path d="M 60 41 A 78 78 0 0 1 100 32"   stroke="#f59e0b" stroke-width="14" fill="none" stroke-linecap="round"/>' +
+    '<path d="M 100 32 A 78 78 0 0 1 140 41"  stroke="#84cc16" stroke-width="14" fill="none" stroke-linecap="round"/>' +
+    '<path d="M 140 41 A 78 78 0 0 1 178 110" stroke="#059669" stroke-width="14" fill="none" stroke-linecap="round"/>' +
+    '<line x1="100" y1="110" x2="' + px + '" y2="' + py + '" stroke="#1a1d21" stroke-width="3" stroke-linecap="round"/>' +
+    '<circle cx="100" cy="110" r="7" fill="#1a1d21"/>' +
+    '<circle cx="100" cy="110" r="3" fill="#fff"/>' +
+  '</svg>';
+
+  var goodPct = (goodSum / Math.max(1, goodSum + badSum)) * 100;
+  var donut = '<div style="position:relative;width:128px;height:128px;border-radius:50%;background:conic-gradient(#059669 0% ' + goodPct.toFixed(2) + '%, #dc2626 ' + goodPct.toFixed(2) + '% 100%)">' +
+    '<div style="position:absolute;top:24px;left:24px;right:24px;bottom:24px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 0 8px rgba(0,0,0,.05)">' +
+      '<div style="font-size:14px;font-weight:bold"><span style="color:#059669">' + goodSum + '</span><span style="color:#9ca3af;margin:0 4px">/</span><span style="color:#dc2626">' + badSum + '</span></div>' +
+      '<div style="font-size:10px;color:#9ca3af">吉 / 凶</div>' +
+    '</div></div>';
+
+  // 8 磁場音量條
+  var maxC = 1;
+  NUM_ALL.forEach(function(m){ if ((total[m]||0) > maxC) maxC = total[m]; });
+  var barsHtml = '<div style="display:flex;gap:4px;align-items:flex-end;margin-bottom:14px">';
+  NUM_ALL.forEach(function(m){
+    var info = NUM_INFO[m];
+    var n = total[m] || 0;
+    var pct = (n / maxC) * 100;
+    barsHtml += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;min-width:0">' +
+      '<div style="position:relative;height:80px;width:100%;background:#f3f4f6;border-radius:4px;overflow:hidden;display:flex;align-items:flex-end">' +
+        '<div style="width:100%;background:' + (info.kind === '吉' ? '#059669' : '#dc2626') + ';height:' + pct + '%;min-height:' + (n > 0 ? '4px' : '0') + ';transition:all .3s">' +
+          (n > 0 ? '<div style="font-size:10px;color:#fff;text-align:center;font-weight:bold;padding-top:2px">' + n + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:10px;font-weight:bold;margin-top:4px;color:' + info.color + '">' + m + '</div>' +
+      '<div style="font-size:9px;color:#9ca3af">' + info.brief + '</div>' +
+    '</div>';
+  });
+  barsHtml += '</div>';
+
+  // 重點摘要（最強吉星 + 最需注意）
+  var goodList = NUM_GOOD.map(function(m){ return { m: m, n: total[m] || 0 }; }).filter(function(x){ return x.n > 0; }).sort(function(a, b){ return b.n - a.n; });
+  var badList  = NUM_BAD.map(function(m){ return { m: m, n: total[m] || 0 }; }).filter(function(x){ return x.n > 0; }).sort(function(a, b){ return b.n - a.n; });
+  var sg = goodList[0], sb = badList[0];
+  var insightsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">';
+  if (sg) {
+    insightsHtml += '<div style="border:1px solid #bbf7d0;background:#f0fdf4;padding:8px;border-radius:8px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+        '<span style="font-size:10px;font-weight:bold;color:#16a34a;background:#dcfce7;padding:1px 8px;border-radius:4px">最強吉星</span>' +
+        '<span style="font-size:14px;font-weight:bold;color:#15803d">' + sg.m + ' ×' + sg.n + '</span>' +
+      '</div>' +
+      '<p style="font-size:11px;color:#14532d;margin:0">' + NUM_INFO[sg.m].desc + '</p>' +
+    '</div>';
+  }
+  if (sb) {
+    insightsHtml += '<div style="border:1px solid #fecaca;background:#fef2f2;padding:8px;border-radius:8px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+        '<span style="font-size:10px;font-weight:bold;color:#dc2626;background:#fee2e2;padding:1px 8px;border-radius:4px">最需注意</span>' +
+        '<span style="font-size:14px;font-weight:bold;color:#b91c1c">' + sb.m + ' ×' + sb.n + '</span>' +
+      '</div>' +
+      '<p style="font-size:11px;color:#7f1d1d;margin:0">' + NUM_INFO[sb.m].desc + '</p>' +
+    '</div>';
+  }
+  insightsHtml += '</div>';
+
+  return '<div style="background:#fff;border:2px solid #e9d5ff;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)">' +
+    '<div style="text-align:center;margin-bottom:10px">' +
+      '<h3 style="font-weight:bold;color:#1f2937;margin:0;font-size:15px">綜合磁場儀表</h3>' +
+      '<p style="font-size:11px;color:#6b7280;margin:2px 0 0">身分證・生日・電話・車牌 整合分析</p>' +
+    '</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:center;margin-bottom:14px">' +
+      '<div style="text-align:center;flex:0 1 220px">' + gaugeSvg +
+        '<div style="margin-top:-12px"><div style="font-size:30px;font-weight:800;color:' + color + '">' + score + '<span style="font-size:14px">%</span></div>' +
+        '<div style="font-size:13px;font-weight:bold;color:' + color + '">' + level + '</div>' +
+        '<div style="font-size:10px;color:#9ca3af">吉星比例</div></div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:center">' + donut + '</div>' +
+    '</div>' +
+    '<div style="font-size:12px;font-weight:bold;color:#4b5563;margin-bottom:6px">磁場強度</div>' +
+    barsHtml +
+    '<div style="font-size:12px;font-weight:bold;color:#4b5563;margin-bottom:6px">重點摘要</div>' +
+    insightsHtml +
+  '</div>';
+}
+
+// 年齡分區卡（從身分證解碼出的人生時間軸）
+function _numAgeMappingCardHtml(am) {
+  if (!am || am.error) return '';
+  var ranges = am.primary_ranges || [];
+  var timeline = (am.timeline || []).filter(function(e){ return e.age_start <= 70; });
+  if (ranges.length === 0 && timeline.length === 0) return '';
+
+  var maxAge = 70;
+  ranges.forEach(function(r){ if (r.end > maxAge) maxAge = r.end; });
+  var axisTicks = [0, 10, 20, 30, 40, 50, 60, 70].filter(function(a){ return a <= maxAge; });
+
+  var html = '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px;margin:6px 0">';
+  html += '<h3 style="font-weight:bold;color:#1f2937;font-size:13px;margin:0">年齡分區</h3>';
+  html += '<p style="font-size:11px;color:#6b7280;margin:2px 0 8px;font-family:monospace">' + (am.id_decoded || '') + '</p>';
+
+  if (ranges.length > 0) {
+    html += '<div style="font-size:11px;font-weight:bold;color:#4b5563;margin-bottom:4px">主磁場影響範圍（可重疊）</div>';
+    html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px;padding-left:70px;font-size:9px;color:#9ca3af">';
+    axisTicks.forEach(function(a){ html += '<span>' + a + '</span>'; });
+    html += '</div>';
+
+    ranges.forEach(function(r){
+      var left = (r.start / maxAge) * 100;
+      var width = ((r.end - r.start) / maxAge) * 100;
+      var info = NUM_INFO[r.magnet];
+      if (!info) return;
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">' +
+        '<div style="width:64px;flex-shrink:0">' +
+          '<div style="font-size:10px;font-weight:bold;color:' + info.color + '">' + r.magnet + '</div>' +
+          '<div style="font-size:9px;color:#9ca3af">' + info.brief + '</div>' +
+        '</div>' +
+        '<div style="flex:1;position:relative;height:18px;background:#f3f4f6;border-radius:3px">' +
+          '<div style="position:absolute;top:0;left:' + left + '%;width:' + width + '%;height:100%;background:' + info.color + ';border-radius:3px;color:#fff;font-size:9px;font-weight:bold;display:flex;align-items:center;justify-content:center">' +
+            r.start + '–' + r.end +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+  }
+
+  if (timeline.length > 0) {
+    html += '<div style="font-size:11px;font-weight:bold;color:#4b5563;margin-top:10px;margin-bottom:4px">年齡細節</div>';
+    html += '<div style="overflow-x:auto"><table style="width:100%;font-size:11px;border-collapse:collapse">';
+    html += '<thead><tr style="background:#f9fafb">';
+    html += '<th style="text-align:left;padding:4px 6px;font-weight:bold;color:#4b5563">年齡</th>';
+    html += '<th style="text-align:left;padding:4px 6px;font-weight:bold;color:#4b5563">數字組</th>';
+    html += '<th style="text-align:left;padding:4px 6px;font-weight:bold;color:#4b5563">磁場</th>';
+    html += '<th style="text-align:left;padding:4px 6px;font-weight:bold;color:#4b5563">說明</th>';
+    html += '</tr></thead><tbody>';
+    timeline.forEach(function(e){
+      var info = NUM_INFO[e.magnet];
+      var note = (e.magnet === '伏位' && e.continues) ? '（延續' + e.continues + '）' : '';
+      html += '<tr style="border-top:1px solid #f3f4f6">' +
+        '<td style="padding:4px 6px;white-space:nowrap">' + e.age_start + '–' + e.age_end + ' 歲</td>' +
+        '<td style="padding:4px 6px;font-family:monospace">' + (e.pair || '') + '</td>' +
+        '<td style="padding:4px 6px;font-weight:bold;color:' + (info ? info.color : '#000') + '">' + e.magnet + '</td>' +
+        '<td style="padding:4px 6px;color:#6b7280">' + (info ? info.desc : '') + note + '</td>' +
+      '</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
 // 渲染 single 分析結果到 HTML
 function _numAnalysisCardHtml(label, result) {
   if (!result) return '';
@@ -1388,7 +1589,7 @@ function _numAnalysisCardHtml(label, result) {
     html += '</div>';
   }
 
-  // 8 磁場 grid
+  // 8 磁場 grid（一格一格的計數）
   html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-top:8px;padding-top:6px;border-top:1px solid #f0f0f0">';
   NUM_ALL.forEach(function(m){
     var info = NUM_INFO[m];
@@ -1398,6 +1599,25 @@ function _numAnalysisCardHtml(label, result) {
     html += '<div style="background:'+bg+';color:'+c+';text-align:center;padding:4px 2px;border-radius:4px;font-size:10px"><div style="font-weight:bold">'+m+'</div><div style="font-size:14px;font-weight:bold">'+n+'</div><div style="opacity:0.7;font-size:9px">'+info.brief+'</div></div>';
   });
   html += '</div>';
+
+  // 8 磁場 bar chart（前台同款,在一格一格的顯示之後）
+  html += '<div style="margin-top:8px;padding-top:6px;border-top:1px solid #f0f0f0">';
+  html += '<div style="font-size:10px;font-weight:bold;color:#6b7280;margin-bottom:4px">磁場分布</div>';
+  html += _numMagnetBarChartHtml(counts);
+  html += '</div>';
+
+  // 伏位細分（前台同款）
+  if (result.fuwei_breakdown && Object.keys(result.fuwei_breakdown).length > 0) {
+    html += '<div style="margin-top:8px;padding-top:6px;border-top:1px solid #f0f0f0">';
+    html += '<div style="font-size:10px;font-weight:bold;color:#6b7280;margin-bottom:4px">伏位細分</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+    Object.keys(result.fuwei_breakdown).forEach(function(k){
+      var v = result.fuwei_breakdown[k];
+      var labelText = (k === '純伏位') ? '純伏位' : ('延續' + k);
+      html += '<span style="font-size:10px;background:#f3f4f6;padding:2px 8px;border-radius:99px">' + labelText + ' <strong>×' + v + '</strong></span>';
+    });
+    html += '</div></div>';
+  }
 
   if (result.duplicate_marks && result.duplicate_marks.length) {
     html += '<div style="margin-top:6px;background:#F3E5F5;color:#6A1B9A;padding:4px 8px;border-radius:4px;font-size:10px"><b>重複磁場：</b>'+result.duplicate_marks.join('、')+'</div>';
@@ -1474,8 +1694,16 @@ async function numAutoSubmit() {
     if (data.license2 && lic2Shown) data.license2 = Object.assign({}, data.license2, { input: lic2Shown });
 
     var html = '';
+    // ① 綜合磁場儀表（最上方,前台同款）
+    var hasAny = ['id','birthday','phone','phone2','license','license2'].some(function(k){ return data[k]; });
+    if (hasAny) html += _numSummaryCardHtml(data);
+
+    // ② 身分證 + 年齡分區
     if (data.id) html += _numAnalysisCardHtml('身分證', data.id);
     if (data.id_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">身分證：'+data.id_error+'</div>';
+    if (data.age_mapping) html += _numAgeMappingCardHtml(data.age_mapping);
+
+    // ③ 其他欄位
     if (data.birthday) html += _numAnalysisCardHtml('生日', data.birthday);
     if (data.birthday_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">生日：'+data.birthday_error+'</div>';
     if (data.phone) html += _numAnalysisCardHtml('電話', data.phone);
