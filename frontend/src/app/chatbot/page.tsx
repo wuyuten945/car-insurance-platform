@@ -8,9 +8,11 @@ import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
 
+// 後端回傳格式：sender = 'user' | 'bot' | 'agent'
+// 前端顯示：'user' 靠右藍底；'bot' / 'agent' 靠左白底（一律當客服訊息）
 interface Message {
   id?: string;
-  role: 'user' | 'assistant';
+  sender: 'user' | 'bot' | 'agent';
   content: string;
   created_at?: string;
 }
@@ -29,7 +31,7 @@ export default function ChatbotPage() {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: '您好！我是 BOPINAN 智能客服，請問有什麼可以幫您的嗎？' },
+    { sender: 'bot', content: '您好！我是 BOPINAN 智能客服，請問有什麼可以幫您的嗎？' },
   ]);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -58,7 +60,8 @@ export default function ChatbotPage() {
       return res.data.data as Message[];
     },
     onSuccess: (newMessages) => {
-      const botMessages = newMessages.filter((m) => m.role === 'assistant');
+      // 後端會把使用者剛送的訊息 + bot/agent 回覆都回傳;前端只追加 bot/agent 的(使用者訊息 handleSend 已 optimistic 加過)
+      const botMessages = newMessages.filter((m) => m.sender !== 'user');
       if (botMessages.length > 0) {
         setMessages((prev) => [...prev, ...botMessages]);
       }
@@ -69,7 +72,7 @@ export default function ChatbotPage() {
     const content = text ?? input.trim();
     if (!content || sendMessage.isPending) return;
 
-    setMessages((prev) => [...prev, { role: 'user', content }]);
+    setMessages((prev) => [...prev, { sender: 'user', content }]);
     setInput('');
     sendMessage.mutate(content);
   };
@@ -103,27 +106,30 @@ export default function ChatbotPage() {
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scroll px-4 py-4 space-y-3 bg-gray-50">
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            {msg.role === 'assistant' && (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 mr-2 mt-0.5">
-                <Bot className="h-3.5 w-3.5 text-primary-500" />
-              </div>
-            )}
+        {messages.map((msg, i) => {
+          const isUser = msg.sender === 'user';
+          return (
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                msg.role === 'user'
-                  ? 'bg-primary-500 text-white rounded-br-md'
-                  : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-md'
-              }`}
+              key={i}
+              className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
             >
-              {msg.content}
+              {!isUser && (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 mr-2 mt-0.5">
+                  <Bot className="h-3.5 w-3.5 text-primary-500" />
+                </div>
+              )}
+              <div
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line ${
+                  isUser
+                    ? 'bg-primary-500 text-white rounded-br-md'
+                    : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-md'
+                }`}
+              >
+                {msg.content}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {sendMessage.isPending && (
           <div className="flex justify-start">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 mr-2">
