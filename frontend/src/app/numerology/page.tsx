@@ -92,6 +92,26 @@ function aggregatePersonalMagnets(snap: PersonalSnapshot): Record<string, number
   return total;
 }
 
+/**
+ * 車牌字母 → 數字轉換（送 API 前處理）
+ * 規則：A=1, B=2, ..., I=9, J=10, K=11, ..., Z=26（單字單轉，無零填）
+ * 連字符、空白會被去掉。
+ * 範例：ABC-1234 → 1 2 3 1234 → "1231234"
+ */
+function convertLicenseToDigits(s: string): string {
+  if (!s) return '';
+  const clean = s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  let out = '';
+  for (const ch of clean) {
+    if (ch >= 'A' && ch <= 'Z') {
+      out += String(ch.charCodeAt(0) - 'A'.charCodeAt(0) + 1);
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
 export default function NumerologyPage() {
   const { ready: __authReady } = useAuthGuard();
   useIdleLogout();
@@ -526,6 +546,11 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [result, setResult] = useState<AutoOut | null>(null);
+  const [licenseDisplay, setLicenseDisplay] = useState<{ original: string; converted: string } | null>(null);
+
+  // 即時預覽：輸入車牌時顯示「字母 → 數字」對照
+  const licenseConverted = license.trim() ? convertLicenseToDigits(license) : '';
+  const licenseHasLetter = /[A-Za-z]/.test(license);
 
   const submit = async () => {
     if (!idNum.trim() && !phone.trim() && !license.trim()) {
@@ -534,11 +559,18 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
     }
     setErr(''); setBusy(true);
     try {
+      const licenseSend = license.trim() ? convertLicenseToDigits(license) : '';
       const res = await api.post('/api/v1/numerology/auto', {
-        id: idNum.trim(), phone: phone.trim(), license: license.trim(),
+        id: idNum.trim(), phone: phone.trim(), license: licenseSend,
       });
       const data = res.data?.data || null;
       setResult(data);
+      // 記錄客戶原本輸入 vs 系統送出的版本（給結果區顯示）
+      if (license.trim()) {
+        setLicenseDisplay({ original: license.trim().toUpperCase(), converted: licenseSend });
+      } else {
+        setLicenseDisplay(null);
+      }
       // 將結果 lift up 給智能建議 tab 用（避凶補吉的依據）
       if (data && (data.id || data.phone || data.license)) {
         onAnalyzed({ id: data.id, phone: data.phone, license: data.license });
@@ -566,8 +598,19 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
           <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0912345678" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">車牌（4 位數字）</label>
-          <input className={inputClass} value={license} onChange={(e) => setLicense(e.target.value)} placeholder="1234" maxLength={4} />
+          <label className="block text-xs font-medium text-gray-600 mb-1">車牌（含英文字也可）</label>
+          <input
+            className={inputClass}
+            value={license}
+            onChange={(e) => setLicense(e.target.value.toUpperCase())}
+            placeholder="如 ABC-1234"
+            maxLength={12}
+          />
+          {licenseHasLetter && licenseConverted && (
+            <p className="text-[10px] text-purple-700 mt-1">
+              字母轉換規則 A=1, B=2, ..., Z=26 → 將以 <b className="font-mono">{licenseConverted}</b> 進行分析
+            </p>
+          )}
         </div>
         <button
           onClick={submit}
@@ -593,7 +636,16 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
 
           {result.phone && <AnalysisCard label="電話" result={result.phone} />}
           {result.phone_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">電話：{result.phone_error}</div>}
-          {result.license && <AnalysisCard label="車牌" result={result.license} />}
+          {result.license && (
+            <>
+              {licenseDisplay && licenseDisplay.original !== licenseDisplay.converted && (
+                <div className="rounded-lg bg-purple-50 border border-purple-200 p-2 mb-2 text-[11px] text-purple-900">
+                  您輸入的車牌「<b className="font-mono">{licenseDisplay.original}</b>」依規則轉換為「<b className="font-mono">{licenseDisplay.converted}</b>」後分析（A=1, B=2, ..., Z=26）
+                </div>
+              )}
+              <AnalysisCard label="車牌" result={result.license} />
+            </>
+          )}
           {result.license_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">車牌：{result.license_error}</div>}
         </div>
       )}
