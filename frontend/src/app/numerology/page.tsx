@@ -537,6 +537,132 @@ function AnalysisCard({ label, result }: { label: string; result: AnalysisOut })
   );
 }
 
+// ───── 智能建議視覺元件 ─────
+
+/** 5 瓣梅花 SVG（台灣新式車牌底紋） */
+function PlumBlossom({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 sm:h-8 sm:w-8">
+      <g fill={color}>
+        <circle cx="20" cy="9" r="6.5" />
+        <circle cx="30.5" cy="16" r="6.5" />
+        <circle cx="26.5" cy="28" r="6.5" />
+        <circle cx="13.5" cy="28" r="6.5" />
+        <circle cx="9.5" cy="16" r="6.5" />
+      </g>
+      <circle cx="20" cy="20" r="3" fill="#fde68a" />
+      <g fill="#a16207" opacity="0.8">
+        <circle cx="20" cy="16.5" r="0.7" />
+        <circle cx="22.5" cy="20" r="0.7" />
+        <circle cx="17.5" cy="20" r="0.7" />
+        <circle cx="20" cy="22.5" r="0.7" />
+      </g>
+    </svg>
+  );
+}
+
+/** iPhone 整機外觀（電話建議用） */
+function PhoneGraphic({ number }: { number: string }) {
+  let display = number;
+  if (number.length === 10) display = `${number.slice(0, 4)}-${number.slice(4, 7)}-${number.slice(7)}`;
+  else if (number.length === 9) display = `${number.slice(0, 3)}-${number.slice(3, 6)}-${number.slice(6)}`;
+
+  return (
+    <div className="flex justify-center py-2">
+      <div
+        className="relative rounded-[2.2rem] bg-gradient-to-b from-gray-900 to-black shadow-xl"
+        style={{ width: 180, height: 360, padding: 6 }}
+      >
+        {/* 側鍵 */}
+        <span className="absolute left-[-2px] top-[60px] h-2 w-1 rounded-l bg-gray-700" />
+        <span className="absolute left-[-2px] top-[100px] h-9 w-1 rounded-l bg-gray-700" />
+        <span className="absolute left-[-2px] top-[145px] h-9 w-1 rounded-l bg-gray-700" />
+        <span className="absolute right-[-2px] top-[110px] h-12 w-1 rounded-r bg-gray-700" />
+        {/* 螢幕 */}
+        <div
+          className="relative h-full w-full rounded-[1.9rem] bg-gradient-to-b from-purple-600 via-pink-500 to-purple-700 overflow-hidden flex flex-col items-center"
+        >
+          {/* 動態島 */}
+          <div className="mt-2 h-5 w-20 rounded-full bg-black flex items-center justify-end pr-1">
+            <span className="block h-1.5 w-1.5 rounded-full bg-gray-700" />
+          </div>
+          {/* 狀態列 */}
+          <div className="w-full px-4 mt-1 flex justify-between text-[10px] text-white/90 font-semibold">
+            <span>9:41</span>
+            <span>● ● ● ●</span>
+          </div>
+          {/* 號碼 */}
+          <div className="flex-1 flex flex-col items-center justify-center w-full px-3">
+            <p className="text-[11px] text-white/70 mb-2 tracking-wider">建議號碼</p>
+            <p className="text-2xl font-mono font-bold text-white tracking-wider drop-shadow break-all text-center">{display}</p>
+          </div>
+          {/* Home 指示條 */}
+          <div className="mb-2 h-1 w-24 rounded-full bg-white/70" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 台灣新式自小客車牌（車牌建議用） */
+function PlateGraphic({ number }: { number: string }) {
+  // 拆字母前綴 + 數字後綴
+  let i = 0;
+  while (i < number.length && /[A-Za-z]/.test(number[i])) i++;
+  const prefix = number.slice(0, i);
+  const suffix = number.slice(i);
+  const display = prefix && suffix ? `${prefix}-${suffix}` : number;
+
+  return (
+    <div className="flex justify-center py-2">
+      <div className="relative rounded-md bg-white border-2 border-gray-300 shadow-md px-3 sm:px-4 pt-4 pb-1.5 w-full max-w-[320px]">
+        {/* 上方螺絲孔 */}
+        <div className="absolute top-1 left-3 h-1.5 w-7 rounded-full bg-gray-200" />
+        <div className="absolute top-1 right-3 h-1.5 w-7 rounded-full bg-gray-200" />
+        {/* 號碼 */}
+        <p className="text-center text-2xl sm:text-3xl font-mono font-black tracking-widest text-gray-900 leading-tight">
+          {display}
+        </p>
+        {/* 三朵梅花（左紫、中灰、右紫） */}
+        <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-0.5">
+          <PlumBlossom color="#c4b5fd" />
+          <PlumBlossom color="#d1d5db" />
+          <PlumBlossom color="#c4b5fd" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** PIN / 一般用途：純數字大字顯示 */
+function PinGraphic({ number, prefix }: { number: string; prefix: string }) {
+  const hasPrefix = prefix && number.startsWith(prefix);
+  return (
+    <div className="flex justify-center py-3">
+      <div className="rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 px-5 py-4 shadow-sm">
+        <p className="text-[11px] text-purple-600 mb-1 text-center">建議號碼</p>
+        <p className="text-3xl font-mono font-bold tracking-wider text-center break-all">
+          {hasPrefix ? (
+            <>
+              <span className="text-purple-400">{prefix}</span>
+              <span className="text-gray-900">{number.slice(prefix.length)}</span>
+            </>
+          ) : (
+            <span className="text-gray-900">{number}</span>
+          )}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/** 吉星 → 它能消的凶星（用於說明每組推薦的功效） */
+const GOOD_COUNTERS_BAD: Record<string, string[]> = {
+  天醫: ['絕命'],
+  延年: ['六煞'],
+  生氣: ['禍害', '五鬼'],
+};
+
 // ───── Tab A: 個人分析 ─────
 
 function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) {
@@ -795,7 +921,23 @@ function RecommendTab({
       <div className="rounded-xl bg-white border border-gray-100 p-4 space-y-3" style={{ opacity: hasSnapshot ? 1 : 0.5, pointerEvents: hasSnapshot ? 'auto' : 'none' }}>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">用途</label>
-          <select className={inputClass} value={purpose} onChange={(e) => setPurpose(e.target.value as 'phone'|'license'|'pin')}>
+          <select
+            className={inputClass}
+            value={purpose}
+            onChange={(e) => {
+              const p = e.target.value as 'phone' | 'license' | 'pin';
+              setPurpose(p);
+              // 依用途調整預設值（仿原網站）
+              if (p === 'license') {
+                if (length > 7) setLength(7);
+                setPrefix('');
+              } else if (p === 'phone') {
+                setPrefix('09');
+              } else {
+                setPrefix('');
+              }
+            }}
+          >
             <option value="phone">📱 電話</option>
             <option value="license">🚗 車牌</option>
             <option value="pin">🔢 PIN / 密碼</option>
@@ -804,11 +946,27 @@ function RecommendTab({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">長度</label>
-            <input type="number" className={inputClass} value={length} onChange={(e) => setLength(parseInt(e.target.value, 10) || 10)} min={2} max={12} />
+            <input
+              type="number"
+              className={inputClass}
+              value={length}
+              onChange={(e) => setLength(parseInt(e.target.value, 10) || 10)}
+              min={2}
+              max={purpose === 'license' ? 7 : 12}
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">開頭</label>
-            <input className={inputClass} value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="09" />
+            <input
+              className={inputClass}
+              value={prefix}
+              onChange={(e) => setPrefix(e.target.value)}
+              placeholder={
+                purpose === 'license' ? '如 ABC、AAA（監理站發的英文字）'
+                : purpose === 'phone' ? '如 09'
+                : '（可留空）'
+              }
+            />
           </div>
         </div>
         <button
@@ -835,25 +993,55 @@ function RecommendTab({
       )}
 
       {recs.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {recs.map((r) => {
             const counts = r.magnet_count || {};
             const goodSum = GOOD.reduce((s, m) => s + (counts[m] || 0), 0);
             const badSum = BAD.reduce((s, m) => s + (counts[m] || 0), 0);
+            // 推算這組推薦能消除使用者身上哪些凶星
+            const userTotal = snapshot ? aggregatePersonalMagnets(snapshot) : {};
+            const cancelled = new Set<string>();
+            for (const [good, bads] of Object.entries(GOOD_COUNTERS_BAD)) {
+              if ((counts[good] || 0) > 0) {
+                for (const bad of bads) {
+                  if ((userTotal[bad] || 0) > 0) cancelled.add(bad);
+                }
+              }
+            }
+            const goodPresent = GOOD
+              .filter((g) => (counts[g] || 0) > 0)
+              .map((g) => `${g}×${counts[g]}`);
             return (
               <div key={r.rank} className="rounded-xl bg-white border-2 border-purple-200 p-3 shadow-sm">
-                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                {/* 排名 + 吉凶 + 複製 */}
+                <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+                  <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-2 py-0.5">#{r.rank}</span>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-2 py-0.5">#{r.rank}</span>
-                    <span className="text-2xl font-mono font-bold text-gray-900">{r.number}</span>
+                    <span className="text-xs text-green-600 font-bold">吉 {goodSum} · 凶 {badSum}</span>
                     <button
                       onClick={() => { navigator.clipboard.writeText(r.number); }}
                       className="text-[11px] bg-blue-50 text-blue-600 rounded px-2 py-0.5 hover:bg-blue-100"
-                    >複製</button>
+                    >複製號碼</button>
                   </div>
-                  <span className="text-xs text-green-600 font-bold">吉 {goodSum} · 凶 {badSum}</span>
                 </div>
-                <div className="grid grid-cols-4 gap-1">
+
+                {/* 視覺化容器（依用途切換） */}
+                {purpose === 'phone' && <PhoneGraphic number={r.number} />}
+                {purpose === 'license' && <PlateGraphic number={r.number} />}
+                {purpose === 'pin' && <PinGraphic number={r.number} prefix={prefix.trim()} />}
+
+                {/* 推薦邏輯說明（仿原站「含 ...，以消除您身上的 ...」） */}
+                <p className="text-xs text-gray-700 mt-2 leading-relaxed">
+                  含 <b className="text-green-700">{goodPresent.length ? goodPresent.join('、') : '—'}</b>
+                  {cancelled.size > 0 && (
+                    <>
+                      ，以消除您身上的 <b className="text-red-600">{[...cancelled].join('、')}</b>
+                    </>
+                  )}
+                </p>
+
+                {/* 完整 8 磁場標籤（只列有 ≥1 個的） */}
+                <div className="flex flex-wrap gap-1 mt-2">
                   {ALL.map((m) => {
                     const meta = MAGNET_INFO[m];
                     const n = counts[m] || 0;
@@ -861,7 +1049,7 @@ function RecommendTab({
                     return (
                       <span
                         key={m}
-                        className="text-[10px] text-center rounded px-1 py-0.5 font-semibold"
+                        className="text-[10px] rounded px-1.5 py-0.5 font-semibold"
                         style={{ backgroundColor: meta.color + '20', color: meta.color }}
                       >
                         {m} ×{n}
