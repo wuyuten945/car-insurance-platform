@@ -634,8 +634,8 @@ function PlateGraphic({ number }: { number: string }) {
         <p className="text-center text-2xl sm:text-3xl font-mono font-black tracking-widest text-gray-900 leading-tight">
           {display}
         </p>
-        {/* 三朵梅花（左紫、中灰、右紫；間距外擴一些） */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-0.5">
+        {/* 三朵梅花（左紫、中灰、右紫；整列平分） */}
+        <div className="flex items-center justify-around mt-0.5 px-2">
           <PlumBlossom color="#c4b5fd" />
           <PlumBlossom color="#d1d5db" />
           <PlumBlossom color="#c4b5fd" />

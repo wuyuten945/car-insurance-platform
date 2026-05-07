@@ -1866,8 +1866,8 @@ function _numPlateGraphicHtml(number) {
       '<div style="position:absolute;top:4px;right:36px;height:6px;width:28px;border-radius:99px;background:#e5e7eb"></div>' +
       // 號碼
       '<p style="text-align:center;font-size:28px;font-family:monospace;font-weight:900;letter-spacing:.15em;color:#111827;margin:0;line-height:1.1">' + display + '</p>' +
-      // 三朵梅花（間距外擴一些）
-      '<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:2px">' +
+      // 三朵梅花（整列平分）
+      '<div style="display:flex;align-items:center;justify-content:space-around;margin-top:2px;padding:0 8px">' +
         _numPlumBlossomSvg('#c4b5fd') + _numPlumBlossomSvg('#d1d5db') + _numPlumBlossomSvg('#c4b5fd') +
       '</div>' +
     '</div>' +
