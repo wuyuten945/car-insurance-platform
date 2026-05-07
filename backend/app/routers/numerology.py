@@ -3,7 +3,11 @@
 原服務有完整的數字易經演算法（八磁場相剋、年齡分區、伏位細分、磁場強化等）。
 我們不重做，只做代理 + 共用 BOPINAN 認證。
 """
+import asyncio
+import hashlib
+import json
 import logging
+import time
 import httpx
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -17,6 +21,35 @@ logger = logging.getLogger(__name__)
 
 NUMEROLOGY_BASE = "https://numerology-easing.onrender.com"
 TIMEOUT = httpx.Timeout(60.0, connect=30.0)  # Render free tier 喚醒可能要 30s
+
+# 簡單的記憶體快取（同一輸入 5 分鐘內回傳同樣結果，省上游 API 配額）
+_CACHE: dict[str, tuple[float, dict]] = {}
+_CACHE_TTL = 300.0  # 5 min
+_CACHE_MAX = 500
+
+
+def _cache_key(path: str, payload: dict) -> str:
+    raw = path + "|" + json.dumps(payload, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()
+
+
+def _cache_get(key: str) -> dict | None:
+    entry = _CACHE.get(key)
+    if not entry:
+        return None
+    ts, val = entry
+    if time.time() - ts > _CACHE_TTL:
+        _CACHE.pop(key, None)
+        return None
+    return val
+
+
+def _cache_set(key: str, val: dict) -> None:
+    if len(_CACHE) >= _CACHE_MAX:
+        # 清掉最舊 1/4
+        for k, _ in sorted(_CACHE.items(), key=lambda kv: kv[1][0])[: _CACHE_MAX // 4]:
+            _CACHE.pop(k, None)
+    _CACHE[key] = (time.time(), val)
 
 
 class AutoIn(BaseModel):
@@ -39,22 +72,61 @@ class RecommendIn(BaseModel):
     top_n: int = 5       # 前台預設 5；後台 admin 可傳 30
 
 
-async def _proxy_post(path: str, payload: dict) -> dict:
+async def _proxy_post(path: str, payload: dict, *, use_cache: bool = True) -> dict:
     url = f"{NUMEROLOGY_BASE}{path}"
-    try:
-        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            r = await client.post(url, json=payload)
+    cache_key = _cache_key(path, payload) if use_cache else ""
+
+    # 1) 快取命中
+    if use_cache:
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            return cached
+
+    # 2) 呼叫上游（429 / 5xx 可重試最多 2 次，指數退讓）
+    last_err: Exception | None = None
+    for attempt in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+                r = await client.post(url, json=payload)
+            if r.status_code == 429:
+                last_err = httpx.HTTPStatusError("429", request=r.request, response=r)
+                if attempt < 2:
+                    await asyncio.sleep(1.5 * (2 ** attempt))  # 1.5s, 3s
+                    continue
+                logger.warning(f"numerology API {path} 429 after {attempt+1} attempts")
+                raise BadRequestError("查詢頻率過高,請等 30 秒後再試一次")
+            if 500 <= r.status_code < 600:
+                last_err = httpx.HTTPStatusError(str(r.status_code), request=r.request, response=r)
+                if attempt < 2:
+                    await asyncio.sleep(1.0 * (2 ** attempt))
+                    continue
             r.raise_for_status()
-            return r.json()
-    except httpx.HTTPStatusError as e:
-        logger.warning(f"numerology API {path} returned {e.response.status_code}")
-        raise BadRequestError(f"數字易經服務回應 {e.response.status_code}")
-    except (httpx.TimeoutException, httpx.NetworkError) as e:
-        logger.warning(f"numerology API {path} network: {e}")
-        raise BadRequestError("數字易經服務暫時無法連線（可能在啟動中，請稍候 30 秒再試）")
-    except Exception as e:
-        logger.exception(f"numerology API {path} unexpected: {e}")
-        raise BadRequestError("數字易經服務錯誤")
+            data = r.json()
+            if use_cache:
+                _cache_set(cache_key, data)
+            return data
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:
+                # 已在上面處理
+                raise BadRequestError("查詢頻率過高,請等 30 秒後再試一次")
+            logger.warning(f"numerology API {path} returned {e.response.status_code}")
+            raise BadRequestError(f"數字易經服務回應 {e.response.status_code}")
+        except (httpx.TimeoutException, httpx.NetworkError) as e:
+            last_err = e
+            if attempt < 2:
+                await asyncio.sleep(1.0 * (2 ** attempt))
+                continue
+            logger.warning(f"numerology API {path} network: {e}")
+            raise BadRequestError("數字易經服務暫時無法連線（可能在啟動中,請稍候 30 秒再試）")
+        except BadRequestError:
+            raise
+        except Exception as e:
+            logger.exception(f"numerology API {path} unexpected: {e}")
+            raise BadRequestError("數字易經服務錯誤")
+
+    # 理論上不會到這裡
+    logger.warning(f"numerology API {path} exhausted retries: {last_err}")
+    raise BadRequestError("數字易經服務暫時無法回應,請稍候再試")
 
 
 @router.post("/auto", response_model=APIResponse)

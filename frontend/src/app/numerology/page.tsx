@@ -546,11 +546,8 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [result, setResult] = useState<AutoOut | null>(null);
-  const [licenseDisplay, setLicenseDisplay] = useState<{ original: string; converted: string } | null>(null);
-
-  // 即時預覽：輸入車牌時顯示「字母 → 數字」對照
-  const licenseConverted = license.trim() ? convertLicenseToDigits(license) : '';
-  const licenseHasLetter = /[A-Za-z]/.test(license);
+  // 使用者實際輸入的車牌（給結果卡片顯示用，避免暴露轉換後的數字）
+  const [licenseShown, setLicenseShown] = useState('');
 
   const submit = async () => {
     if (!idNum.trim() && !phone.trim() && !license.trim()) {
@@ -565,12 +562,7 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
       });
       const data = res.data?.data || null;
       setResult(data);
-      // 記錄客戶原本輸入 vs 系統送出的版本（給結果區顯示）
-      if (license.trim()) {
-        setLicenseDisplay({ original: license.trim().toUpperCase(), converted: licenseSend });
-      } else {
-        setLicenseDisplay(null);
-      }
+      setLicenseShown(license.trim().toUpperCase());
       // 將結果 lift up 給智能建議 tab 用（避凶補吉的依據）
       if (data && (data.id || data.phone || data.license)) {
         onAnalyzed({ id: data.id, phone: data.phone, license: data.license });
@@ -586,7 +578,7 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
   return (
     <div className="space-y-3">
       <div className="rounded-xl bg-purple-50 p-3 text-xs text-purple-900 leading-relaxed">
-        💡 輸入身分證、電話、車牌（4 位數字），系統會分析每組號碼的磁場分布。三項可以只填部分。
+        💡 輸入身分證、電話、車牌，系統會分析每組號碼的磁場分布。三項可以只填部分。
       </div>
       <div className="rounded-xl bg-white border border-gray-100 p-4 space-y-3">
         <div>
@@ -606,11 +598,6 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
             placeholder="如 ABC-1234"
             maxLength={12}
           />
-          {licenseHasLetter && licenseConverted && (
-            <p className="text-[10px] text-purple-700 mt-1">
-              字母轉換規則 A=1, B=2, ..., Z=26 → 將以 <b className="font-mono">{licenseConverted}</b> 進行分析
-            </p>
-          )}
         </div>
         <button
           onClick={submit}
@@ -637,14 +624,10 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
           {result.phone && <AnalysisCard label="電話" result={result.phone} />}
           {result.phone_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">電話：{result.phone_error}</div>}
           {result.license && (
-            <>
-              {licenseDisplay && licenseDisplay.original !== licenseDisplay.converted && (
-                <div className="rounded-lg bg-purple-50 border border-purple-200 p-2 mb-2 text-[11px] text-purple-900">
-                  您輸入的車牌「<b className="font-mono">{licenseDisplay.original}</b>」依規則轉換為「<b className="font-mono">{licenseDisplay.converted}</b>」後分析（A=1, B=2, ..., Z=26）
-                </div>
-              )}
-              <AnalysisCard label="車牌" result={result.license} />
-            </>
+            <AnalysisCard
+              label="車牌"
+              result={licenseShown ? { ...result.license, input: licenseShown } : result.license}
+            />
           )}
           {result.license_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">車牌：{result.license_error}</div>}
         </div>
