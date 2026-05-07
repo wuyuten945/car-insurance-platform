@@ -1861,13 +1861,13 @@ function _numPlateGraphicHtml(number) {
 
   return '<div style="display:flex;justify-content:center;padding:8px 0">' +
     '<div style="position:relative;border-radius:6px;background:#fff;border:2px solid #d1d5db;box-shadow:0 4px 12px rgba(0,0,0,.1);padding:16px 16px 6px;width:100%;max-width:320px">' +
-      // 上方螺絲孔
-      '<div style="position:absolute;top:4px;left:12px;height:6px;width:28px;border-radius:99px;background:#e5e7eb"></div>' +
-      '<div style="position:absolute;top:4px;right:12px;height:6px;width:28px;border-radius:99px;background:#e5e7eb"></div>' +
+      // 上方螺絲孔（往中間靠攏一點點）
+      '<div style="position:absolute;top:4px;left:36px;height:6px;width:28px;border-radius:99px;background:#e5e7eb"></div>' +
+      '<div style="position:absolute;top:4px;right:36px;height:6px;width:28px;border-radius:99px;background:#e5e7eb"></div>' +
       // 號碼
       '<p style="text-align:center;font-size:28px;font-family:monospace;font-weight:900;letter-spacing:.15em;color:#111827;margin:0;line-height:1.1">' + display + '</p>' +
-      // 三朵梅花
-      '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:2px">' +
+      // 三朵梅花（間距外擴一些）
+      '<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:2px">' +
         _numPlumBlossomSvg('#c4b5fd') + _numPlumBlossomSvg('#d1d5db') + _numPlumBlossomSvg('#c4b5fd') +
       '</div>' +
     '</div>' +

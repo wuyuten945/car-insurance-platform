@@ -627,15 +627,15 @@ function PlateGraphic({ number }: { number: string }) {
   return (
     <div className="flex justify-center py-2">
       <div className="relative rounded-md bg-white border-2 border-gray-300 shadow-md px-3 sm:px-4 pt-4 pb-1.5 w-full max-w-[320px]">
-        {/* 上方螺絲孔 */}
-        <div className="absolute top-1 left-3 h-1.5 w-7 rounded-full bg-gray-200" />
-        <div className="absolute top-1 right-3 h-1.5 w-7 rounded-full bg-gray-200" />
+        {/* 上方螺絲孔（往中間靠攏一點點） */}
+        <div className="absolute top-1 left-8 sm:left-10 h-1.5 w-7 rounded-full bg-gray-200" />
+        <div className="absolute top-1 right-8 sm:right-10 h-1.5 w-7 rounded-full bg-gray-200" />
         {/* 號碼 */}
         <p className="text-center text-2xl sm:text-3xl font-mono font-black tracking-widest text-gray-900 leading-tight">
           {display}
         </p>
-        {/* 三朵梅花（左紫、中灰、右紫） */}
-        <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-0.5">
+        {/* 三朵梅花（左紫、中灰、右紫；間距外擴一些） */}
+        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-0.5">
           <PlumBlossom color="#c4b5fd" />
           <PlumBlossom color="#d1d5db" />
           <PlumBlossom color="#c4b5fd" />
