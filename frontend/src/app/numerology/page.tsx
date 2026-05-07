@@ -42,6 +42,12 @@ interface AnalysisOut {
   error?: string;
 }
 
+interface PersonalSnapshot {
+  id?: AnalysisOut;
+  phone?: AnalysisOut;
+  license?: AnalysisOut;
+}
+
 interface RecommendOut {
   rank: number;
   number: string;
@@ -49,10 +55,31 @@ interface RecommendOut {
   duplicate_marks?: string[];
 }
 
+// 凶星 → 對應吉星（用於智能建議避凶補吉，與原網站邏輯一致）
+const COUNTER_MAGNET: Record<string, string> = {
+  絕命: '天醫',
+  五鬼: '生氣',
+  六煞: '延年',
+  禍害: '生氣',
+};
+
+function aggregatePersonalMagnets(snap: PersonalSnapshot): Record<string, number> {
+  const total: Record<string, number> = {};
+  (['id', 'phone', 'license'] as const).forEach((k) => {
+    const counts = (snap[k]?.magnet_count) || {};
+    Object.entries(counts).forEach(([m, n]) => {
+      if (m === '中性') return;
+      total[m] = (total[m] || 0) + (n as number);
+    });
+  });
+  return total;
+}
+
 export default function NumerologyPage() {
   const { ready: __authReady } = useAuthGuard();
   useIdleLogout();
   const [tab, setTab] = useState<TabKey>('auto');
+  const [snapshot, setSnapshot] = useState<PersonalSnapshot | null>(null);
 
   if (!__authReady) return null;
 
@@ -84,9 +111,9 @@ export default function NumerologyPage() {
         ))}
       </div>
 
-      {tab === 'auto'      && <AutoTab />}
+      {tab === 'auto'      && <AutoTab onAnalyzed={setSnapshot} />}
       {tab === 'manual'    && <ManualTab />}
-      {tab === 'recommend' && <RecommendTab topN={3} />}
+      {tab === 'recommend' && <RecommendTab topN={3} snapshot={snapshot} onGoToAuto={() => setTab('auto')} />}
 
       <p className="text-[10px] text-gray-400 text-center pt-4 border-t border-gray-100">
         本系統僅供參考，不構成任何決策依據。
@@ -184,7 +211,7 @@ function AnalysisCard({ label, result }: { label: string; result: AnalysisOut })
 
 // ───── Tab A: 個人分析 ─────
 
-function AutoTab() {
+function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) {
   const [idNum, setIdNum] = useState('');
   const [phone, setPhone] = useState('');
   const [license, setLicense] = useState('');
@@ -202,7 +229,12 @@ function AutoTab() {
       const res = await api.post('/api/v1/numerology/auto', {
         id: idNum.trim(), phone: phone.trim(), license: license.trim(),
       });
-      setResult(res.data?.data || null);
+      const data = res.data?.data || null;
+      setResult(data);
+      // 將結果 lift up 給智能建議 tab 用（避凶補吉的依據）
+      if (data && (data.id || data.phone || data.license)) {
+        onAnalyzed({ id: data.id, phone: data.phone, license: data.license });
+      }
     } catch (e: unknown) {
       const errObj = e as { response?: { data?: { message?: string; detail?: string } } };
       setErr(errObj?.response?.data?.message || errObj?.response?.data?.detail || '分析失敗');
@@ -328,20 +360,46 @@ function ManualTab() {
 
 // ───── Tab C: 智能建議 ─────
 
-function RecommendTab({ topN }: { topN: number }) {
+function RecommendTab({
+  topN, snapshot, onGoToAuto,
+}: {
+  topN: number;
+  snapshot: PersonalSnapshot | null;
+  onGoToAuto: () => void;
+}) {
   const [purpose, setPurpose] = useState<'phone' | 'license' | 'pin'>('phone');
   const [length, setLength] = useState(10);
   const [prefix, setPrefix] = useState('09');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [recs, setRecs] = useState<RecommendOut[]>([]);
+  const [debugInfo, setDebugInfo] = useState<{ exclude: string[]; require: string[] } | null>(null);
+
+  const hasSnapshot = !!snapshot && (!!snapshot.id || !!snapshot.phone || !!snapshot.license);
 
   const submit = async () => {
+    if (!hasSnapshot) {
+      setErr('請先在「個人分析」分頁完成身分證 / 電話 / 車牌的分析，建議才能依您的磁場狀況客製');
+      return;
+    }
     setErr(''); setBusy(true);
     try {
+      // 從個人分析結果推導 exclude / require（跟原網站邏輯一致）
+      const total = aggregatePersonalMagnets(snapshot!);
+      const exclude: string[] = [];
+      const require: string[] = [];
+      for (const bad of BAD) {
+        if ((total[bad] || 0) > 0) {
+          exclude.push(bad);
+          const counter = COUNTER_MAGNET[bad];
+          if (counter && !require.includes(counter)) require.push(counter);
+        }
+      }
+      setDebugInfo({ exclude, require });
+
       const r = await api.post('/api/v1/numerology/recommend', {
         purpose, length, prefix: prefix.trim(),
-        exclude_magnets: [], require_magnets: [],
+        exclude_magnets: exclude, require_magnets: require,
         top_n: topN,
       });
       setRecs(r.data?.data?.recommendations || []);
@@ -356,9 +414,35 @@ function RecommendTab({ topN }: { topN: number }) {
   return (
     <div className="space-y-3">
       <div className="rounded-xl bg-purple-50 p-3 text-xs text-purple-900 leading-relaxed">
-        🎯 自動產生 {topN} 組高分吉祥號碼。可在「個人分析」分頁先做分析，建議內容會自動避凶補吉（進階版規則由後端主導）。
+        🎯 自動產生 {topN} 組高分吉祥號碼。系統會根據「個人分析」結果<b>自動避開您身上既有的凶星、補對應的吉星</b>，所以**必須先完成個人分析**。
       </div>
-      <div className="rounded-xl bg-white border border-gray-100 p-4 space-y-3">
+
+      {/* 必須先做個人分析的提示 */}
+      {!hasSnapshot && (
+        <div className="rounded-xl bg-amber-50 border border-amber-300 p-4 text-center">
+          <p className="text-sm font-bold text-amber-900 mb-2">⚠️ 還沒做個人分析</p>
+          <p className="text-xs text-amber-800 mb-3 leading-relaxed">
+            智能建議需要您的個人磁場狀況才能客製化。
+            <br />請先到「個人分析」分頁，輸入身分證 / 電話 / 車牌（任一即可）並按分析。
+          </p>
+          <button
+            onClick={onGoToAuto}
+            className="rounded-lg bg-amber-500 hover:bg-amber-600 px-4 py-2 text-xs font-bold text-white"
+          >
+            前往個人分析 →
+          </button>
+        </div>
+      )}
+
+      {/* 已有快照時顯示摘要 */}
+      {hasSnapshot && (
+        <div className="rounded-xl bg-green-50 border border-green-200 p-3 text-xs text-green-900">
+          ✓ 已讀取您的個人分析結果，建議會自動依您的磁場避凶補吉。
+          <button onClick={onGoToAuto} className="ml-2 text-green-700 underline">重新分析</button>
+        </div>
+      )}
+
+      <div className="rounded-xl bg-white border border-gray-100 p-4 space-y-3" style={{ opacity: hasSnapshot ? 1 : 0.5, pointerEvents: hasSnapshot ? 'auto' : 'none' }}>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">用途</label>
           <select className={inputClass} value={purpose} onChange={(e) => setPurpose(e.target.value as 'phone'|'license'|'pin')}>
@@ -387,6 +471,18 @@ function RecommendTab({ topN }: { topN: number }) {
         </button>
         {err && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{err}</div>}
       </div>
+
+      {debugInfo && hasSnapshot && (debugInfo.exclude.length > 0 || debugInfo.require.length > 0) && (
+        <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900">
+          <b>建議邏輯：</b>
+          {debugInfo.exclude.length > 0 && (
+            <div>已避開您身上的凶星：<span className="font-semibold text-red-600">{debugInfo.exclude.join('、')}</span></div>
+          )}
+          {debugInfo.require.length > 0 && (
+            <div>已加強對應吉星：<span className="font-semibold text-green-600">{debugInfo.require.join('、')}</span></div>
+          )}
+        </div>
+      )}
 
       {recs.length > 0 && (
         <div className="space-y-2">
