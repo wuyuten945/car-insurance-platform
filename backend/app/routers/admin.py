@@ -1275,6 +1275,26 @@ var NUM_INFO = {
 window._numPersonalSnapshot = null;  // 個人分析結果快取（給智能建議讀凶星）
 
 // ────── UI helpers ──────
+function _numClearAllInputs() {
+  // 防個資殘留：每次關 / 開都清空所有輸入和結果
+  ['num-id','num-birthday','num-phone','num-phone2','num-license','num-license2',
+   'num-m1','num-m2','num-m3','num-rec-prefix'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['num-personal-results','num-manual-results','num-rec-results'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+  // 重設智能建議的長度與開頭預設值
+  var lenEl = document.getElementById('num-rec-length');
+  if (lenEl) lenEl.value = 10;
+  var prefixEl = document.getElementById('num-rec-prefix');
+  if (prefixEl) prefixEl.value = '09';
+  // 清掉個人分析快照
+  window._numPersonalSnapshot = null;
+}
+
 function openNumerologyModal() {
   // 未登入 → 跳警語引導去登入,而不是無聲打開空白 modal
   if (!ADMIN_TOKEN) {
@@ -1282,6 +1302,7 @@ function openNumerologyModal() {
     if (dlg) dlg.style.display = 'flex';
     return;
   }
+  _numClearAllInputs();   // 開啟前清空,避免上次操作的個資殘留
   document.getElementById('numerology-modal').style.display = 'flex';
   numSwitchTab('personal');
 }
@@ -1299,6 +1320,7 @@ function closeNumerologyLoginRequired(goLogin) {
 
 function closeNumerologyModal() {
   document.getElementById('numerology-modal').style.display = 'none';
+  _numClearAllInputs();   // 關閉時也清,雙重保險
 }
 
 function numSwitchTab(tab) {

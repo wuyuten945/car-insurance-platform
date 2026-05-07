@@ -9,12 +9,11 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from pydantic import BaseModel
 
-from app.dependencies import get_current_user
-from app.exceptions import BadRequestError
-from app.models.user import User
+from app.core.security import decode_token
+from app.exceptions import BadRequestError, UnauthorizedError
 from app.schemas.common import APIResponse
 from app.services import numerology_engine as engine
 
@@ -23,6 +22,27 @@ logger = logging.getLogger(__name__)
 
 # recommend() 會跑 1000-2000 次 analyze，是 CPU bound，不要阻塞 event loop。
 _EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="numerology")
+
+
+# ─────────────────────────────────────────────────────────────
+# 統一認證：接受客戶 token (type=access) 或管理員 token (type=admin)
+# ─────────────────────────────────────────────────────────────
+async def require_any_auth(
+    authorization: str = Header(..., description="Bearer <token>"),
+) -> dict:
+    """數字易經是後台 admin / agent 與前台客戶都會使用的功能,故兩種 JWT 都允許。
+    僅驗證 token 有效,不抓使用者物件(numerology endpoint 本身不需要)。
+    """
+    if not authorization.startswith("Bearer "):
+        raise UnauthorizedError("無效的授權標頭")
+    token = authorization[7:]
+    payload = decode_token(token)
+    if not payload:
+        raise UnauthorizedError("無效或過期的 Token")
+    token_type = payload.get("type")
+    if token_type not in ("access", "admin"):
+        raise UnauthorizedError("無效或過期的 Token")
+    return payload
 
 
 class AutoIn(BaseModel):
@@ -65,7 +85,7 @@ def _safe_age_mapping(id_str: str) -> tuple[dict | None, str | None]:
 @router.post("/auto", response_model=APIResponse)
 async def auto_analyze(
     payload: AutoIn,
-    current_user: User = Depends(get_current_user),
+    _auth: dict = Depends(require_any_auth),
 ):
     """個人分析：身分證 / 生日 / 電話 ×2 / 車牌 ×2 一鍵綜合分析。"""
     fields = [payload.id, payload.birthday, payload.phone, payload.phone2,
@@ -129,7 +149,7 @@ async def auto_analyze(
 @router.post("/analyze", response_model=APIResponse)
 async def analyze_number(
     payload: AnalyzeIn,
-    current_user: User = Depends(get_current_user),
+    _auth: dict = Depends(require_any_auth),
 ):
     """進階分析：單組或多組合併號碼分析。"""
     val = (payload.input or "").strip()
@@ -144,7 +164,7 @@ async def analyze_number(
 @router.post("/recommend", response_model=APIResponse)
 async def recommend_numbers(
     payload: RecommendIn,
-    current_user: User = Depends(get_current_user),
+    _auth: dict = Depends(require_any_auth),
 ):
     """智能建議：依個人凶星避開 + 補對應吉星，產生 N 組高分號碼。"""
     top_n = max(1, min(payload.top_n, 50))
