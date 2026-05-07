@@ -14,8 +14,12 @@ interface Message {
   id?: string;
   sender: 'user' | 'bot' | 'agent';
   content: string;
+  intent?: string | null;
   created_at?: string;
 }
+
+// 偵測「轉人工」相關關鍵字（與後端 chatbot_service.py 的 transfer intent 一致）
+const TRANSFER_REGEX = /轉人工|真人客服|人工客服|找業務員|找專員/;
 
 const QUICK_REPLIES = [
   '保單怎麼查',
@@ -39,8 +43,16 @@ export default function ChatbotPage() {
     },
   ]);
   const [input, setInput] = useState('');
+  const [lineOaUrl, setLineOaUrl] = useState('');   // 來自 /eligibility,用於轉人工跳轉
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // 載入時抓 LINE OA URL（轉人工會用到）
+  useEffect(() => {
+    api.get('/api/v1/customers/eligibility')
+      .then((res) => setLineOaUrl(res.data?.data?.line_oa_url || ''))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -76,6 +88,12 @@ export default function ChatbotPage() {
   const handleSend = (text?: string) => {
     const content = text ?? input.trim();
     if (!content || sendMessage.isPending) return;
+
+    // 預先偵測「轉人工」→ 立即在使用者點擊的同一個 user-gesture 內開 LINE OA
+    // （如果等到 API 回傳後才 window.open,瀏覽器會視為非使用者觸發而擋下 popup）
+    if (TRANSFER_REGEX.test(content) && lineOaUrl) {
+      window.open(lineOaUrl, '_blank', 'noopener,noreferrer');
+    }
 
     setMessages((prev) => [...prev, { sender: 'user', content }]);
     setInput('');
@@ -131,6 +149,17 @@ export default function ChatbotPage() {
                 }`}
               >
                 {msg.content}
+                {/* 轉人工 → CTA 按鈕(若 popup 被擋,使用者可手動點) */}
+                {msg.intent === 'transfer_human' && lineOaUrl && (
+                  <a
+                    href={lineOaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-[#06C755] hover:bg-[#04a849] px-4 py-2.5 text-sm font-bold text-white transition"
+                  >
+                    📱 開啟 LINE OA 客服
+                  </a>
+                )}
               </div>
             </div>
           );
