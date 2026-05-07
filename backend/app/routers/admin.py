@@ -1386,6 +1386,17 @@ function _numConvertLicense(s) {
   return out;
 }
 
+// 從 API 回應抽取錯誤訊息(兼容 BOPINAN APIResponse 與 FastAPI HTTPException / ValidationError)
+function _numExtractError(d, status) {
+  if (!d) return 'HTTP ' + (status || '??');
+  if (d.message) return d.message;
+  if (typeof d.detail === 'string') return d.detail;
+  if (Array.isArray(d.detail)) {
+    return d.detail.map(function(e){ return (e && e.msg) ? e.msg : JSON.stringify(e); }).join(', ');
+  }
+  return 'HTTP ' + (status || '??');
+}
+
 async function numAutoSubmit() {
   var idn = document.getElementById('num-id').value.trim();
   var bday = document.getElementById('num-birthday').value.trim();
@@ -1415,9 +1426,11 @@ async function numAutoSubmit() {
         license: licSend, license2: lic2Send,
       }),
     });
-    var d = await r.json();
-    if (!d.success) {
-      box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">'+(d.message||'分析失敗')+'</div>';
+    var d = await r.json().catch(function(){ return null; });
+    if (!r.ok || !d || !d.success) {
+      var msg = _numExtractError(d, r.status);
+      console.warn('numerology /auto failed', r.status, d);
+      box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">分析失敗：'+msg+'</div>';
       return;
     }
     var data = d.data || {};
@@ -1465,8 +1478,12 @@ async function numManualSubmit() {
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN_TOKEN},
         body: JSON.stringify({ input: inputs[i], mode: 'general' }),
       });
-      var dd = await rr.json();
-      indiv.push((dd.data || {}));
+      var dd = await rr.json().catch(function(){ return null; });
+      if (!rr.ok || !dd || !dd.success) {
+        box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">分析失敗（號碼 '+(i+1)+'）：'+_numExtractError(dd, rr.status)+'</div>';
+        return;
+      }
+      indiv.push(dd.data || {});
     }
     var combined = indiv[0];
     if (inputs.length > 1) {
@@ -1475,7 +1492,11 @@ async function numManualSubmit() {
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN_TOKEN},
         body: JSON.stringify({ input: inputs.join(''), mode: 'general' }),
       });
-      var dc = await rc.json();
+      var dc = await rc.json().catch(function(){ return null; });
+      if (!rc.ok || !dc || !dc.success) {
+        box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">合併分析失敗：'+_numExtractError(dc, rc.status)+'</div>';
+        return;
+      }
       combined = dc.data || {};
     }
     var html = '';
@@ -1530,9 +1551,10 @@ async function numRecommendSubmit() {
         top_n: 30,
       }),
     });
-    var d = await r.json();
-    if (!d.success) {
-      box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">'+(d.message||'失敗')+'</div>';
+    var d = await r.json().catch(function(){ return null; });
+    if (!r.ok || !d || !d.success) {
+      console.warn('numerology /recommend failed', r.status, d);
+      box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">產生失敗：'+_numExtractError(d, r.status)+'</div>';
       return;
     }
     var recs = (d.data && d.data.recommendations) || [];
