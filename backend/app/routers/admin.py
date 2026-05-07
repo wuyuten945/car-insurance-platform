@@ -315,14 +315,18 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 
       <!-- Tab: 個人分析 -->
       <div id="num-tab-personal" class="num-pane">
-        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">輸入客戶 / 自己的身分證、電話、車牌（4 位數字），三項只填部分也可。分析結果會儲存到智能建議分頁，自動避凶補吉。</div>
+        <div style="font-size:11px;color:#666;background:#F3E5F5;padding:8px;border-radius:6px;margin-bottom:8px">輸入客戶 / 自己的身分證、生日、電話、車牌（每項可填可不填，至少填一項）。同個人有兩支電話 / 兩台車可分別填入,會一起整合分析,結果會自動帶入智能建議避凶補吉。</div>
         <div class="row">
           <div><label>身分證字號</label><input type="text" id="num-id" placeholder="A123456789" maxlength="10" style="text-transform:uppercase"></div>
-          <div><label>電話</label><input type="text" id="num-phone" placeholder="0912345678"></div>
+          <div><label>生日（西元）</label><input type="text" id="num-birthday" placeholder="1985/03/15" maxlength="10"></div>
         </div>
         <div class="row">
-          <div><label>車牌（4 位數字）</label><input type="text" id="num-license" placeholder="1234" maxlength="4"></div>
-          <div></div>
+          <div><label>電話</label><input type="text" id="num-phone" placeholder="0912345678"></div>
+          <div><label>電話 2（選填）</label><input type="text" id="num-phone2" placeholder="0987654321"></div>
+        </div>
+        <div class="row">
+          <div><label>車牌（含英文字也可）</label><input type="text" id="num-license" placeholder="如 ABC-1234" maxlength="12" style="text-transform:uppercase"></div>
+          <div><label>車牌 2（含英文字也可,選填）</label><input type="text" id="num-license2" placeholder="如 XYZ-5678" maxlength="12" style="text-transform:uppercase"></div>
         </div>
         <button onclick="numAutoSubmit()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🔍 分析</button>
         <div id="num-personal-results" style="margin-top:10px"></div>
@@ -1333,21 +1337,47 @@ function _numAnalysisCardHtml(label, result) {
 }
 
 // ────── Tab 個人分析（API 一次回三項）──────
+// 車牌字母 → 數字（A=1, B=2, ..., Z=26 單字單轉）。送 API 前轉換,顯示時還原成原文
+function _numConvertLicense(s) {
+  if (!s) return '';
+  var clean = s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  var out = '';
+  for (var i = 0; i < clean.length; i++) {
+    var ch = clean[i];
+    if (ch >= 'A' && ch <= 'Z') out += String(ch.charCodeAt(0) - 'A'.charCodeAt(0) + 1);
+    else out += ch;
+  }
+  return out;
+}
+
 async function numAutoSubmit() {
   var idn = document.getElementById('num-id').value.trim();
+  var bday = document.getElementById('num-birthday').value.trim();
   var ph = document.getElementById('num-phone').value.trim();
+  var ph2 = document.getElementById('num-phone2').value.trim();
   var lic = document.getElementById('num-license').value.trim();
+  var lic2 = document.getElementById('num-license2').value.trim();
   var box = document.getElementById('num-personal-results');
-  if (!idn && !ph && !lic) {
+  if (!idn && !bday && !ph && !ph2 && !lic && !lic2) {
     box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">請至少輸入一項</div>';
     return;
   }
-  box.innerHTML = '<div style="text-align:center;color:#999;padding:20px"><span style="display:inline-block;animation:spin 1s linear infinite">⏳</span> 分析中⋯（首次喚醒服務約 30 秒）</div>';
+  // 車牌字母轉數字後送 API,但顯示時還原成使用者原本輸入
+  var licSend = _numConvertLicense(lic);
+  var lic2Send = _numConvertLicense(lic2);
+  var licShown = lic.toUpperCase();
+  var lic2Shown = lic2.toUpperCase();
+
+  box.innerHTML = '<div style="text-align:center;color:#999;padding:20px"><span style="display:inline-block;animation:spin 1s linear infinite">⏳</span> 分析中⋯</div>';
   try {
     var r = await fetch(CONSOLE_API.replace('/admin-console','') + '/numerology/auto', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN_TOKEN},
-      body: JSON.stringify({ id: idn, phone: ph, license: lic }),
+      body: JSON.stringify({
+        id: idn, birthday: bday,
+        phone: ph, phone2: ph2,
+        license: licSend, license2: lic2Send,
+      }),
     });
     var d = await r.json();
     if (!d.success) {
@@ -1355,14 +1385,24 @@ async function numAutoSubmit() {
       return;
     }
     var data = d.data || {};
-    window._numPersonalSnapshot = data;  // 儲存給智能建議用
+    window._numPersonalSnapshot = data;  // 儲存給智能建議用（含 6 個欄位）
+    // 把車牌的 input 欄位還原成使用者輸入,避免暴露轉換後的數字
+    if (data.license && licShown) data.license = Object.assign({}, data.license, { input: licShown });
+    if (data.license2 && lic2Shown) data.license2 = Object.assign({}, data.license2, { input: lic2Shown });
+
     var html = '';
     if (data.id) html += _numAnalysisCardHtml('身分證', data.id);
     if (data.id_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">身分證：'+data.id_error+'</div>';
+    if (data.birthday) html += _numAnalysisCardHtml('生日', data.birthday);
+    if (data.birthday_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">生日：'+data.birthday_error+'</div>';
     if (data.phone) html += _numAnalysisCardHtml('電話', data.phone);
     if (data.phone_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">電話：'+data.phone_error+'</div>';
+    if (data.phone2) html += _numAnalysisCardHtml('電話 2', data.phone2);
+    if (data.phone2_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">電話 2：'+data.phone2_error+'</div>';
     if (data.license) html += _numAnalysisCardHtml('車牌', data.license);
     if (data.license_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">車牌：'+data.license_error+'</div>';
+    if (data.license2) html += _numAnalysisCardHtml('車牌 2', data.license2);
+    if (data.license2_error) html += '<div style="background:#FFEBEE;color:#C62828;padding:6px 8px;border-radius:6px;margin:4px 0">車牌 2：'+data.license2_error+'</div>';
     box.innerHTML = html;
   } catch (e) {
     box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:8px;border-radius:6px">錯誤：'+e.message+'</div>';
@@ -1422,12 +1462,12 @@ async function numRecommendSubmit() {
   var prefix = document.getElementById('num-rec-prefix').value.trim();
   var box = document.getElementById('num-rec-results');
 
-  // 從個人分析快照中推導 exclude / require
+  // 從個人分析快照中推導 exclude / require — 6 個欄位整合
   var exclude = [], require = [];
   var COUNTER = { '絕命':'天醫', '五鬼':'生氣', '六煞':'延年', '禍害':'生氣' };
   if (window._numPersonalSnapshot) {
     var total = {};
-    ['id','phone','license'].forEach(function(k){
+    ['id','birthday','phone','phone2','license','license2'].forEach(function(k){
       var c = (window._numPersonalSnapshot[k] || {}).magnet_count || {};
       Object.keys(c).forEach(function(m){
         if (m === '中性') return;
