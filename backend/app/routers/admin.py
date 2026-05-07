@@ -994,7 +994,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           <div><label>開頭</label><input type="text" id="num-rec-prefix" value="09" placeholder="如 09 / ABC" autocomplete="off" data-form-type="other"></div>
         </div>
         <button type="button" onclick="numRecommendSubmit()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer">🎯 產生 30 組吉祥號碼</button>
-        <div id="num-rec-results" style="margin-top:10px;max-height:500px;overflow-y:auto"></div>
+        <div id="num-rec-results" style="margin-top:10px;max-height:75vh;overflow-y:auto;padding-right:4px"></div>
       </div>
     </form>
 
@@ -1774,6 +1774,108 @@ async function numManualSubmit() {
   }
 }
 
+// ─── 智能建議視覺元件（前台同款）─────
+
+// 5 瓣梅花 SVG（台灣新式車牌底紋）
+function _numPlumBlossomSvg(color) {
+  return '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px">' +
+    '<g fill="' + color + '">' +
+      '<circle cx="20" cy="9" r="6.5"/>' +
+      '<circle cx="30.5" cy="16" r="6.5"/>' +
+      '<circle cx="26.5" cy="28" r="6.5"/>' +
+      '<circle cx="13.5" cy="28" r="6.5"/>' +
+      '<circle cx="9.5" cy="16" r="6.5"/>' +
+    '</g>' +
+    '<circle cx="20" cy="20" r="3" fill="#fde68a"/>' +
+    '<g fill="#a16207" opacity="0.8">' +
+      '<circle cx="20" cy="16.5" r="0.7"/><circle cx="22.5" cy="20" r="0.7"/>' +
+      '<circle cx="17.5" cy="20" r="0.7"/><circle cx="20" cy="22.5" r="0.7"/>' +
+    '</g>' +
+  '</svg>';
+}
+
+// iPhone 整機外觀（電話建議用）
+function _numPhoneGraphicHtml(number) {
+  var display = number;
+  if (number.length === 10) display = number.slice(0,4)+'-'+number.slice(4,7)+'-'+number.slice(7);
+  else if (number.length === 9) display = number.slice(0,3)+'-'+number.slice(3,6)+'-'+number.slice(6);
+
+  return '<div style="display:flex;justify-content:center;padding:8px 0">' +
+    '<div style="position:relative;width:180px;height:360px;border-radius:35px;background:linear-gradient(180deg,#111827,#000);box-shadow:0 8px 24px rgba(0,0,0,.3);padding:6px">' +
+      // 側鍵
+      '<span style="position:absolute;left:-2px;top:60px;height:8px;width:4px;border-radius:2px 0 0 2px;background:#374151"></span>' +
+      '<span style="position:absolute;left:-2px;top:100px;height:36px;width:4px;border-radius:2px 0 0 2px;background:#374151"></span>' +
+      '<span style="position:absolute;left:-2px;top:145px;height:36px;width:4px;border-radius:2px 0 0 2px;background:#374151"></span>' +
+      '<span style="position:absolute;right:-2px;top:110px;height:48px;width:4px;border-radius:0 2px 2px 0;background:#374151"></span>' +
+      // 螢幕
+      '<div style="position:relative;height:100%;width:100%;border-radius:30px;background:linear-gradient(180deg,#9333ea,#ec4899,#7e22ce);overflow:hidden;display:flex;flex-direction:column;align-items:center">' +
+        // 動態島
+        '<div style="margin-top:8px;height:20px;width:80px;border-radius:99px;background:#000;display:flex;align-items:center;justify-content:flex-end;padding-right:4px">' +
+          '<span style="display:block;height:6px;width:6px;border-radius:50%;background:#374151"></span>' +
+        '</div>' +
+        // 狀態列
+        '<div style="width:100%;padding:0 16px;margin-top:4px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.9);font-weight:600">' +
+          '<span>9:41</span><span>● ● ● ●</span>' +
+        '</div>' +
+        // 號碼
+        '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:0 12px">' +
+          '<p style="font-size:11px;color:rgba(255,255,255,.7);margin:0 0 8px;letter-spacing:.1em">建議號碼</p>' +
+          '<p style="font-size:22px;font-family:monospace;font-weight:bold;color:#fff;letter-spacing:.05em;margin:0;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.2);word-break:break-all">' + display + '</p>' +
+        '</div>' +
+        // Home indicator
+        '<div style="margin-bottom:8px;height:4px;width:96px;border-radius:99px;background:rgba(255,255,255,.7)"></div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// 台灣新式自小客車牌（車牌建議用）
+function _numPlateGraphicHtml(number) {
+  var i = 0;
+  while (i < number.length && /[A-Za-z]/.test(number[i])) i++;
+  var prefix = number.slice(0, i);
+  var suffix = number.slice(i);
+  var display = (prefix && suffix) ? prefix + '-' + suffix : number;
+
+  return '<div style="display:flex;justify-content:center;padding:8px 0">' +
+    '<div style="position:relative;border-radius:6px;background:#fff;border:2px solid #d1d5db;box-shadow:0 4px 12px rgba(0,0,0,.1);padding:16px 16px 6px;width:100%;max-width:320px">' +
+      // 上方螺絲孔
+      '<div style="position:absolute;top:4px;left:12px;height:6px;width:28px;border-radius:99px;background:#e5e7eb"></div>' +
+      '<div style="position:absolute;top:4px;right:12px;height:6px;width:28px;border-radius:99px;background:#e5e7eb"></div>' +
+      // 號碼
+      '<p style="text-align:center;font-size:28px;font-family:monospace;font-weight:900;letter-spacing:.15em;color:#111827;margin:0;line-height:1.1">' + display + '</p>' +
+      // 三朵梅花
+      '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:2px">' +
+        _numPlumBlossomSvg('#c4b5fd') + _numPlumBlossomSvg('#d1d5db') + _numPlumBlossomSvg('#c4b5fd') +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// PIN / 一般用途（漸層大字塊）
+function _numPinGraphicHtml(number, prefix) {
+  var hasPrefix = prefix && number.indexOf(prefix) === 0;
+  var numHtml;
+  if (hasPrefix) {
+    numHtml = '<span style="color:#c4b5fd">' + prefix + '</span><span style="color:#111827">' + number.slice(prefix.length) + '</span>';
+  } else {
+    numHtml = '<span style="color:#111827">' + number + '</span>';
+  }
+  return '<div style="display:flex;justify-content:center;padding:12px 0">' +
+    '<div style="background:linear-gradient(135deg,#faf5ff,#fdf2f8);border:1px solid #e9d5ff;padding:14px 24px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.04)">' +
+      '<p style="font-size:11px;color:#9333ea;margin:0 0 4px;text-align:center">建議號碼</p>' +
+      '<p style="font-size:28px;font-family:monospace;font-weight:bold;letter-spacing:.05em;text-align:center;margin:0;word-break:break-all">' + numHtml + '</p>' +
+    '</div>' +
+  '</div>';
+}
+
+// 吉星 → 它能消的凶星
+var NUM_GOOD_COUNTERS_BAD = {
+  '天醫': ['絕命'],
+  '延年': ['六煞'],
+  '生氣': ['禍害', '五鬼'],
+};
+
 // ────── Tab 智能建議（30 組）──────
 async function numRecommendSubmit() {
   var purpose = document.getElementById('num-rec-purpose').value;
@@ -1821,37 +1923,108 @@ async function numRecommendSubmit() {
     }
     var recs = (d.data && d.data.recommendations) || [];
     if (recs.length === 0) {
-      box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">未能產生符合條件的號碼，請放寬條件再試</div>';
+      box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">未能產生符合條件的號碼,請放寬條件再試</div>';
       return;
     }
-    var html = '<div style="font-size:11px;color:#666;margin-bottom:6px">共 '+recs.length+' 組';
-    if (exclude.length) html += '　|　已避開：'+exclude.join('、');
-    if (require.length) html += '　|　強化：'+require.join('、');
-    html += '</div>';
+
+    // 個人分析整合磁場（用來推算每組推薦能消使用者哪些凶星）
+    var userTotal = {};
+    if (window._numPersonalSnapshot) {
+      ['id','birthday','phone','phone2','license','license2'].forEach(function(k){
+        var c = (window._numPersonalSnapshot[k] || {}).magnet_count || {};
+        Object.keys(c).forEach(function(m){
+          if (m === '中性') return;
+          userTotal[m] = (userTotal[m] || 0) + c[m];
+        });
+      });
+    }
+
+    // ── 建議邏輯摘要卡（前台同款）──
+    var html = '';
+    var detectedBad = NUM_BAD.filter(function(m){ return (userTotal[m]||0) > 0; });
+    var detectedBadHtml = detectedBad.length
+      ? detectedBad.map(function(m){ return '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">' + m + ' ' + userTotal[m] + '</span>'; }).join(' ')
+      : '<span style="color:#9ca3af;font-size:10px">無凶星</span>';
+    var requireGoodHtml = require.length
+      ? require.map(function(m){ return '<span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">' + m + '</span>'; }).join(' ')
+      : '<span style="color:#9ca3af;font-size:10px">—</span>';
+    html += '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px;margin-bottom:10px">' +
+      '<div style="font-weight:bold;font-size:13px;color:#1f2937;margin-bottom:6px">建議邏輯（依您的個人分析）</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:4px">' +
+        '<span style="color:#6b7280;min-width:60px">您的凶星：</span><span>' + detectedBadHtml + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;font-size:11px">' +
+        '<span style="color:#6b7280;min-width:60px">需加強：</span><span>' + requireGoodHtml + '</span>' +
+      '</div>' +
+    '</div>';
+
+    // ── 建議號碼列表 ──
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px">' +
+      '<div style="font-weight:bold;font-size:13px;color:#1f2937">建議使用的號碼（共 ' + recs.length + ' 組）</div>' +
+      '<button onclick="numRecommendSubmit()" style="background:#f3e8ff;color:#7c3aed;border:0;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">🔄 再換一組</button>' +
+    '</div>';
+    if (exclude.length || require.length) {
+      html += '<p style="font-size:10px;color:#6b7280;margin:0 0 6px">';
+      if (exclude.length) html += '已避開：' + exclude.join('、');
+      if (exclude.length && require.length) html += '　|　';
+      if (require.length) html += '強化：' + require.join('、');
+      html += '</p>';
+    }
+
     recs.forEach(function(r){
       var counts = r.magnet_count || {};
       var goodSum = 0, badSum = 0;
       NUM_GOOD.forEach(function(m){ goodSum += counts[m]||0; });
       NUM_BAD.forEach(function(m){ badSum += counts[m]||0; });
-      html += '<div style="background:#fff;border:2px solid #E1BEE7;border-radius:8px;padding:8px 10px;margin-bottom:6px">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
-      html += '<div style="display:flex;align-items:center;gap:6px">';
-      html += '<span style="background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:99px">#'+r.rank+'</span>';
-      html += '<span style="font-family:monospace;font-size:18px;font-weight:bold">'+r.number+'</span>';
-      html += '<button onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent=\\'已複製\\'" style="padding:2px 8px;font-size:10px;background:#E3F2FD;color:#1565C0;border:0;border-radius:4px;cursor:pointer">複製</button>';
-      html += '</div>';
-      html += '<span style="font-size:11px;color:#2E7D32;font-weight:bold">吉 '+goodSum+' · 凶 '+badSum+'</span>';
-      html += '</div>';
-      html += '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:4px">';
+
+      // 推算這組推薦能消使用者身上哪些凶星
+      var cancelled = {};
+      Object.keys(NUM_GOOD_COUNTERS_BAD).forEach(function(g){
+        if ((counts[g]||0) > 0) {
+          NUM_GOOD_COUNTERS_BAD[g].forEach(function(b){
+            if ((userTotal[b]||0) > 0) cancelled[b] = true;
+          });
+        }
+      });
+      var cancelStr = Object.keys(cancelled).join('、') || '—';
+      var goodPresent = NUM_GOOD.filter(function(g){ return (counts[g]||0) > 0; }).map(function(g){ return g + '×' + counts[g]; });
+      var goodStr = goodPresent.length ? goodPresent.join('、') : '—';
+
+      // 視覺：依 purpose 切換
+      var visual;
+      if (purpose === 'phone') visual = _numPhoneGraphicHtml(r.number);
+      else if (purpose === 'license') visual = _numPlateGraphicHtml(r.number);
+      else visual = _numPinGraphicHtml(r.number, prefix);
+
+      html += '<div style="background:#fff;border:2px solid #e9d5ff;border-radius:12px;padding:10px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
+      // header: rank + 吉/凶 + 複製
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:4px">' +
+        '<span style="background:linear-gradient(90deg,#9C27B0,#E91E63);color:#fff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:99px">#' + r.rank + '</span>' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span style="font-size:11px;color:#16a34a;font-weight:bold">吉 ' + goodSum + ' · 凶 ' + badSum + '</span>' +
+          '<button onclick="navigator.clipboard.writeText(\\''+ r.number +'\\');this.textContent=\\'已複製\\';setTimeout(()=>this.textContent=\\'複製號碼\\',1500)" style="padding:2px 8px;font-size:10px;background:#E3F2FD;color:#1565C0;border:0;border-radius:4px;cursor:pointer">複製號碼</button>' +
+        '</div>' +
+      '</div>';
+      // 視覺
+      html += visual;
+      // 推薦邏輯說明
+      html += '<p style="font-size:11px;color:#374151;margin:8px 0 0;line-height:1.6">' +
+        '含 <b style="color:#15803d">' + goodStr + '</b>';
+      if (Object.keys(cancelled).length > 0) {
+        html += ',以消除您身上的 <b style="color:#dc2626">' + cancelStr + '</b>';
+      }
+      html += '</p>';
+      // 8 磁場 tag
+      html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
       NUM_ALL.forEach(function(m){
         var n = counts[m] || 0;
         if (n === 0) return;
         var info = NUM_INFO[m];
-        html += '<span style="background:'+info.color+'20;color:'+info.color+';padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">'+m+' ×'+n+'</span>';
+        html += '<span style="background:'+info.color+'20;color:'+info.color+';padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">'+m+' ×'+n+'</span>';
       });
       html += '</div>';
       if (r.duplicate_marks && r.duplicate_marks.length) {
-        html += '<div style="font-size:10px;color:#6A1B9A;margin-top:3px">'+r.duplicate_marks.join('、')+'</div>';
+        html += '<div style="font-size:10px;color:#6A1B9A;margin-top:4px">'+r.duplicate_marks.join('、')+'</div>';
       }
       html += '</div>';
     });
