@@ -44,8 +44,11 @@ interface AnalysisOut {
 
 interface PersonalSnapshot {
   id?: AnalysisOut;
+  birthday?: AnalysisOut;
   phone?: AnalysisOut;
+  phone2?: AnalysisOut;
   license?: AnalysisOut;
+  license2?: AnalysisOut;
 }
 
 interface RecommendOut {
@@ -64,13 +67,21 @@ interface AgeMappingOut {
 
 interface AutoOut {
   id?: AnalysisOut;
+  birthday?: AnalysisOut;
   phone?: AnalysisOut;
+  phone2?: AnalysisOut;
   license?: AnalysisOut;
+  license2?: AnalysisOut;
   id_error?: string;
+  birthday_error?: string;
   phone_error?: string;
+  phone2_error?: string;
   license_error?: string;
+  license2_error?: string;
   age_mapping?: AgeMappingOut;
 }
+
+const PERSONAL_KEYS = ['id', 'birthday', 'phone', 'phone2', 'license', 'license2'] as const;
 
 // 凶星 → 對應吉星（用於智能建議避凶補吉，與原網站邏輯一致）
 const COUNTER_MAGNET: Record<string, string> = {
@@ -82,7 +93,7 @@ const COUNTER_MAGNET: Record<string, string> = {
 
 function aggregatePersonalMagnets(snap: PersonalSnapshot): Record<string, number> {
   const total: Record<string, number> = {};
-  (['id', 'phone', 'license'] as const).forEach((k) => {
+  PERSONAL_KEYS.forEach((k) => {
     const counts = (snap[k]?.magnet_count) || {};
     Object.entries(counts).forEach(([m, n]) => {
       if (m === '中性') return;
@@ -303,7 +314,7 @@ function InsightCards({ counts }: { counts: Record<string, number> }) {
 /** 綜合儀表面板 — 整合 id/phone/license 的磁場 */
 function PersonalSummaryCard({ data }: { data: AutoOut }) {
   const total: Record<string, number> = {};
-  (['id', 'phone', 'license'] as const).forEach((k) => {
+  PERSONAL_KEYS.forEach((k) => {
     const c = (data[k]?.magnet_count) || {};
     Object.entries(c).forEach(([m, n]) => {
       if (m === '中性') return;
@@ -327,7 +338,7 @@ function PersonalSummaryCard({ data }: { data: AutoOut }) {
     <div className="rounded-2xl bg-white border-2 border-purple-200 p-4 shadow-sm">
       <div className="text-center mb-2">
         <h3 className="font-bold text-gray-900">綜合磁場儀表</h3>
-        <p className="text-xs text-gray-500">身分證・電話・車牌 整合分析</p>
+        <p className="text-xs text-gray-500">身分證・生日・電話・車牌 整合分析</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center mb-4">
@@ -667,31 +678,48 @@ const GOOD_COUNTERS_BAD: Record<string, string[]> = {
 
 function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) {
   const [idNum, setIdNum] = useState('');
+  const [birthday, setBirthday] = useState('');
   const [phone, setPhone] = useState('');
+  const [phone2, setPhone2] = useState('');
   const [license, setLicense] = useState('');
+  const [license2, setLicense2] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [result, setResult] = useState<AutoOut | null>(null);
   // 使用者實際輸入的車牌（給結果卡片顯示用，避免暴露轉換後的數字）
   const [licenseShown, setLicenseShown] = useState('');
+  const [license2Shown, setLicense2Shown] = useState('');
 
   const submit = async () => {
-    if (!idNum.trim() && !phone.trim() && !license.trim()) {
+    const anyFilled = [idNum, birthday, phone, phone2, license, license2]
+      .some((s) => s.trim());
+    if (!anyFilled) {
       setErr('請至少輸入一項');
       return;
     }
     setErr(''); setBusy(true);
     try {
       const licenseSend = license.trim() ? convertLicenseToDigits(license) : '';
+      const license2Send = license2.trim() ? convertLicenseToDigits(license2) : '';
       const res = await api.post('/api/v1/numerology/auto', {
-        id: idNum.trim(), phone: phone.trim(), license: licenseSend,
+        id: idNum.trim(),
+        birthday: birthday.trim(),
+        phone: phone.trim(),
+        phone2: phone2.trim(),
+        license: licenseSend,
+        license2: license2Send,
       });
-      const data = res.data?.data || null;
+      const data: AutoOut | null = res.data?.data || null;
       setResult(data);
       setLicenseShown(license.trim().toUpperCase());
-      // 將結果 lift up 給智能建議 tab 用（避凶補吉的依據）
-      if (data && (data.id || data.phone || data.license)) {
-        onAnalyzed({ id: data.id, phone: data.phone, license: data.license });
+      setLicense2Shown(license2.trim().toUpperCase());
+      // 將結果 lift up 給智能建議 tab 用（避凶補吉的依據）— 6 個欄位全納入
+      if (data && PERSONAL_KEYS.some((k) => data[k])) {
+        onAnalyzed({
+          id: data.id, birthday: data.birthday,
+          phone: data.phone, phone2: data.phone2,
+          license: data.license, license2: data.license2,
+        });
       }
     } catch (e: unknown) {
       const errObj = e as { response?: { data?: { message?: string; detail?: string } } };
@@ -700,11 +728,12 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
   };
 
   const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:border-purple-500';
+  const hasAny = result && PERSONAL_KEYS.some((k) => result[k]);
 
   return (
     <div className="space-y-3">
       <div className="rounded-xl bg-purple-50 p-3 text-xs text-purple-900 leading-relaxed">
-        💡 輸入身分證、電話、車牌，系統會分析每組號碼的磁場分布。三項可以只填部分。
+        💡 輸入身分證、生日、電話、車牌（每項可填可不填，至少填一項）。同個人有兩支電話 / 兩台車可分別填入，會一起整合分析。
       </div>
       <div className="rounded-xl bg-white border border-gray-100 p-4 space-y-3">
         <div>
@@ -712,8 +741,16 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
           <input className={inputClass} value={idNum} onChange={(e) => setIdNum(e.target.value.toUpperCase())} placeholder="A123456789" maxLength={10} />
         </div>
         <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">生日（西元）</label>
+          <input className={inputClass} value={birthday} onChange={(e) => setBirthday(e.target.value)} placeholder="1985/03/15" maxLength={10} />
+        </div>
+        <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">電話</label>
           <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0912345678" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">電話 2（選填）</label>
+          <input className={inputClass} value={phone2} onChange={(e) => setPhone2(e.target.value)} placeholder="0987654321" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">車牌（含英文字也可）</label>
@@ -725,21 +762,31 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
             maxLength={12}
           />
         </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">車牌 2（含英文字也可，選填）</label>
+          <input
+            className={inputClass}
+            value={license2}
+            onChange={(e) => setLicense2(e.target.value.toUpperCase())}
+            placeholder="如 XYZ-5678"
+            maxLength={12}
+          />
+        </div>
         <button
           onClick={submit}
           disabled={busy}
           className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
         >
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-          {busy ? '分析中⋯（首次請等 30 秒喚醒服務）' : '分析'}
+          {busy ? '分析中⋯' : '分析'}
         </button>
         {err && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{err}</div>}
       </div>
 
       {result && (
         <div>
-          {/* 綜合儀表面板（吉/凶比例 + 8 磁場強度 + 重點摘要） */}
-          {(result.id || result.phone || result.license) && <PersonalSummaryCard data={result} />}
+          {/* 綜合儀表面板（吉/凶比例 + 8 磁場強度 + 重點摘要）— 6 欄位整合 */}
+          {hasAny && <PersonalSummaryCard data={result} />}
 
           {result.id && <AnalysisCard label="身分證" result={result.id} />}
           {result.id_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">身分證：{result.id_error}</div>}
@@ -747,8 +794,15 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
           {/* 年齡分區（從身分證解碼出的人生時間軸） */}
           {result.age_mapping && <AgeMappingCard am={result.age_mapping} />}
 
+          {result.birthday && <AnalysisCard label="生日" result={result.birthday} />}
+          {result.birthday_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">生日：{result.birthday_error}</div>}
+
           {result.phone && <AnalysisCard label="電話" result={result.phone} />}
           {result.phone_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">電話：{result.phone_error}</div>}
+
+          {result.phone2 && <AnalysisCard label="電話 2" result={result.phone2} />}
+          {result.phone2_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">電話 2：{result.phone2_error}</div>}
+
           {result.license && (
             <AnalysisCard
               label="車牌"
@@ -756,6 +810,14 @@ function AutoTab({ onAnalyzed }: { onAnalyzed: (s: PersonalSnapshot) => void }) 
             />
           )}
           {result.license_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">車牌：{result.license_error}</div>}
+
+          {result.license2 && (
+            <AnalysisCard
+              label="車牌 2"
+              result={license2Shown ? { ...result.license2, input: license2Shown } : result.license2}
+            />
+          )}
+          {result.license2_error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 mb-3">車牌 2：{result.license2_error}</div>}
         </div>
       )}
     </div>

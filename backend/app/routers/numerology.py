@@ -27,8 +27,11 @@ _EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="numerology")
 
 class AutoIn(BaseModel):
     id: str | None = None
+    birthday: str | None = None     # 西元生日 YYYY/MM/DD（slash 等非數字字元 engine 會自動 strip）
     phone: str | None = None
+    phone2: str | None = None       # 第二支電話（選填）
     license: str | None = None
+    license2: str | None = None     # 第二台車牌（選填）
 
 
 class AnalyzeIn(BaseModel):
@@ -64,11 +67,14 @@ async def auto_analyze(
     payload: AutoIn,
     current_user: User = Depends(get_current_user),
 ):
-    """個人分析：身分證 / 電話 / 車牌 一鍵綜合分析。"""
-    if not (payload.id or payload.phone or payload.license):
+    """個人分析：身分證 / 生日 / 電話 ×2 / 車牌 ×2 一鍵綜合分析。"""
+    fields = [payload.id, payload.birthday, payload.phone, payload.phone2,
+              payload.license, payload.license2]
+    if not any(f for f in fields):
         raise BadRequestError("請至少輸入一項")
 
     out: dict = {}
+
     if payload.id:
         result, err = _safe_analyze(payload.id, "id")
         if result is not None:
@@ -81,6 +87,14 @@ async def auto_analyze(
         else:
             out["id_error"] = err
 
+    if payload.birthday:
+        # engine.letter_to_digits 會自動 strip /、-、空白等非英數字元
+        result, err = _safe_analyze(payload.birthday, "general")
+        if result is not None:
+            out["birthday"] = result
+        else:
+            out["birthday_error"] = err
+
     if payload.phone:
         result, err = _safe_analyze(payload.phone, "general")
         if result is not None:
@@ -88,12 +102,26 @@ async def auto_analyze(
         else:
             out["phone_error"] = err
 
+    if payload.phone2:
+        result, err = _safe_analyze(payload.phone2, "general")
+        if result is not None:
+            out["phone2"] = result
+        else:
+            out["phone2_error"] = err
+
     if payload.license:
         result, err = _safe_analyze(payload.license, "general")
         if result is not None:
             out["license"] = result
         else:
             out["license_error"] = err
+
+    if payload.license2:
+        result, err = _safe_analyze(payload.license2, "general")
+        if result is not None:
+            out["license2"] = result
+        else:
+            out["license2_error"] = err
 
     return APIResponse(data=out)
 
