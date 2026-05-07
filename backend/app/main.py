@@ -66,6 +66,7 @@ async def _ensure_columns():
         ("policies",      "policyholder_birth_date", "DATE"),
         ("policies",      "policyholder_gender",     "VARCHAR(10)"),
         ("policies",      "policyholder_phone",      "VARCHAR(20)"),
+        ("policies",      "policyholder_relation_to_owner", "VARCHAR(50)"),
         ("policies",      "insured_name",       "VARCHAR(100)"),
         ("policies",      "insured_id_number",  "VARCHAR(20)"),
         ("policies",      "insured_birth_date", "DATE"),

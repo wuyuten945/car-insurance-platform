@@ -38,6 +38,7 @@ class PolicyOut(BaseModel):
     policyholder_birth_date: date | None = None
     policyholder_gender: str | None = None
     policyholder_phone: str | None = None
+    policyholder_relation_to_owner: str | None = None
     insured_name: str | None = None
     insured_id_number: str | None = None
     insured_birth_date: date | None = None
@@ -149,6 +150,7 @@ class PolicyCreate(BaseModel):
     policyholder_birth_date: date | None = None
     policyholder_gender: str | None = None
     policyholder_phone: str | None = None
+    policyholder_relation_to_owner: str | None = None
     insured_name: str | None = None
     insured_id_number: str | None = None
     insured_birth_date: date | None = None
@@ -180,6 +182,7 @@ class PolicyUpdate(BaseModel):
     policyholder_birth_date: date | None = None
     policyholder_gender: str | None = None
     policyholder_phone: str | None = None
+    policyholder_relation_to_owner: str | None = None
     insured_name: str | None = None
     insured_id_number: str | None = None
     insured_birth_date: date | None = None

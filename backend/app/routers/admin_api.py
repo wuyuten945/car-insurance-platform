@@ -597,6 +597,7 @@ async def get_all_policies(
             "policyholder_birth_date": str(p.policyholder_birth_date) if p.policyholder_birth_date else None,
             "policyholder_gender": p.policyholder_gender,
             "policyholder_phone": p.policyholder_phone,
+            "policyholder_relation_to_owner": p.policyholder_relation_to_owner,
             "insured_name": p.insured_name,
             "insured_id_number": p.insured_id_number,
             "insured_birth_date": str(p.insured_birth_date) if p.insured_birth_date else None,

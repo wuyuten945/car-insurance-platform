@@ -171,6 +171,7 @@ class PolicyService:
             policyholder_birth_date=getattr(data, "policyholder_birth_date", None),
             policyholder_gender=getattr(data, "policyholder_gender", None),
             policyholder_phone=getattr(data, "policyholder_phone", None),
+            policyholder_relation_to_owner=getattr(data, "policyholder_relation_to_owner", None),
             insured_name=getattr(data, "insured_name", None),
             insured_id_number=getattr(data, "insured_id_number", None),
             insured_birth_date=getattr(data, "insured_birth_date", None),

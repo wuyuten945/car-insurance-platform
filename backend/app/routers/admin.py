@@ -641,6 +641,12 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
             </div>
             <div><label data-i18n="lbl_ph_phone">電話</label><input type="tel" id="p-ph-phone" placeholder="0912-345-678"></div>
           </div>
+          <div class="row">
+            <div style="flex:1;min-width:0">
+              <label data-i18n="lbl_ph_relation">與車主(=被保險人)的關係</label>
+              <input type="text" id="p-ph-relation" placeholder="如：本人 / 父 / 母 / 配偶 / 子女 / 員工 / 朋友" maxlength="50" autocomplete="off">
+            </div>
+          </div>
         </div>
 
         <!-- 被保人（insured） -->
@@ -723,6 +729,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
             </select>
           </td></tr>
           <tr><td style="padding:6px;color:#666" data-i18n="lbl_ph_phone">要保人電話</td><td><input type="tel" id="pe-ph-phone" placeholder="0912-345-678" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
+          <tr><td style="padding:6px;color:#666" data-i18n="lbl_ph_relation">與車主(=被保險人)的關係</td><td><input type="text" id="pe-ph-relation" placeholder="如：本人 / 父 / 母 / 配偶 / 子女 / 員工 / 朋友" maxlength="50" autocomplete="off" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></td></tr>
 
           <!-- 被保人 -->
           <tr><td colspan="2" style="padding:8px 6px 4px;color:#2E7D32;font-weight:bold;font-size:13px;border-top:1px solid #eee">
@@ -2798,6 +2805,7 @@ var I18N = {
     sec_policyholder: '要保人（可與客戶為不同人）',
     sec_insured: '被保人（受益對象，可與要保人不同）',
     lbl_ph_name: '要保人姓名', lbl_ph_id: '要保人身分證字號', lbl_ph_birth: '要保人生日', lbl_ph_gender: '要保人性別', lbl_ph_phone: '要保人電話',
+    lbl_ph_relation: '與車主(=被保險人)的關係',
     lbl_in_name: '被保人姓名', lbl_in_id: '被保人身分證字號', lbl_in_birth: '被保人生日', lbl_in_gender: '被保人性別', lbl_in_phone: '被保人電話',
     sec_voluntary_period: '任意險 期間（綜合險 / 第三人責任 / 車體損失 等）',
     sec_compulsory_period: '強制險（汽車強制責任險，可能跟任意險不同家、不同保單號、不同期間）',
@@ -3015,6 +3023,7 @@ var I18N = {
     sec_policyholder: 'Policyholder (may differ from customer)',
     sec_insured: 'Insured Person (beneficiary, may differ from policyholder)',
     lbl_ph_name: 'Policyholder Name', lbl_ph_id: 'Policyholder ID', lbl_ph_birth: 'Policyholder Birth', lbl_ph_gender: 'Policyholder Gender', lbl_ph_phone: 'Policyholder Phone',
+    lbl_ph_relation: 'Relation to Vehicle Owner (= Insured)',
     lbl_in_name: 'Insured Name', lbl_in_id: 'Insured ID', lbl_in_birth: 'Insured Birth', lbl_in_gender: 'Insured Gender', lbl_in_phone: 'Insured Phone',
     sec_voluntary_period: 'Voluntary Coverage Period (Comprehensive / 3rd-Party / Collision etc.)',
     sec_compulsory_period: 'Compulsory (CALI — may have different insurer / policy # / period from voluntary)',
@@ -4959,6 +4968,7 @@ async function createPolicy() {
     policyholder_birth_date: document.getElementById('p-ph-birth').value || null,
     policyholder_gender: document.getElementById('p-ph-gender').value || null,
     policyholder_phone: (document.getElementById('p-ph-phone').value || '').trim() || null,
+    policyholder_relation_to_owner: (document.getElementById('p-ph-relation').value || '').trim() || null,
     insured_name: (document.getElementById('p-in-name').value || '').trim() || null,
     insured_id_number: (document.getElementById('p-in-id').value || '').trim().toUpperCase() || null,
     insured_birth_date: document.getElementById('p-in-birth').value || null,
@@ -5021,7 +5031,7 @@ function _resetPolicyFormFields() {
   fillInsurerSelect('p-insurer', 'p-insurer-other', '');
   fillInsurerSelect('p-cinsurer', 'p-cinsurer-other', '');
   ['p-number','p-premium','p-cnumber','p-cpremium',
-   'p-ph-name','p-ph-id','p-ph-birth','p-ph-gender','p-ph-phone',
+   'p-ph-name','p-ph-id','p-ph-birth','p-ph-gender','p-ph-phone','p-ph-relation',
    'p-in-name','p-in-id','p-in-birth','p-in-gender','p-in-phone'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value = '';
@@ -5310,6 +5320,7 @@ function editPolicyFromList(pid) {
   document.getElementById('pe-ph-birth').value  = p.policyholder_birth_date || '';
   document.getElementById('pe-ph-gender').value = p.policyholder_gender || '';
   document.getElementById('pe-ph-phone').value  = p.policyholder_phone || '';
+  document.getElementById('pe-ph-relation').value = p.policyholder_relation_to_owner || '';
   document.getElementById('pe-in-name').value   = p.insured_name || '';
   document.getElementById('pe-in-id').value     = p.insured_id_number || '';
   document.getElementById('pe-in-birth').value  = p.insured_birth_date || '';
@@ -5369,6 +5380,7 @@ async function savePolicyEdit() {
     policyholder_birth_date: document.getElementById('pe-ph-birth').value || null,
     policyholder_gender: document.getElementById('pe-ph-gender').value || null,
     policyholder_phone: (document.getElementById('pe-ph-phone').value || '').trim() || null,
+    policyholder_relation_to_owner: (document.getElementById('pe-ph-relation').value || '').trim() || null,
     insured_name: (document.getElementById('pe-in-name').value || '').trim() || null,
     insured_id_number: (document.getElementById('pe-in-id').value || '').trim().toUpperCase() || null,
     insured_birth_date: document.getElementById('pe-in-birth').value || null,

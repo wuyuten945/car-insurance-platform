@@ -40,6 +40,8 @@ class Policy(TimestampMixin, Base):
     policyholder_birth_date  = Column(Date,        nullable=True)
     policyholder_gender      = Column(String(10),  nullable=True)  # 男 / 女 / 其他
     policyholder_phone       = Column(String(20),  nullable=True)
+    # 要保人與車主(=被保險人)的關係（業務員自由填寫，例：本人/配偶/父/母/子女/員工/朋友）
+    policyholder_relation_to_owner = Column(String(50), nullable=True)
 
     # 被保人（insured）— 可能跟要保人 / 客戶都不同
     insured_name        = Column(String(100), nullable=True)
