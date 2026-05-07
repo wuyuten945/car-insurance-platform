@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Send, Bot, Loader2, ArrowLeft } from 'lucide-react';
+import { Send, BookOpen, Loader2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
@@ -18,11 +18,13 @@ interface Message {
 }
 
 const QUICK_REPLIES = [
-  '我的保單有哪些保障？',
-  '如何申請理賠？',
-  '理賠進度查詢',
-  '續保相關問題',
-  '保費怎麼算的？',
+  '保單怎麼查',
+  '理賠如何申請',
+  '續保比價在哪',
+  '車禍/SOS 怎麼用',
+  '帳戶資料修改',
+  '法規查詢',
+  '轉人工客服',
 ];
 
 export default function ChatbotPage() {
@@ -31,7 +33,10 @@ export default function ChatbotPage() {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { sender: 'bot', content: '您好！我是 BOPINAN 智能客服，請問有什麼可以幫您的嗎？' },
+    {
+      sender: 'bot',
+      content: '您好！這裡是 BOPINAN 服務導引中心 📖\n從下方按鈕快速找到您需要的功能,或輸入關鍵字（如「保單」「理賠」「續保」「SOS」）查詢操作說明。\n\n若需專人協助,輸入「轉人工」會直接通知業務員或客服。',
+    },
   ]);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -95,11 +100,11 @@ export default function ChatbotPage() {
         </button>
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100">
-            <Bot className="h-4 w-4 text-primary-500" />
+            <BookOpen className="h-4 w-4 text-primary-500" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-900">智能客服</p>
-            <p className="text-[10px] text-green-500">在線</p>
+            <p className="text-sm font-semibold text-gray-900">服務導引</p>
+            <p className="text-[10px] text-gray-500">FAQ · 操作指引</p>
           </div>
         </div>
       </div>
@@ -115,7 +120,7 @@ export default function ChatbotPage() {
             >
               {!isUser && (
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 mr-2 mt-0.5">
-                  <Bot className="h-3.5 w-3.5 text-primary-500" />
+                  <BookOpen className="h-3.5 w-3.5 text-primary-500" />
                 </div>
               )}
               <div
@@ -133,7 +138,7 @@ export default function ChatbotPage() {
         {sendMessage.isPending && (
           <div className="flex justify-start">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 mr-2">
-              <Bot className="h-3.5 w-3.5 text-primary-500" />
+              <BookOpen className="h-3.5 w-3.5 text-primary-500" />
             </div>
             <div className="rounded-2xl bg-white px-4 py-3 shadow-sm border border-gray-100 rounded-bl-md">
               <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
@@ -167,7 +172,7 @@ export default function ChatbotPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="輸入您的問題..."
+            placeholder="輸入關鍵字找操作指引..."
             className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
           />
           <button

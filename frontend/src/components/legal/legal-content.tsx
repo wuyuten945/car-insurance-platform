@@ -277,7 +277,7 @@ export const LEGAL_DOCS: Record<LegalKey, LegalDoc> = {
   <li><strong>驗車日期計算</strong>：依監理單位公告規則計算，特殊情形（如過戶、變更）請以監理站官方答覆為準。</li>
   <li><strong>理賠申請</strong>：本平台僅協助蒐集與整理事故資料，<strong>實際理賠審核權在保險公司</strong>。</li>
   <li><strong>緊急救援</strong>：實際拖吊、救援服務由合作業者提供，本平台不對其服務品質負最終責任。</li>
-  <li><strong>智能客服</strong>：機器人回覆僅供參考，重要事項請聯絡保險公司客服或法務專員。</li>
+  <li><strong>服務導引</strong>：系統回覆為固定格式之操作指引，僅協助找到對應功能位置；重要事項請聯絡保險公司客服或法務專員。</li>
 </ol>
 
 <h3>免責聲明</h3>
