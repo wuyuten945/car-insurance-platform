@@ -29,18 +29,17 @@ async def upload_policy_scan(
 ):
     """上傳保單（JPG/PNG/PDF）— 立即回應，不等 OCR"""
     from app.core.pdf_utils import is_pdf, pdf_to_images
+    from app.core.upload_validation import validate_upload
 
-    allowed = ("image/jpeg", "image/png", "image/webp", "application/pdf")
-    if file.content_type not in allowed:
-        from app.exceptions import BadRequestError
-        raise BadRequestError("僅支援 JPG/PNG/WebP/PDF 格式")
+    content = await validate_upload(file, kind="image_or_pdf", max_mb=10)
 
-    ext = file.filename.rsplit(".", 1)[-1] if file.filename else "jpg"
+    # 用 UUID 重新命名,只保留副檔名(額外保險,validate_upload 已擋 path traversal)
+    raw_ext = (file.filename or "").rsplit(".", 1)[-1].lower() if file.filename else "jpg"
+    ext = raw_ext if raw_ext in ("jpg", "jpeg", "png", "webp", "gif", "pdf") else "bin"
     filename = f"policy_{uuid.uuid4().hex[:8]}.{ext}"
     upload_dir = Path(settings.UPLOAD_DIR) / "policies"
     upload_dir.mkdir(parents=True, exist_ok=True)
     filepath = upload_dir / filename
-    content = await file.read()
     filepath.write_bytes(content)
 
     # PDF → 轉第一頁為 JPG

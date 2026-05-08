@@ -1,16 +1,56 @@
 from pydantic_settings import BaseSettings
 from typing import List
 import json
+import logging
+import os
+import secrets
+
+logger = logging.getLogger(__name__)
+
+# 安全:JWT 密鑰必須由環境變數提供。若 dev 環境沒設,生成一次性隨機 secret
+# (重啟會換,所有 token 失效 — 這是設計上的提醒,要設環境變數)
+_DEV_SECRET_FALLBACK = None
+
+
+def _resolve_jwt_secret() -> str:
+    """
+    優先順序:
+      1. JWT_SECRET_KEY env (production 必須設)
+      2. dev 環境(DEBUG=true 且無 RENDER 標記) 自動生成隨機 secret + log warn
+      3. production-ish (非 dev) 沒設 → 直接 raise,絕不啟動
+    """
+    global _DEV_SECRET_FALLBACK
+    val = os.environ.get("JWT_SECRET_KEY") or ""
+    if val and val not in ("dev-secret-key-change-in-production", "change-this-to-a-random-secret-key"):
+        return val
+    # 沒設或還在用範例值
+    is_render = bool(os.environ.get("RENDER") or os.environ.get("RENDER_SERVICE_ID"))
+    debug_env = (os.environ.get("DEBUG") or "").lower() in ("1", "true", "yes")
+    if is_render or not debug_env:
+        # production / Render 部署環境 → 拒絕啟動
+        raise RuntimeError(
+            "JWT_SECRET_KEY environment variable is required and must not be the placeholder. "
+            "Set it to a strong random value (>= 32 chars) in your deployment environment."
+        )
+    # dev 環境 → 一次性 secret 並警告
+    if _DEV_SECRET_FALLBACK is None:
+        _DEV_SECRET_FALLBACK = secrets.token_urlsafe(32)
+        logger.warning(
+            "[security] JWT_SECRET_KEY not set; generated a temporary dev secret. "
+            "Tokens will become invalid on every server restart. "
+            "Set JWT_SECRET_KEY in your .env or environment to fix."
+        )
+    return _DEV_SECRET_FALLBACK
 
 
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./car_insurance.db"
 
-    # JWT
-    JWT_SECRET_KEY: str = "dev-secret-key-change-in-production"
+    # JWT — 透過 _resolve_jwt_secret() 強制要求環境變數,沒設或用範例值都不能啟動
+    JWT_SECRET_KEY: str = ""
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60   # 從 480 (8hr) 縮為 60 分鐘,降低 token 外洩影響
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     # OTP
@@ -86,3 +126,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# JWT secret 強制檢查(沒設或設成範例值都會 raise / dev 環境會生隨機值)
+settings.JWT_SECRET_KEY = _resolve_jwt_secret()

@@ -10,6 +10,9 @@ import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.config import settings
 from app.database import create_tables
@@ -26,6 +29,27 @@ logger = logging.getLogger(__name__)
 
 # APScheduler 實例
 scheduler = AsyncIOScheduler()
+
+# ─────────────────────────────────────────────────────────────
+# 全域速率限制(slowapi)— 防 DDoS / 防爆破
+# 使用 Authorization header 中的 token 為 key,沒 token 退而求其次用 IP
+# 每個 endpoint 可用 @limiter.limit("5/minute") 加嚴
+# 預設 default_limits = ["120/minute", "1000/hour"] 對所有 endpoint 生效
+# ─────────────────────────────────────────────────────────────
+def _rate_limit_key(request: Request) -> str:
+    auth = request.headers.get("authorization") or ""
+    if auth.startswith("Bearer "):
+        token = auth[7:]
+        # 用 token 前 16 字當識別(避免太長,也避免直接拿全 token 入 cache)
+        return f"tok:{token[:16]}"
+    return f"ip:{get_remote_address(request)}"
+
+
+limiter = Limiter(
+    key_func=_rate_limit_key,
+    default_limits=["120/minute", "2000/hour"],
+    headers_enabled=True,
+)
 
 
 async def _ensure_columns():
@@ -207,6 +231,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# 速率限制 — 必須在所有 router 前面註冊
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -249,7 +277,19 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Mount static files for uploads
 uploads_path = Path(settings.UPLOAD_DIR)
 uploads_path.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
+
+
+# 自訂 StaticFiles:加上 X-Content-Type-Options: nosniff(防 SVG XSS / polyglot 檔)
+class _SecureStaticFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Content-Security-Policy", "default-src 'none'")
+        response.headers.setdefault("Cache-Control", "private, max-age=300")
+        return response
+
+
+app.mount("/uploads", _SecureStaticFiles(directory=str(uploads_path)), name="uploads")
 
 # Register routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["認證"])

@@ -25,12 +25,12 @@ async def verify_otp(phone: str, otp: str) -> bool:
     return False
 
 
-async def check_otp_rate_limit(key: str, per_minute: int = 1, per_hour: int = 30) -> bool:
-    """通用 OTP rate limit。
+async def check_otp_rate_limit(key: str, per_minute: int = 1, per_hour: int = 5) -> bool:
+    """通用 OTP rate limit(已收緊以防止 OTP 枚舉攻擊)。
 
     key: 任意識別字串，e.g. "email:foo@bar.com" 或 "ip:1.2.3.4"
     per_minute: 10 秒視窗內允許次數（預設 1，符合「每 10 秒最多 1 次」原語意）
-    per_hour: 每小時允許次數（預設 30）
+    per_hour: 每小時允許次數（預設 5,從 30 收緊。6 位數 OTP 1M 組合,5 次/hr 防爆破）
     """
     minute_key = f"otp_rate:min:{key}"
     hour_key = f"otp_rate:hour:{key}"

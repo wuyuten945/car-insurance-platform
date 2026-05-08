@@ -1031,6 +1031,15 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 </div>
 
 <script>
+// XSS 防護:所有要塞進 innerHTML 的 DB 字串(客戶名、車牌、備註等)必須先過 esc()
+// React 自動 escape,但這裡是 vanilla JS 字串拼接,沒包就會中 stored XSS
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
 var API = '';
 var TOKEN = '';
 var ADMIN_TOKEN = '';
@@ -1251,7 +1260,7 @@ function _recheckInsuredAlignment(prefix) {
     statusEl.innerHTML = '<span style="color:#2E7D32;font-size:11px;font-weight:600">✓ 與車主一致</span>';
     insEl.style.borderColor = '#A5D6A7';
   } else {
-    statusEl.innerHTML = '<span style="color:#D32F2F;font-size:11px;font-weight:600">⚠️ 與車主「' + (custName || '?') + '」不符</span>';
+    statusEl.innerHTML = '<span style="color:#D32F2F;font-size:11px;font-weight:600">⚠️ 與車主「' + esc(custName || '?') + '」不符</span>';
     insEl.style.borderColor = '#EF9A9A';
   }
 }
@@ -2099,13 +2108,13 @@ async function loadQuoteRequests(status) {
       html += '<div style="border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:10px;background:#fff">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
       html += '<div>';
-      html += '<span style="display:inline-block;padding:2px 8px;font-size:11px;font-weight:600;color:#fff;background:' + statColor + ';border-radius:4px">' + statLabel + '</span>';
-      html += ' <b style="margin-left:6px">' + (qr.customer_name || '') + '</b>';
-      if (qr.customer_phone) html += ' <span style="color:#999;font-size:11px">' + qr.customer_phone + '</span>';
-      if (qr.vehicle_plate) html += ' <span style="color:#1565C0;font-family:monospace;margin-left:4px">' + qr.vehicle_plate + '</span>';
+      html += '<span style="display:inline-block;padding:2px 8px;font-size:11px;font-weight:600;color:#fff;background:' + statColor + ';border-radius:4px">' + esc(statLabel) + '</span>';
+      html += ' <b style="margin-left:6px">' + esc(qr.customer_name || '') + '</b>';
+      if (qr.customer_phone) html += ' <span style="color:#999;font-size:11px">' + esc(qr.customer_phone) + '</span>';
+      if (qr.vehicle_plate) html += ' <span style="color:#1565C0;font-family:monospace;margin-left:4px">' + esc(qr.vehicle_plate) + '</span>';
       if (qr.use_existing_policy) html += ' <span style="color:#0288D1;font-size:10px;background:#E3F2FD;padding:1px 6px;border-radius:3px">與原保單相同</span>';
-      html += '<div style="font-size:11px;color:#666;margin-top:2px">送出：' + (qr.submitted_at ? qr.submitted_at.replace('T',' ').substring(0,16) : '-')
-            + (qr.assigned_admin_name ? ' · 處理人：' + qr.assigned_admin_name : '') + '</div>';
+      html += '<div style="font-size:11px;color:#666;margin-top:2px">送出：' + (qr.submitted_at ? esc(qr.submitted_at.replace('T',' ').substring(0,16)) : '-')
+            + (qr.assigned_admin_name ? ' · 處理人：' + esc(qr.assigned_admin_name) : '') + '</div>';
       html += '</div>';
       html += '<button onclick="openQuoteRespond(\\'' + qr.id + '\\')" style="padding:6px 14px;font-size:12px;background:#1565C0;color:#fff;border:0;border-radius:6px;cursor:pointer">處理 / 回報報價</button>';
       html += '</div>';
@@ -2114,7 +2123,7 @@ async function loadQuoteRequests(status) {
         html += '<div style="margin-top:6px;font-size:11px;color:#666">勾選項目：';
         qr.desired_items.forEach(function(it){
           html += '<span style="display:inline-block;background:#F5F5F5;padding:2px 6px;border-radius:3px;margin:1px">'
-                + it.name + (it.limit ? ' ' + (it.limit / 10000) + '萬' : '') + '</span>';
+                + esc(it.name) + (it.limit ? ' ' + (Number(it.limit) / 10000) + '萬' : '') + '</span>';
         });
         html += '</div>';
       }
@@ -2123,7 +2132,7 @@ async function loadQuoteRequests(status) {
       if (qr.claims_count_3y != null) meta.push('3 年出險 ' + qr.claims_count_3y + ' 次');
       if (qr.surcharge_pct != null) meta.push('已知加費 ' + qr.surcharge_pct + '%');
       if (meta.length) html += '<div style="margin-top:4px;font-size:11px;color:#666">' + meta.join(' · ') + '</div>';
-      if (qr.notes) html += '<div style="margin-top:4px;font-size:11px;color:#888;background:#FFF8E1;padding:4px 8px;border-radius:4px">📝 ' + qr.notes + '</div>';
+      if (qr.notes) html += '<div style="margin-top:4px;font-size:11px;color:#888;background:#FFF8E1;padding:4px 8px;border-radius:4px">📝 ' + esc(qr.notes) + '</div>';
       // 已加的報價列表
       if (qr.responses && qr.responses.length) {
         html += '<div style="margin-top:8px;border-top:1px solid #f0f0f0;padding-top:8px">';
@@ -2131,7 +2140,7 @@ async function loadQuoteRequests(status) {
         qr.responses.forEach(function(rsp) {
           html += '<div style="background:' + (rsp.is_recommended?'#FFF3E0':'#F5F5F5')
                 + ';padding:4px 8px;border-radius:4px;margin:2px 0;display:flex;justify-content:space-between;font-size:12px">';
-          html += '<span><b>' + rsp.insurer_name + '</b>'
+          html += '<span><b>' + esc(rsp.insurer_name) + '</b>'
                 + (rsp.is_recommended ? ' <span style="color:#E65100">⭐</span>' : '') + '</span>';
           html += '<span><b>$' + Number(rsp.quoted_premium).toLocaleString() + '</b>';
           html += ' <button onclick="deleteQuoteResponse(\\'' + rsp.id + '\\',\\'' + qr.id + '\\')" style="margin-left:6px;background:#FFEBEE;color:#C62828;border:0;border-radius:3px;padding:1px 6px;font-size:10px;cursor:pointer">刪</button></span>';
@@ -2327,11 +2336,11 @@ function switchTodoBucket(bucket) {
       uid = 'bopinan-policy-' + it.id + '@bopinan.ego-intl.com';
     }
     html += '<tr style="border-bottom:1px solid #f0f0f0">';
-    html += '<td style="padding:6px"><span style="color:' + typeColor + ';font-weight:600">' + it.type_label + '</span></td>';
-    html += '<td style="padding:6px"><b>' + (it.customer_name || '') + '</b>' + (it.customer_phone ? '<br><span style="color:#999;font-size:10px">' + it.customer_phone + '</span>' : '') + '</td>';
-    html += '<td style="padding:6px">' + (it.plate || '-') + (it.policy_number ? '<br><span style="color:#999;font-size:10px;font-family:monospace">' + it.policy_number + '</span>' : '') + '</td>';
-    html += '<td style="padding:6px">' + it.due_date + '</td>';
-    html += '<td style="padding:6px"><b style="color:' + daysColor + '">' + daysText + '</b></td>';
+    html += '<td style="padding:6px"><span style="color:' + typeColor + ';font-weight:600">' + esc(it.type_label) + '</span></td>';
+    html += '<td style="padding:6px"><b>' + esc(it.customer_name || '') + '</b>' + (it.customer_phone ? '<br><span style="color:#999;font-size:10px">' + esc(it.customer_phone) + '</span>' : '') + '</td>';
+    html += '<td style="padding:6px">' + esc(it.plate || '-') + (it.policy_number ? '<br><span style="color:#999;font-size:10px;font-family:monospace">' + esc(it.policy_number) + '</span>' : '') + '</td>';
+    html += '<td style="padding:6px">' + esc(it.due_date) + '</td>';
+    html += '<td style="padding:6px"><b style="color:' + daysColor + '">' + esc(daysText) + '</b></td>';
     html += '<td style="padding:6px;white-space:nowrap">' + _calBtnHtml(calTitle, it.due_date, calDesc, uid) + '</td>';
     html += '</tr>';
   });
@@ -2467,17 +2476,17 @@ function _renderCustPolicyTip(uid) {
     + (items[0].customer_name || '') + ' · 共 ' + items.length + ' 張保單</div>';
   items.forEach(function(p){
     html += '<div style="padding:5px 0;border-top:1px dashed #f0f0f0">';
-    html += '<b style="font-family:monospace">' + (p.policy_number||'') + '</b> · ' + (p.insurer_name||'')
-         + ' · <span style="color:' + (p.status==='active'?'#2E7D32':p.status==='expired'?'#D32F2F':'#E65100') + '">' + (p.status||'') + '</span>';
-    html += '<br><span style="color:#666;font-size:11px">任意險：' + (p.start_date||'') + (p.start_time?' '+p.start_time:'')
-         + ' ~ ' + (p.end_date||'') + (p.end_time?' '+p.end_time:'') + '</span>';
+    html += '<b style="font-family:monospace">' + esc(p.policy_number||'') + '</b> · ' + esc(p.insurer_name||'')
+         + ' · <span style="color:' + (p.status==='active'?'#2E7D32':p.status==='expired'?'#D32F2F':'#E65100') + '">' + esc(p.status||'') + '</span>';
+    html += '<br><span style="color:#666;font-size:11px">任意險：' + esc(p.start_date||'') + (p.start_time?' '+esc(p.start_time):'')
+         + ' ~ ' + esc(p.end_date||'') + (p.end_time?' '+esc(p.end_time):'') + '</span>';
     if (p.compulsory_insurer_name || p.compulsory_policy_number) {
-      html += '<br><span style="color:#E65100;font-size:11px">強制險：' + (p.compulsory_insurer_name||'')
-           + ' ' + (p.compulsory_policy_number||'')
-           + (p.compulsory_start_date ? ' / ' + p.compulsory_start_date + ' ~ ' + (p.compulsory_end_date||'') : '')
+      html += '<br><span style="color:#E65100;font-size:11px">強制險：' + esc(p.compulsory_insurer_name||'')
+           + ' ' + esc(p.compulsory_policy_number||'')
+           + (p.compulsory_start_date ? ' / ' + esc(p.compulsory_start_date) + ' ~ ' + esc(p.compulsory_end_date||'') : '')
            + '</span>';
     }
-    if (p.vehicle_plate) html += '<br><span style="color:#666;font-size:11px">車輛：' + p.vehicle_plate + '</span>';
+    if (p.vehicle_plate) html += '<br><span style="color:#666;font-size:11px">車輛：' + esc(p.vehicle_plate) + '</span>';
     if (p.total_premium) html += '<br><span style="color:#666;font-size:11px">保費：$' + Number(p.total_premium).toLocaleString() + '</span>';
     html += '</div>';
   });
@@ -2488,14 +2497,14 @@ function _renderCustVehicleTip(uid) {
   var items = (window._lastVehicles || []).filter(function(v){ return v.user_id === uid; });
   if (items.length === 0) return '<i style="color:#999">查無此客戶車輛</i>';
   var html = '<div style="font-weight:bold;color:#1565C0;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:4px">'
-    + (items[0].customer_name || '') + ' · 共 ' + items.length + ' 輛車</div>';
+    + esc(items[0].customer_name || '') + ' · 共 ' + items.length + ' 輛車</div>';
   items.forEach(function(v){
     html += '<div style="padding:5px 0;border-top:1px dashed #f0f0f0">';
-    html += '<b>' + (v.plate_number||'') + '</b> · ' + (v.brand||'') + ' ' + (v.model||'') + ' · ' + (v.vehicle_type||'-');
-    html += '<br><span style="color:#666;font-size:11px">' + (v.year||'?') + (v.manufacture_month?'/'+String(v.manufacture_month).padStart(2,'0'):'')
-         + ' · ' + (v.color||'') + ' · ' + (v.engine_cc?v.engine_cc+'cc':'') + ' · ' + (v.fuel_type||'') + '</span>';
-    if (v.registration_expiry) html += '<br><span style="color:#666;font-size:11px">行照到期：' + v.registration_expiry + '</span>';
-    if (v.vin) html += '<br><span style="color:#999;font-size:10px;font-family:monospace">VIN: ' + v.vin + '</span>';
+    html += '<b>' + esc(v.plate_number||'') + '</b> · ' + esc(v.brand||'') + ' ' + esc(v.model||'') + ' · ' + esc(v.vehicle_type||'-');
+    html += '<br><span style="color:#666;font-size:11px">' + esc(v.year||'?') + (v.manufacture_month?'/'+String(v.manufacture_month).padStart(2,'0'):'')
+         + ' · ' + esc(v.color||'') + ' · ' + (v.engine_cc?esc(v.engine_cc)+'cc':'') + ' · ' + esc(v.fuel_type||'') + '</span>';
+    if (v.registration_expiry) html += '<br><span style="color:#666;font-size:11px">行照到期：' + esc(v.registration_expiry) + '</span>';
+    if (v.vin) html += '<br><span style="color:#999;font-size:10px;font-family:monospace">VIN: ' + esc(v.vin) + '</span>';
     html += '</div>';
   });
   return html;
@@ -5134,20 +5143,18 @@ async function loadPolicies() {
     var cls = p.status==='active'?'active':p.status==='expired'?'expired':'expiring';
     var label = p.status==='active'?'有效':p.status==='expired'?'已到期':'即將到期';
     var owner = p.customer_name
-      ? '<div data-hover-cust="' + (p.user_id||'') + '" data-hover-type="policy" style="cursor:help">'
-          + '<b>'+p.customer_name+'</b>'
-          + (p.customer_phone ? '<br><span style="font-size:11px;color:#666">'+p.customer_phone+'</span>' : '')
+      ? '<div data-hover-cust="' + esc(p.user_id||'') + '" data-hover-type="policy" style="cursor:help">'
+          + '<b>'+esc(p.customer_name)+'</b>'
+          + (p.customer_phone ? '<br><span style="font-size:11px;color:#666">'+esc(p.customer_phone)+'</span>' : '')
         + '</div>'
       : '<span style="color:#999">-</span>';
-    var plate = p.vehicle_plate || '<span style="color:#999">-</span>';
-    var cidEsc = (p.user_id||'');
-    var nameEsc = (p.customer_name||'').replace(/"/g,'&quot;');
+    var plate = p.vehicle_plate ? esc(p.vehicle_plate) : '<span style="color:#999">-</span>';
     // 主列：點擊選取（高亮）、雙擊展開
-    html += '<tr style="cursor:pointer" onclick="selectPolicyRow(this)" ondblclick="togglePolicyDetails(&quot;'+p.id+'&quot;)">';
+    html += '<tr style="cursor:pointer" onclick="selectPolicyRow(this)" ondblclick="togglePolicyDetails(&quot;'+esc(p.id)+'&quot;)">';
     html += '<td>'+owner+'</td>';
     html += '<td>'+plate+'</td>';
-    html += '<td style="font-family:monospace;font-size:11px">'+p.policy_number+'</td>';
-    html += '<td>'+p.insurer_name+'</td>';
+    html += '<td style="font-family:monospace;font-size:11px">'+esc(p.policy_number)+'</td>';
+    html += '<td>'+esc(p.insurer_name)+'</td>';
     html += '<td><span class="badge '+cls+'">'+label+'</span></td>';
     html += '<td>'+(p.start_date||'-')+(p.start_time?' '+p.start_time:'')+'</td>';
     var endCell = (p.end_date||'-')+(p.end_time?' '+p.end_time:'');
@@ -5208,7 +5215,7 @@ function renderPolicyDetails(pid) {
       html += '<td style="text-align:right;color:#2E7D32">'+(it.premium?'$'+Number(it.premium).toLocaleString():'-')+'</td>';
       html += '<td style="text-align:right">'+(it.coverage_limit?'$'+Number(it.coverage_limit).toLocaleString():'-')+'</td>';
       html += '<td style="text-align:right">'+(it.deductible?'$'+Number(it.deductible).toLocaleString():'-')+'</td>';
-      html += '<td style="font-size:11px;color:#666">'+(it.description||'-')+'</td>';
+      html += '<td style="font-size:11px;color:#666">'+esc(it.description||'-')+'</td>';
       html += '</tr>';
     });
     html += '</tbody></table>';
@@ -5555,7 +5562,7 @@ async function loadOverview() {
         html += '<table><thead><tr><th>姓名</th><th>電話</th><th>Email</th></tr></thead><tbody>';
         for (var ci = 0; ci < customers.length; ci++) {
           var c = customers[ci];
-          html += '<tr><td>'+(c.name||'-')+'</td><td>'+(c.phone||'-')+'</td><td>'+(c.email||'-')+'</td></tr>';
+          html += '<tr><td>'+esc(c.name||'-')+'</td><td>'+esc(c.phone||'-')+'</td><td>'+esc(c.email||'-')+'</td></tr>';
         }
         html += '</tbody></table>';
       } else {
@@ -5588,8 +5595,8 @@ async function loadAgents() {
     for (var i = 0; i < agents.length; i++) {
       var a = agents[i];
       var st = a.is_active ? '<span style="color:#22c55e;font-weight:bold">啟用</span>' : '<span style="color:#ef4444;font-weight:bold">停用</span>';
-      html += '<tr><td><b>'+a.username+'</b></td><td>'+a.display_name+'</td><td>'+st+'</td>';
-      html += '<td>'+a.customer_count+'</td><td style="font-size:11px">'+(a.last_login||'-')+'</td>';
+      html += '<tr><td><b>'+esc(a.username)+'</b></td><td>'+esc(a.display_name)+'</td><td>'+st+'</td>';
+      html += '<td>'+esc(a.customer_count)+'</td><td style="font-size:11px">'+esc(a.last_login||'-')+'</td>';
       html += '<td style="white-space:nowrap">';
       if (a.is_active) html += '<button class="btn danger" style="padding:3px 8px;font-size:11px;margin:1px" onclick="toggleAgent(&quot;'+a.id+'&quot;,false)">停用</button>';
       else html += '<button class="btn success" style="padding:3px 8px;font-size:11px;margin:1px" onclick="toggleAgent(&quot;'+a.id+'&quot;,true)">啟用</button>';

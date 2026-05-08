@@ -74,20 +74,42 @@ class AdminLoginRequest(BaseModel):
 
 @router.post("/login")
 async def admin_login(req: AdminLoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
-    """管理員帳密登入"""
+    """管理員帳密登入(含 brute-force 鎖定保護)"""
+    from app.core.cache import cache
+    client_ip = request.client.host if request.client else "unknown"
+
+    # ── IP-level rate limit:同 IP 短期高失敗率直接拒絕(避免遍歷帳號) ──
+    ip_fail_key = f"adm_login_fail:ip:{client_ip}"
+    ip_fail_count = (await cache.get(ip_fail_key)) or 0
+    if ip_fail_count >= 20:  # 20 次 IP 失敗 → 60 分鐘冷卻
+        return APIResponse(success=False, message=i18n_t("admin_invalid_credentials"))
+
     result = await db.execute(select(AdminUser).where(AdminUser.username == req.username))
     admin = result.scalar_one_or_none()
 
+    # ── 帳號級 lockout:5 次失敗鎖 60 秒,10 次失敗鎖 10 分鐘 ──
+    if admin:
+        user_lock_key = f"adm_login_lock:user:{admin.id}"
+        locked_until = await cache.get(user_lock_key)
+        if locked_until:
+            return APIResponse(success=False, message=i18n_t("admin_invalid_credentials"))
+
     if not admin or not verify_password(req.password, admin.password_hash):
         if admin:
-            admin.login_fail_count = str(int(admin.login_fail_count or "0") + 1)
+            new_count = int(admin.login_fail_count or "0") + 1
+            admin.login_fail_count = str(new_count)
+            # 階段式 lockout
+            if new_count >= 10:
+                await cache.set(f"adm_login_lock:user:{admin.id}", "1", ttl=600)  # 10 分鐘
+            elif new_count >= 5:
+                await cache.set(f"adm_login_lock:user:{admin.id}", "1", ttl=60)   # 60 秒
+        await cache.increment(ip_fail_key, ttl=3600)
         return APIResponse(success=False, message=i18n_t("admin_invalid_credentials"))
 
     if not admin.is_active:
         return APIResponse(success=False, message=i18n_t("admin_disabled"))
 
     # IP 白名單檢查
-    client_ip = request.client.host if request.client else ""
     if admin.ip_whitelist:
         allowed = [ip.strip() for ip in admin.ip_whitelist.split(",") if ip.strip()]
         if allowed and client_ip not in allowed:
@@ -96,6 +118,8 @@ async def admin_login(req: AdminLoginRequest, request: Request, db: AsyncSession
 
     admin.last_login_at = datetime.now(timezone.utc)
     admin.login_fail_count = "0"
+    # 成功登入清掉同 IP 失敗計數
+    await cache.delete(ip_fail_key)
 
     # 產生管理員專用 JWT（type=admin）
     from jose import jwt
@@ -1090,6 +1114,8 @@ async def admin_upload_registration(
     db: AsyncSession = Depends(get_db),
 ):
     """上傳行照（admin 代客戶）"""
+    from app.core.upload_validation import validate_upload
+    await validate_upload(file, kind="image_or_pdf", max_mb=10)
     vehicle = await _resolve_vehicle_with_perm(db, admin, vehicle_id)
     svc = UserService(db)
     updated = await svc.upload_registration(vehicle.user_id, vehicle_id, file)
@@ -1254,17 +1280,16 @@ async def admin_upload_policy_scan(
     from pathlib import Path as _P
     from app.config import settings as _s
     from app.core.pdf_utils import is_pdf, pdf_to_images
+    from app.core.upload_validation import validate_upload
 
-    allowed = ("image/jpeg", "image/png", "image/webp", "application/pdf")
-    if file.content_type not in allowed:
-        raise BadRequestError("僅支援 JPG/PNG/WebP/PDF 格式")
+    content = await validate_upload(file, kind="image_or_pdf", max_mb=10)
 
-    ext = file.filename.rsplit(".", 1)[-1] if file.filename else "jpg"
+    raw_ext = (file.filename or "").rsplit(".", 1)[-1].lower() if file.filename else "jpg"
+    ext = raw_ext if raw_ext in ("jpg", "jpeg", "png", "webp", "gif", "pdf") else "bin"
     filename = f"policy_{_uuid.uuid4().hex[:8]}.{ext}"
     upload_dir = _P(_s.UPLOAD_DIR) / "policies"
     upload_dir.mkdir(parents=True, exist_ok=True)
     filepath = upload_dir / filename
-    content = await file.read()
     filepath.write_bytes(content)
 
     image_name = filename
@@ -1298,10 +1323,24 @@ async def admin_ocr_policy_scan(
 
     await _check_customer_perm(db, admin, customer_id)
 
+    # 防 path traversal:filename 必須是安全字元(限定我們發的格式 policy_xxxxxxxx.ext)
+    import re as _re
+    if not _re.match(r"^[A-Za-z0-9_\-]+\.[A-Za-z0-9]+$", filename) or ".." in filename:
+        raise BadRequestError("檔名格式不合法")
+
     upload_dir = _P(_s.UPLOAD_DIR) / "policies"
-    image_path = str(upload_dir / filename)
-    if not _P(image_path).exists():
+    image_path = upload_dir / filename
+    # 雙保險:resolve 後的真實路徑必須仍在 upload_dir 之下
+    try:
+        resolved = image_path.resolve()
+        upload_resolved = upload_dir.resolve()
+        if not str(resolved).startswith(str(upload_resolved)):
+            raise BadRequestError("檔名格式不合法")
+    except Exception:
+        raise BadRequestError("檔名格式不合法")
+    if not resolved.exists():
         raise BadRequestError("找不到上傳的保單圖片")
+    image_path = str(resolved)
 
     ocr_result = await analyze_policy(image_path)
 
@@ -2040,7 +2079,8 @@ async def import_unified_csv(
 ):
     """大量上傳客戶 + 車輛 + 保單。Idempotent：用 customer_id/phone/email + plate_number + policy_number upsert。"""
     from app.core.admin_csv import import_csv as do_import
-    raw = await file.read()
+    from app.core.upload_validation import validate_upload
+    raw = await validate_upload(file, kind="csv", max_mb=20)
     try:
         text = raw.decode("utf-8-sig")
     except UnicodeDecodeError:

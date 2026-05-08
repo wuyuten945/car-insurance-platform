@@ -18,7 +18,11 @@ router = APIRouter()
 
 @router.post("/otp/send", response_model=APIResponse)
 async def send_otp(req: OTPSendRequest, request: Request, db: AsyncSession = Depends(get_db)):
-    """發送 Email OTP（手機 OTP 已停用以避免 SMS 簡訊費用被惡意刷取）"""
+    """發送 Email OTP（手機 OTP 已停用以避免 SMS 簡訊費用被惡意刷取）
+
+    速率限制由 services/auth_service 內部 cache 實作(每 email 5/hr,先前是 30/hr,
+    已收緊以防 OTP 暴力枚舉)
+    """
     svc = AuthService(db)
     ip = request.client.host if request.client else ""
     result = await svc.send_otp(email=req.email, ip=ip)

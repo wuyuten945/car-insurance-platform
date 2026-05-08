@@ -70,6 +70,8 @@ async def upload_document(
     db: AsyncSession = Depends(get_db),
 ):
     """上傳理賠文件"""
+    from app.core.upload_validation import validate_upload
+    await validate_upload(file, kind="image_or_pdf", max_mb=10)
     svc = ClaimService(db)
     doc = await svc.upload_document(claim_id, file, document_type)
     return APIResponse(data=ClaimDocumentOut.model_validate(doc), message="文件已上傳")

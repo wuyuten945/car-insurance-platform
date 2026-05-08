@@ -73,6 +73,8 @@ async def upload_photo(
     db: AsyncSession = Depends(get_db),
 ):
     """上傳事故照片（限投保客戶 — 即名下需有 agent 建檔保單）"""
+    from app.core.upload_validation import validate_upload
+    await validate_upload(file, kind="image", max_mb=10)
     await _assert_user_can_upload_accident_photo(db, current_user.id)
     svc = AccidentService(db)
     photo = await svc.upload_photo(accident_id, file, photo_type, latitude, longitude)

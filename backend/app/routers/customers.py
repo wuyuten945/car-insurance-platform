@@ -347,6 +347,9 @@ async def upload_registration(
             "此車輛由業務員 / 平台建檔，不能直接上傳行照。如需更新請聯繫您的業務員。"
         )
 
+    from app.core.upload_validation import validate_upload
+    await validate_upload(file, kind="image_or_pdf", max_mb=10)
+
     svc = UserService(db)
     vehicle = await svc.upload_registration(current_user.id, vehicle_id, file)
 
