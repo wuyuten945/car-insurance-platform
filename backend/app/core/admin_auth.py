@@ -17,13 +17,28 @@ from app.exceptions import UnauthorizedError, ForbiddenError
 logger = logging.getLogger(__name__)
 
 
+def _bcrypt_hash(password: str) -> str:
+    """直接用 bcrypt 套件,避開 passlib 與新版 bcrypt 的相容性問題。"""
+    import bcrypt as _bc
+    # bcrypt 上限 72 bytes(規格限制),超過會 silently 截斷,這裡明確截斷以一致行為
+    pw_bytes = password.encode("utf-8")[:72]
+    return _bc.hashpw(pw_bytes, _bc.gensalt(rounds=12)).decode("utf-8")
+
+
+def _bcrypt_verify(password: str, hashed: str) -> bool:
+    import bcrypt as _bc
+    try:
+        return _bc.checkpw(password.encode("utf-8")[:72], hashed.encode("utf-8"))
+    except Exception:
+        return False
+
+
 def hash_password(password: str) -> str:
     """密碼加密 — 新格式用 bcrypt(成本 12, '$2b$' 開頭)。
     舊格式 'salt:digest' (SHA-256) 仍可被 verify_password 驗證以保持向下相容,
     並在使用者下次成功登入時透過 needs_rehash() 升級。
     """
-    from passlib.hash import bcrypt
-    return bcrypt.using(rounds=12).hash(password)
+    return _bcrypt_hash(password)
 
 
 def verify_password(password: str, password_hash: str) -> bool:
@@ -31,11 +46,7 @@ def verify_password(password: str, password_hash: str) -> bool:
     if not password_hash:
         return False
     if password_hash.startswith("$2"):
-        try:
-            from passlib.hash import bcrypt
-            return bcrypt.verify(password, password_hash)
-        except Exception:
-            return False
+        return _bcrypt_verify(password, password_hash)
     if ":" in password_hash:
         salt, h = password_hash.split(":", 1)
         return hashlib.sha256((salt + password).encode()).hexdigest() == h

@@ -10,11 +10,11 @@ import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
-from app.core.rate_limit import limiter
+from app.core.rate_limit import limiter, _real_client_ip, _rate_limit_key
+from app.core.rate_limit_log import record_hit as _record_rate_hit
 from app.database import create_tables
 from app.routers import auth, customers, policies, renewal, accidents, claims, chatbot, notifications, rental, inspection, admin, oauth, admin_api, admin_console, line_bot, quote_requests, numerology
 from app.tasks.policy_expiry_notifier import check_policy_expiry
@@ -217,7 +217,33 @@ app = FastAPI(
 
 # 速率限制 — 必須在所有 router 前面註冊
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+# 自訂 rate-limit handler:除回 429 外,記錄誰被擋了多少次,給 admin 觀測用
+async def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    try:
+        _record_rate_hit(
+            key=_rate_limit_key(request),
+            path=str(request.url.path),
+            method=request.method,
+            ip=_real_client_ip(request),
+            limit=str(exc.detail),
+        )
+    except Exception:
+        pass
+    return JSONResponse(
+        status_code=429,
+        content={
+            "success": False,
+            "data": None,
+            "message": f"請求過於頻繁,請稍後再試 ({exc.detail})",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+        headers={"Retry-After": "60"},
+    )
+
+
+app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 
 # CORS — 防呆:同時 allow_credentials=True 與 allow_origins=['*'] 是 CSRF 的 invitation,
 # 偵測到就強制收斂為 [] 並警告

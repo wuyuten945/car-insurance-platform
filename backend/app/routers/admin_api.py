@@ -496,6 +496,32 @@ async def list_customers(
 # 操作日誌
 # ═══════════════════════════════════════════════════
 
+@router.get("/rate-limit-stats")
+async def get_rate_limit_stats(
+    limit: int = Query(100, ge=1, le=500),
+    admin: AdminUser = Depends(require_super_admin),
+):
+    """Rate limit 觀測:看誰常被擋(僅 super_admin)。
+
+    回傳:
+      - recent_events: 最近 N 筆撞牆紀錄 (新→舊),含 key/path/IP/limit
+      - top_offenders: 24 小時內前 20 個被擋最多的 key
+      - total_events_buffered: 目前 buffer 內事件數
+    """
+    from app.core.rate_limit_log import get_stats
+    return APIResponse(data=get_stats(limit=limit))
+
+
+@router.delete("/rate-limit-stats")
+async def clear_rate_limit_stats(
+    admin: AdminUser = Depends(require_super_admin),
+):
+    """清空 rate limit 觀測 buffer (debug 用)"""
+    from app.core.rate_limit_log import clear_stats
+    clear_stats()
+    return APIResponse(message="rate-limit-stats 已清空")
+
+
 @router.get("/audit-logs")
 async def list_audit_logs(
     agent_id: str = Query(None),

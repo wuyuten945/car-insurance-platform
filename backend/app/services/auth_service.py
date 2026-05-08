@@ -24,9 +24,11 @@ def _hash_password(plain: str) -> str:
     """使用 bcrypt(成本 12)。新雜湊格式以 '$2b$' 開頭。
 
     舊 SHA-256 雜湊 'salt$digest' 仍可用 _verify_password 驗證,但下次密碼變更會自動升級。
+    用 bcrypt 套件直接呼叫,避開 passlib 與新版 bcrypt 的相容性問題。
     """
-    from passlib.hash import bcrypt
-    return bcrypt.using(rounds=12).hash(plain)
+    import bcrypt as _bc
+    pw_bytes = plain.encode("utf-8")[:72]   # bcrypt 上限 72 bytes
+    return _bc.hashpw(pw_bytes, _bc.gensalt(rounds=12)).decode("utf-8")
 
 
 def _verify_password(plain: str, stored: str) -> bool:
@@ -35,8 +37,8 @@ def _verify_password(plain: str, stored: str) -> bool:
     # bcrypt 雜湊
     if stored.startswith("$2"):
         try:
-            from passlib.hash import bcrypt
-            return bcrypt.verify(plain, stored)
+            import bcrypt as _bc
+            return _bc.checkpw(plain.encode("utf-8")[:72], stored.encode("utf-8"))
         except Exception:
             return False
     # 舊 SHA-256 + salt 格式 (向下相容)
