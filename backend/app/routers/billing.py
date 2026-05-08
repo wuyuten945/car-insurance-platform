@@ -7,7 +7,7 @@ import logging
 from dataclasses import asdict
 
 from fastapi import APIRouter, Depends, Query, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -82,8 +82,10 @@ async def list_subscriptions(
 
 
 class ExtendRequest(BaseModel):
-    months: int = 1
-    payment_ref: str | None = None
+    # 限 1-60 個月,防 super_admin 手滑或 API 被濫用造成 740 年訂閱
+    months: int = Field(1, ge=1, le=60)
+    # 限長 100 字,對齊 DB 欄位,防超長字串或 binary blob
+    payment_ref: str | None = Field(None, max_length=100)
 
 
 @router.post("/subscriptions/{agent_id}/extend", response_model=APIResponse)
@@ -156,10 +158,17 @@ async def billing_webhook(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
+    # 由全域 default_limits ("120/minute") 提供 rate limit;
+    # 加上下方 provider/payload 驗證已足夠防爆 log,故不疊加 @limiter.limit。
     """外部金流回呼。MVP 只 log,不做事。
 
     Phase 2 會依 provider 解析 payload + 驗簽 → 自動 extend。
+    Provider 限制英數字以避免 path injection 攻擊到 log。
     """
+    if not provider.replace("_", "").replace("-", "").isalnum() or len(provider) > 30:
+        raise BadRequestError("provider 名稱只能是英數字 / -_ 且長度不可超過 30")
     body = await request.body()
+    if len(body) > 100 * 1024:   # 100KB 上限
+        raise BadRequestError("payload 過大")
     logger.info(f"[billing-webhook] provider={provider} bytes={len(body)}")
     return APIResponse(message=f"webhook {provider} received(尚未實作)")

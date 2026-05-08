@@ -332,9 +332,11 @@ async def check_subscription_gate(request: Request, call_next):
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                     },
                 )
-    except Exception:
-        # middleware 內部錯誤不該擋 request,放行讓 router 處理
-        pass
+    except Exception as e:
+        # middleware 內部錯誤不該擋 request,放行讓 router 處理(各 endpoint 仍有
+        # Depends(get_current_admin) 做 token 驗證,所以這裡 fail-open 是安全的)。
+        # 但要 log 出來,否則訂閱 gate 永遠繞過也不會被發現。
+        logger.warning(f"[subscription-gate] middleware error: {type(e).__name__}: {e}")
     return await call_next(request)
 
 
