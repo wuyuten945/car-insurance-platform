@@ -52,7 +52,8 @@ STAGE_EMOJI = {
 
 
 def generate_claim_number() -> str:
-    prefix = datetime.now().strftime("%Y%m%d")
+    # 用 timezone-aware datetime,避免和系統其他 datetime.now(timezone.utc) 比較時混淆
+    prefix = datetime.now(timezone.utc).strftime("%Y%m%d")
     suffix = "".join(random.choices(string.digits, k=6))
     return f"CLM-{prefix}-{suffix}"
 

@@ -120,6 +120,10 @@ async def admin_login(req: AdminLoginRequest, request: Request, db: AsyncSession
     admin.login_fail_count = "0"
     # 成功登入清掉同 IP 失敗計數
     await cache.delete(ip_fail_key)
+    # 透明升級舊 SHA-256 雜湊為 bcrypt
+    from app.core.admin_auth import needs_rehash, hash_password
+    if needs_rehash(admin.password_hash):
+        admin.password_hash = hash_password(req.password)
 
     # 產生管理員專用 JWT（type=admin）
     from jose import jwt

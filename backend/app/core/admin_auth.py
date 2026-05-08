@@ -18,18 +18,33 @@ logger = logging.getLogger(__name__)
 
 
 def hash_password(password: str) -> str:
-    """密碼加密（SHA-256 + salt）"""
-    salt = secrets.token_hex(16)
-    h = hashlib.sha256((salt + password).encode()).hexdigest()
-    return f"{salt}:{h}"
+    """密碼加密 — 新格式用 bcrypt(成本 12, '$2b$' 開頭)。
+    舊格式 'salt:digest' (SHA-256) 仍可被 verify_password 驗證以保持向下相容,
+    並在使用者下次成功登入時透過 needs_rehash() 升級。
+    """
+    from passlib.hash import bcrypt
+    return bcrypt.using(rounds=12).hash(password)
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    """驗證密碼"""
-    if ":" not in password_hash:
+    """驗證密碼。同時相容 bcrypt(新)和舊 SHA-256+salt 格式。"""
+    if not password_hash:
         return False
-    salt, h = password_hash.split(":", 1)
-    return hashlib.sha256((salt + password).encode()).hexdigest() == h
+    if password_hash.startswith("$2"):
+        try:
+            from passlib.hash import bcrypt
+            return bcrypt.verify(password, password_hash)
+        except Exception:
+            return False
+    if ":" in password_hash:
+        salt, h = password_hash.split(":", 1)
+        return hashlib.sha256((salt + password).encode()).hexdigest() == h
+    return False
+
+
+def needs_rehash(password_hash: str) -> bool:
+    """舊 SHA-256 雜湊應在下次驗證成功時升級為 bcrypt"""
+    return bool(password_hash) and not password_hash.startswith("$2")
 
 
 def generate_api_key() -> str:

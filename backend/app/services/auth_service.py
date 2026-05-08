@@ -21,18 +21,35 @@ INTERIM_TOKEN_TTL = 300  # 5 分鐘短效，OTP 通過後等用戶輸密碼用
 
 
 def _hash_password(plain: str) -> str:
-    """使用 SHA-256 + per-record salt（與 admin 一致風格）"""
-    salt = secrets.token_hex(16)
-    digest = hashlib.sha256((salt + plain).encode("utf-8")).hexdigest()
-    return f"{salt}${digest}"
+    """使用 bcrypt(成本 12)。新雜湊格式以 '$2b$' 開頭。
+
+    舊 SHA-256 雜湊 'salt$digest' 仍可用 _verify_password 驗證,但下次密碼變更會自動升級。
+    """
+    from passlib.hash import bcrypt
+    return bcrypt.using(rounds=12).hash(plain)
 
 
 def _verify_password(plain: str, stored: str) -> bool:
-    if not stored or "$" not in stored:
+    if not stored:
         return False
-    salt, digest = stored.split("$", 1)
-    expected = hashlib.sha256((salt + plain).encode("utf-8")).hexdigest()
-    return secrets.compare_digest(expected, digest)
+    # bcrypt 雜湊
+    if stored.startswith("$2"):
+        try:
+            from passlib.hash import bcrypt
+            return bcrypt.verify(plain, stored)
+        except Exception:
+            return False
+    # 舊 SHA-256 + salt 格式 (向下相容)
+    if "$" in stored:
+        salt, digest = stored.split("$", 1)
+        expected = hashlib.sha256((salt + plain).encode("utf-8")).hexdigest()
+        return secrets.compare_digest(expected, digest)
+    return False
+
+
+def needs_rehash(stored: str) -> bool:
+    """舊 SHA-256 雜湊應在下次驗證成功時自動重 hash 為 bcrypt"""
+    return bool(stored) and not stored.startswith("$2")
 
 
 def _create_interim_token(user_id: str) -> str:
@@ -142,6 +159,10 @@ class AuthService:
             raise BadRequestError(t("pw_not_enabled"))
         if not _verify_password(password, user.password_hash):
             raise BadRequestError(t("pw_wrong"))
+
+        # 透明升級舊 SHA-256 雜湊為 bcrypt(只在驗證成功後執行)
+        if needs_rehash(user.password_hash):
+            user.password_hash = _hash_password(password)
 
         user.last_login_at = datetime.now(timezone.utc)
         access_token = create_access_token(user.id)

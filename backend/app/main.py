@@ -235,10 +235,15 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS
+# CORS — 防呆:同時 allow_credentials=True 與 allow_origins=['*'] 是 CSRF 的 invitation,
+# 偵測到就強制收斂為 [] 並警告
+_cors_origins = settings.cors_origins_list
+if _cors_origins == ["*"] or "*" in _cors_origins:
+    logger.warning("[security] CORS_ORIGINS 含 '*' 與 allow_credentials=True 不可並存,強制收斂為空")
+    _cors_origins = []
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
