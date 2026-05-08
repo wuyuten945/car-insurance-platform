@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -40,6 +40,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const { isAuthenticated, user, loadUser } = useAuthStore();
   const { t } = useT();
+  // 自製 tooltip：用 state 記錄哪個 badge 正在顯示說明（key 範例 `${vehicleId}-insp` / `${vehicleId}-comp`）
+  const [activeTip, setActiveTip] = useState<string | null>(null);
 
   const QUICK_ACTIONS = [
     { href: '/emergency', icon: AlertTriangle, label: t('dash.quickAction.emergency'), color: 'bg-emergency-red', textColor: 'text-white' },
@@ -228,14 +230,21 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <span
-                      title={inspectTooltip}
-                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition ${
+                      onMouseEnter={() => setActiveTip(`${p.id}-insp`)}
+                      onMouseLeave={() => setActiveTip((cur) => (cur === `${p.id}-insp` ? null : cur))}
+                      onClick={() => setActiveTip((cur) => (cur === `${p.id}-insp` ? null : `${p.id}-insp`))}
+                      className={`relative shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition ${
                         canInsp.can_inspect
                           ? 'bg-green-50 text-green-700 border-green-300'
                           : 'bg-gray-50 text-gray-500 border-gray-200'
                       }`}
                     >
                       可驗車
+                      {activeTip === `${p.id}-insp` && (
+                        <span className="absolute right-0 top-full mt-1 z-30 w-56 rounded-md bg-gray-900 text-white text-[11px] font-normal px-2.5 py-2 shadow-lg leading-relaxed whitespace-normal text-left">
+                          {inspectTooltip}
+                        </span>
+                      )}
                     </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2 text-[11px]">
@@ -245,14 +254,21 @@ export default function DashboardPage() {
                         : t('dash.inspectNoDate')}
                     </span>
                     <span
-                      title={compTooltip}
-                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition ${
+                      onMouseEnter={() => setActiveTip(`${p.id}-comp`)}
+                      onMouseLeave={() => setActiveTip((cur) => (cur === `${p.id}-comp` ? null : cur))}
+                      onClick={() => setActiveTip((cur) => (cur === `${p.id}-comp` ? null : `${p.id}-comp`))}
+                      className={`relative shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition ${
                         comp.has && comp.ok_for_inspect
                           ? 'bg-green-50 text-green-700 border-green-300'
                           : 'bg-gray-50 text-gray-500 border-gray-200'
                       }`}
                     >
                       強制險
+                      {activeTip === `${p.id}-comp` && (
+                        <span className="absolute right-0 top-full mt-1 z-30 w-56 rounded-md bg-gray-900 text-white text-[11px] font-normal px-2.5 py-2 shadow-lg leading-relaxed whitespace-normal text-left">
+                          {compTooltip}
+                        </span>
+                      )}
                     </span>
                   </div>
                 </div>
