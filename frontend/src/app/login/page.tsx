@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { KeyRound, ArrowRight, Loader2, Mail, Languages, AlertTriangle, Copy, Check, ShieldCheck, Lock, Clock } from 'lucide-react';
+import { KeyRound, ArrowRight, Loader2, Mail, Languages, AlertTriangle, Copy, Check, ShieldCheck, Lock, Clock, Sparkles, X } from 'lucide-react';
 import { useIdleLogoutBanner } from '@/lib/useIdleLogout';
 import Image from 'next/image';
 import { useAuthStore } from '@/stores/auth-store';
@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [countdown, setCountdown] = useState(0);
   const [inAppBrowser, setInAppBrowser] = useState<{ isInApp: boolean; appName: string }>({ isInApp: false, appName: '' });
   const [urlCopied, setUrlCopied] = useState(false);
+  const [showNumerologyTeaser, setShowNumerologyTeaser] = useState(false);
 
   // 偵測 LINE/FB/IG 等內建瀏覽器（Google OAuth 拒絕在 embedded webview 登入）
   useEffect(() => {
@@ -156,6 +157,95 @@ export default function LoginPage() {
           </div>
         </div>
       )}
+      {/* Top-left: 數字易經行銷標籤 — 點擊跳出介紹 modal 吸引消費者註冊 */}
+      <div className="absolute top-4 left-4 z-10">
+        <button
+          type="button"
+          onClick={() => setShowNumerologyTeaser(true)}
+          aria-label={lang === 'zh' ? '幫人生拿副好牌' : 'Numerology — Get a winning hand'}
+          title={lang === 'zh' ? '幫人生拿副好牌（數字易經）' : 'Numerology'}
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white shadow-lg hover:shadow-xl active:scale-95 transition cursor-pointer animate-pulse-slow"
+          style={{ background: 'linear-gradient(90deg,#9C27B0,#E91E63,#FF9800)' }}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          {lang === 'zh' ? '✨ 幫人生拿副好牌' : '✨ Numerology'}
+        </button>
+      </div>
+
+      {/* 數字易經介紹 modal — 未登入也可看,登入後才能用 */}
+      {showNumerologyTeaser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          onClick={() => setShowNumerologyTeaser(false)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowNumerologyTeaser(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 cursor-pointer"
+              aria-label="關閉"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center gap-2 mb-3">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+                style={{ background: 'linear-gradient(135deg,#9C27B0,#E91E63,#FF9800)' }}
+              >
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">
+                {lang === 'zh' ? '✨ 幫人生拿副好牌' : '✨ Numerology'}
+              </h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+              {lang === 'zh'
+                ? '透過八宅遊星「數字易經」分析您身分證、生日、電話、車牌的磁場吉凶,並產生避凶補吉的建議號碼。'
+                : 'Analyze the lucky/unlucky energy of your ID, birthday, phone & plate using the 8-Magnet Numerology system, then get tailored recommendation numbers.'}
+            </p>
+            <div className="rounded-lg bg-purple-50 border border-purple-200 p-3 mb-4 space-y-1.5">
+              <p className="text-xs text-purple-900 flex items-start gap-2">
+                <span>📋</span>
+                <span>
+                  {lang === 'zh' ? '個人分析:身分證 / 生日 / 電話 / 車牌 完整磁場儀表' : 'Personal analysis: ID / Birthday / Phone / Plate'}
+                </span>
+              </p>
+              <p className="text-xs text-purple-900 flex items-start gap-2">
+                <span>🎯</span>
+                <span>
+                  {lang === 'zh' ? '智能建議:依您的磁場避凶補吉,產生 3 組吉祥號碼' : 'Smart suggestions: 3 lucky numbers tailored to your profile'}
+                </span>
+              </p>
+              <p className="text-xs text-purple-900 flex items-start gap-2">
+                <span>🔍</span>
+                <span>
+                  {lang === 'zh' ? '進階分析:任意號碼組合的交互作用判讀' : 'Advanced: combined-numbers interaction analysis'}
+                </span>
+              </p>
+            </div>
+            <p className="text-[11px] text-gray-500 mb-4 text-center">
+              {lang === 'zh' ? '🔒 註冊登入後即可免費使用' : '🔒 Free after sign-up'}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowNumerologyTeaser(false);
+                setTimeout(() => {
+                  document.querySelector<HTMLInputElement>('input[type=email]')?.focus();
+                }, 100);
+              }}
+              className="w-full rounded-lg px-4 py-3 text-sm font-bold text-white shadow-md hover:shadow-lg active:scale-95 transition cursor-pointer"
+              style={{ background: 'linear-gradient(90deg,#9C27B0,#E91E63,#FF9800)' }}
+            >
+              {lang === 'zh' ? '立即登入體驗 →' : 'Sign in now →'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top-right controls: 業務員專區入口 + 語言切換 */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <button
