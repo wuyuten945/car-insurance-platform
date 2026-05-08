@@ -31,6 +31,8 @@ interface PinnedVehicle {
   zone_can_inspect: {
     in_window: boolean;
     can_inspect: boolean;
+    window_status?: string;
+    reasons?: string[];   // 不可驗車原因（後端產生,前端顯示）
   };
 }
 
@@ -231,6 +233,13 @@ export default function DashboardPage() {
                       {t('dash.compulsoryShort', { status: comp.has ? t('dash.statusYes') : t('dash.statusNo') })}
                     </span>
                   </div>
+                  {/* 不可驗車原因(後端 zone_can_inspect.reasons) — 讓使用者懂為什麼是紅圈叉 */}
+                  {!canInsp.can_inspect && canInsp.reasons && canInsp.reasons.length > 0 && (
+                    <div className="mt-2 rounded-md bg-red-50 border border-red-200 px-2 py-1.5 text-[11px] text-red-700 leading-relaxed">
+                      <span className="font-bold">⚠️ 目前不可驗車：</span>
+                      {canInsp.reasons.join('、')}
+                    </div>
+                  )}
                 </div>
               );
             })}
