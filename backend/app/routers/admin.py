@@ -916,7 +916,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     </div>
     <div class="card">
       <h2 data-i18n="h_agent_list">業務員列表</h2>
-      <table><thead><tr><th data-i18n="lbl_username">帳號</th><th data-i18n="th_name">名稱</th><th data-i18n="th_status">狀態</th><th data-i18n="th_customer_count">客戶數</th><th data-i18n="th_last_login">最後登入</th><th data-i18n="th_action">操作</th></tr></thead>
+      <table><thead><tr><th data-i18n="lbl_username">帳號</th><th data-i18n="th_name">名稱</th><th data-i18n="th_status">狀態</th><th>訂閱</th><th data-i18n="th_customer_count">客戶數</th><th data-i18n="th_last_login">最後登入</th><th data-i18n="th_action">操作</th></tr></thead>
       <tbody id="agents-table"></tbody></table>
     </div>
   </div>
@@ -5738,22 +5738,109 @@ addItemRow();
 // ═══ Console: Agents ═══
 async function loadAgents() {
   try {
-    var r = await fetch(CONSOLE_API+'/agents', {headers:consoleHeaders()});
-    var d = await r.json();
-    var agents = d.data || [];
+    // 平行抓 agents + subscriptions(super_admin 才有 subscriptions endpoint)
+    var [aRes, sRes] = await Promise.all([
+      fetch(CONSOLE_API+'/agents', {headers:consoleHeaders()}),
+      fetch(CONSOLE_API.replace('/admin-console','') + '/billing/subscriptions', {headers:consoleHeaders()}),
+    ]);
+    var aD = await aRes.json();
+    var agents = aD.data || [];
+    var subs = {};
+    if (sRes.ok) {
+      var sD = await sRes.json();
+      (sD.data || []).forEach(function(x){ subs[x.agent_id] = x; });
+    }
+    window._lastAgents = agents;
+    window._lastSubs = subs;
     var html = '';
     for (var i = 0; i < agents.length; i++) {
       var a = agents[i];
       var st = a.is_active ? '<span style="color:#22c55e;font-weight:bold">啟用</span>' : '<span style="color:#ef4444;font-weight:bold">停用</span>';
       html += '<tr><td><b>'+esc(a.username)+'</b></td><td>'+esc(a.display_name)+'</td><td>'+st+'</td>';
+      // 訂閱欄
+      html += '<td>' + _renderSubBadge(subs[a.id]) + '</td>';
       html += '<td>'+esc(a.customer_count)+'</td><td style="font-size:11px">'+esc(a.last_login||'-')+'</td>';
       html += '<td style="white-space:nowrap">';
+      // 訂閱操作按鈕(只對 agent role 顯示;super_admin 沒 subscription)
+      if (subs[a.id] && subs[a.id].status !== 'super_admin') {
+        html += '<button class="btn" style="padding:3px 8px;font-size:11px;margin:1px;background:#1976D2;color:#fff" onclick="openExtendSubscription(&quot;'+a.id+'&quot;)">💳 延長</button>';
+        if (subs[a.id].is_cancelled || subs[a.id].status === 'expired' || subs[a.id].status === 'past_due') {
+          html += '<button class="btn" style="padding:3px 8px;font-size:11px;margin:1px;background:#388E3C;color:#fff" onclick="reactivateSubscription(&quot;'+a.id+'&quot;)">↻ 重啟</button>';
+        } else {
+          html += '<button class="btn" style="padding:3px 8px;font-size:11px;margin:1px;background:#FFA000;color:#fff" onclick="adminCancelSubscription(&quot;'+a.id+'&quot;)">取消訂閱</button>';
+        }
+      }
       if (a.is_active) html += '<button class="btn danger" style="padding:3px 8px;font-size:11px;margin:1px" onclick="toggleAgent(&quot;'+a.id+'&quot;,false)">停用</button>';
       else html += '<button class="btn success" style="padding:3px 8px;font-size:11px;margin:1px" onclick="toggleAgent(&quot;'+a.id+'&quot;,true)">啟用</button>';
       html += '</td></tr>';
     }
-    document.getElementById('agents-table').innerHTML = html || '<tr><td colspan="6" style="color:#999">尚無業務員</td></tr>';
+    document.getElementById('agents-table').innerHTML = html || '<tr><td colspan="7" style="color:#999">尚無業務員</td></tr>';
   } catch(e) { console.error(e); }
+}
+
+function _renderSubBadge(sub) {
+  if (!sub) return '<span style="color:#999;font-size:10px">-</span>';
+  if (sub.status === 'super_admin') return '<span style="color:#666;font-size:10px">系統管理員</span>';
+  var labels = {trial:'試用',active:'已訂閱',cancelled:'已取消',past_due:'寬限',expired:'過期'};
+  var colors = {trial:'#1976D2',active:'#2E7D32',cancelled:'#E65100',past_due:'#D84315',expired:'#C62828'};
+  var bg = (colors[sub.status] || '#999') + '20';
+  var color = colors[sub.status] || '#666';
+  var endStr = sub.period_end ? sub.period_end.substring(5,10) : '-';
+  return '<span style="background:'+bg+';color:'+color+';padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600" title="到期 '+esc(sub.period_end||'')+'">'
+       + esc(labels[sub.status] || sub.status) + ' · ' + esc(endStr) + ' (' + sub.days_remaining + 'd)</span>';
+}
+
+function openExtendSubscription(agentId) {
+  var sub = (window._lastSubs || {})[agentId];
+  var agent = ((window._lastAgents || []).filter(function(a){ return a.id === agentId; })[0]) || {};
+  var months = prompt('延長幾個月?(NT$' + (sub ? sub.price_twd : 149) + ' / 月)\\n業務員:' + (agent.username || agentId), '1');
+  if (!months) return;
+  var m = parseInt(months, 10);
+  if (!m || m < 1 || m > 60) { alert('月數必須是 1-60'); return; }
+  var ref = prompt('付款編號(可選,例如綠界 / 銀行轉帳末 5 碼)', '');
+  _doExtend(agentId, m, ref);
+}
+
+async function _doExtend(agentId, months, paymentRef) {
+  try {
+    var body = { months: months };
+    if (paymentRef && paymentRef.trim()) body.payment_ref = paymentRef.trim();
+    var r = await fetch(CONSOLE_API.replace('/admin-console','') + '/billing/subscriptions/' + agentId + '/extend', {
+      method: 'POST',
+      headers: consoleHeaders(true),
+      body: JSON.stringify(body),
+    });
+    var d = await r.json();
+    if (!r.ok || !d.success) { alert('延長失敗:' + (d.message || '')); return; }
+    alert('已延長 ' + months + ' 個月');
+    loadAgents();
+  } catch(e) { alert('錯誤:' + e.message); }
+}
+
+async function adminCancelSubscription(agentId) {
+  if (!confirm('確定強制取消此業務員訂閱?可使用至期末。')) return;
+  try {
+    var r = await fetch(CONSOLE_API.replace('/admin-console','') + '/billing/subscriptions/' + agentId + '/cancel', {
+      method: 'POST', headers: consoleHeaders(true),
+    });
+    var d = await r.json();
+    if (!r.ok || !d.success) { alert('取消失敗:' + (d.message || '')); return; }
+    alert('已取消');
+    loadAgents();
+  } catch(e) { alert('錯誤:' + e.message); }
+}
+
+async function reactivateSubscription(agentId) {
+  if (!confirm('確定重啟此業務員的訂閱?')) return;
+  try {
+    var r = await fetch(CONSOLE_API.replace('/admin-console','') + '/billing/subscriptions/' + agentId + '/reactivate', {
+      method: 'POST', headers: consoleHeaders(true),
+    });
+    var d = await r.json();
+    if (!r.ok || !d.success) { alert('重啟失敗:' + (d.message || '')); return; }
+    alert('已重啟訂閱');
+    loadAgents();
+  } catch(e) { alert('錯誤:' + e.message); }
 }
 async function createAgent() {
   var body = {username:document.getElementById('ag-user').value, password:document.getElementById('ag-pass').value,
