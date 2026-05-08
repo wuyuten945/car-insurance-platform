@@ -156,7 +156,7 @@ export default function LoginPage() {
           </div>
         </div>
       )}
-      {/* Top-right controls: 管理員入口 + 語言切換 */}
+      {/* Top-right controls: 業務員專區入口 + 語言切換 */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <button
           type="button"
@@ -164,12 +164,12 @@ export default function LoginPage() {
             const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
             window.location.href = `${apiBase}/admin`;
           }}
-          aria-label="管理員入口"
-          title={lang === 'zh' ? '管理員後台' : 'Admin'}
+          aria-label="業務員專區"
+          title={lang === 'zh' ? '業務員專區' : 'Agent Portal'}
           className="flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-xs font-bold text-white hover:bg-white/30 transition cursor-pointer"
         >
           <ShieldCheck className="h-3.5 w-3.5" />
-          {lang === 'zh' ? '管理員' : 'Admin'}
+          {lang === 'zh' ? '業務員專區' : 'Agent Portal'}
         </button>
         <button
           type="button"
