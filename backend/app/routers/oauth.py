@@ -74,7 +74,7 @@ async def google_callback(code: str = Query(...), db: AsyncSession = Depends(get
     redirect_uri = f"{settings.BACKEND_URL}/api/v1/oauth/google/callback"
 
     # Exchange code for token
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         token_resp = await client.post("https://oauth2.googleapis.com/token", data={
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -144,7 +144,7 @@ async def apple_callback(code: str = Query(""), db: AsyncSession = Depends(get_d
     }
     client_secret = pyjwt.encode(payload, settings.APPLE_PRIVATE_KEY, algorithm="ES256", headers=headers)
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         token_resp = await client.post("https://appleid.apple.com/auth/token", data={
             "code": code,
             "client_id": settings.APPLE_CLIENT_ID,
@@ -194,7 +194,7 @@ async def facebook_callback(code: str = Query(...), db: AsyncSession = Depends(g
     import httpx
     redirect_uri = f"{settings.OAUTH_REDIRECT_BASE}/auth/callback/facebook"
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         # Exchange code for token
         token_resp = await client.get("https://graph.facebook.com/v18.0/oauth/access_token", params={
             "code": code,
@@ -254,7 +254,7 @@ async def line_callback(code: str = Query(...), db: AsyncSession = Depends(get_d
     import jwt as pyjwt
     redirect_uri = f"{settings.BACKEND_URL}/api/v1/oauth/line/callback"
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         # Step 1: code → access_token + id_token
         token_resp = await client.post(
             "https://api.line.me/oauth2/v2.1/token",

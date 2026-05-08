@@ -59,10 +59,11 @@ def _gemini_call(image_path: str, prompt: str) -> dict:
             types.Part(text=prompt),
         ])
 
-        # 限速：距上次呼叫至少 5 秒
+        # 限速：距上次呼叫至少 5 秒(用 await asyncio.sleep,不阻塞 event loop)
+        import asyncio as _asyncio
         elapsed = time.time() - _last_gemini_call
         if elapsed < 5:
-            time.sleep(5 - elapsed)
+            await _asyncio.sleep(5 - elapsed)
 
         models = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash"]
         last_err = ""

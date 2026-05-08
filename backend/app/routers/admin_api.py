@@ -234,23 +234,28 @@ async def list_agents(
     admin: AdminUser = Depends(require_super_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """列出所有業務員"""
+    """列出所有業務員 — 用 GROUP BY 一次抓 customer_count(避免 N+1)"""
+    # 一個 query 同時抓 agent + customer_count(left join)
+    cnt_subq = (
+        select(AgentCustomer.agent_id, func.count(AgentCustomer.customer_id).label("cnt"))
+        .group_by(AgentCustomer.agent_id)
+        .subquery()
+    )
     result = await db.execute(
-        select(AdminUser).where(AdminUser.role == "agent").order_by(AdminUser.created_at.desc())
+        select(AdminUser, cnt_subq.c.cnt)
+        .outerjoin(cnt_subq, AdminUser.id == cnt_subq.c.agent_id)
+        .where(AdminUser.role == "agent")
+        .order_by(AdminUser.created_at.desc())
     )
     agents = []
-    for a in result.scalars().all():
-        # 統計客戶數
-        cnt = await db.execute(
-            select(func.count()).where(AgentCustomer.agent_id == a.id)
-        )
+    for a, customer_count in result.all():
         agents.append({
             "id": a.id, "username": a.username, "display_name": a.display_name,
             "email": a.email, "phone": a.phone,
             "is_active": a.is_active, "role": a.role,
             "api_key": a.api_key[:8] + "..." if a.api_key else "",
             "ip_whitelist": a.ip_whitelist or "",
-            "customer_count": cnt.scalar() or 0,
+            "customer_count": customer_count or 0,
             "last_login": a.last_login_at.isoformat() if a.last_login_at else None,
             "created_at": a.created_at.isoformat(),
         })
@@ -458,15 +463,17 @@ async def quick_search(
 
 @router.get("/customers")
 async def list_customers(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(1000, ge=1, le=1000),
     admin: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """列出可存取的客戶（agent 只看自己的）"""
+    """列出可存取的客戶（agent 只看自己的）— 加分頁上限防 OOM,response 保持向下相容的純陣列"""
     accessible = await get_accessible_customer_ids(admin, db)
     query = select(User)
     if accessible is not None:
         query = query.where(User.id.in_(accessible))
-    query = query.order_by(User.created_at.desc())
+    query = query.order_by(User.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
     customers = []
     for u in result.scalars().all():
@@ -474,7 +481,7 @@ async def list_customers(
             "id": u.id, "name": u.name, "phone": u.phone, "email": u.email,
             "created_at": u.created_at.isoformat(),
         })
-    await log_action(db, admin, "view", "customer_list", detail=f"{len(customers)} 筆")
+    await log_action(db, admin, "view", "customer_list", detail=f"{len(customers)} 筆 (page={page})")
     return APIResponse(data=customers)
 
 

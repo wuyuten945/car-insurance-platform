@@ -141,7 +141,9 @@ class PolicyService:
     async def create_policy(
         self, user_id: str, data: PolicyCreate, *, data_source: str = "agent"
     ) -> Policy:
-        # 檢查保單號碼是否重複
+        # 檢查保單號碼是否重複(注意:這只是友善的早期檢查,真正的併發保護靠 unique
+        # constraint + 下面的 IntegrityError catch — 兩個併發 request 同時走到這裡都
+        # 會通過,但 DB unique 索引擋掉一個)
         existing = await self.db.execute(
             select(Policy).where(Policy.policy_number == data.policy_number)
         )
@@ -181,7 +183,14 @@ class PolicyService:
             document_url=data.document_url,
         )
         self.db.add(policy)
-        await self.db.flush()
+        # 用 try/except IntegrityError 保護 race condition:兩個併發 request 同時建相同
+        # policy_number 時,DB 的 UNIQUE constraint 會擋掉第二個,我們轉成 BadRequestError
+        from sqlalchemy.exc import IntegrityError
+        try:
+            await self.db.flush()
+        except IntegrityError:
+            await self.db.rollback()
+            raise BadRequestError(f"保單號碼 {data.policy_number} 已存在")
 
         # 建立保障項目
         for item_data in data.items:

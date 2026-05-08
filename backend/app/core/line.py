@@ -40,7 +40,7 @@ class LINENotifyService:
             "messages": [{"type": "text", "text": message}],
         }
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(self.api_url, json=payload, headers=headers)
                 resp.raise_for_status()
             logger.info(f"[LINE] 發送成功: {user_id}")

@@ -120,10 +120,19 @@ class AuthService:
         }
 
     async def verify_password_with_interim(self, interim_token: str, password: str) -> dict:
-        """OTP 通過後的二因子驗證：用 interim_token + 密碼換正式 tokens"""
+        """OTP 通過後的二因子驗證：用 interim_token + 密碼換正式 tokens
+
+        安全:interim_token 用過即 blacklist,防 replay。
+        """
         user_id = _decode_interim_token(interim_token)
         if not user_id:
             raise UnauthorizedError(t("pw_session_expired"))
+
+        # 一旦 decode 成功就先 blacklist,避免下面任一驗證失敗時 token 仍可被用
+        from app.core.security import blacklist_token, is_token_blacklisted
+        if await is_token_blacklisted(interim_token):
+            raise UnauthorizedError(t("pw_session_expired"))
+        await blacklist_token(interim_token)
 
         result = await self.db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()

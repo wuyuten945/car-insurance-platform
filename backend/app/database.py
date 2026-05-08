@@ -20,12 +20,25 @@ def _normalize_db_url(url: str) -> str:
 
 
 _db_url = _normalize_db_url(settings.DATABASE_URL)
+_is_sqlite = "sqlite" in _db_url
 
-engine = create_async_engine(
-    _db_url,
-    echo=False,
-    connect_args={"check_same_thread": False} if "sqlite" in _db_url else {},
-)
+# 連線池調整:預設 5 個連線在負載一點點時就 queue。Render 免費 PG 上限 97 個 connection,
+# 我們留充裕 buffer:pool_size=20 + max_overflow=10 = 同時 30 個。pool_pre_ping=True
+# 確保撈到的 connection 是活的(避免 PG 自動 idle timeout 後第一次查詢失敗)。
+# pool_recycle=1800 強制每 30 分鐘換一次連線,防 PG idle 太久被 kill。
+_engine_kwargs = dict(echo=False)
+if _is_sqlite:
+    _engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    _engine_kwargs.update(
+        pool_size=20,
+        max_overflow=10,
+        pool_pre_ping=True,
+        pool_recycle=1800,
+        pool_timeout=30,
+    )
+
+engine = create_async_engine(_db_url, **_engine_kwargs)
 
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
