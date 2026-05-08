@@ -412,7 +412,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       </div>
       <img id="v-preview" class="preview" style="display:none">
       <button class="btn" id="v-upload-btn" onclick="uploadRegistration()" data-i18n="btn_upload_reg">上傳行照</button>
-      <button class="btn success" id="v-ocr-btn" style="display:none" onclick="runOcr()" data-i18n="btn_ocr_reg">AI 辨識行照</button>
+      <button class="btn success" id="v-ocr-btn" style="display:none;opacity:0.5;cursor:not-allowed;filter:grayscale(0.6)" disabled title="AI 辨識功能開發中,待完善後再開放使用" onclick="runOcr()" data-i18n="btn_ocr_reg">AI 辨識行照（暫未開放）</button>
       <div id="v-loading" style="display:none;margin-top:12px;color:#1565C0;font-size:14px">
         <span style="display:inline-block;animation:spin 1s linear infinite;margin-right:8px">&#9696;</span>
         <span id="v-loading-text" data-i18n="msg_uploading">上傳中...</span>
@@ -468,7 +468,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
           <img id="ve-file-preview" class="preview" style="display:none;max-width:200px;max-height:140px;margin:6px 0;border-radius:6px;border:1px solid #ccc">
           <div style="margin-top:6px">
             <button class="btn" style="padding:6px 14px;font-size:12px;background:#1565C0;color:#fff" onclick="uploadRegistrationDirect()" data-i18n="btn_upload_reg">上傳行照</button>
-            <button class="btn success" style="padding:6px 14px;font-size:12px;display:none" id="ve-ocr-btn" onclick="ocrRegistrationDirect()" data-i18n="btn_ocr_autofill">AI 辨識自動填入</button>
+            <button class="btn success" style="padding:6px 14px;font-size:12px;display:none;opacity:0.5;cursor:not-allowed;filter:grayscale(0.6)" disabled title="AI 辨識功能開發中,待完善後再開放使用" id="ve-ocr-btn" onclick="ocrRegistrationDirect()" data-i18n="btn_ocr_autofill">AI 辨識自動填入（暫未開放）</button>
           </div>
           <div id="ve-upload-loading" style="display:none;margin-top:6px;color:#1565C0;font-size:12px">
             <span style="display:inline-block;animation:spin 1s linear infinite;margin-right:6px">&#9696;</span>
@@ -516,7 +516,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
         </div>
         <img id="p-preview" class="preview" style="display:none">
         <button class="btn" id="p-upload-btn" onclick="uploadPolicy()" data-i18n="btn_upload_policy">上傳保單</button>
-        <button class="btn success" id="p-ocr-btn" style="display:none" onclick="runPolicyOcr()" data-i18n="btn_ocr_policy">AI 辨識保單</button>
+        <button class="btn success" id="p-ocr-btn" style="display:none;opacity:0.5;cursor:not-allowed;filter:grayscale(0.6)" disabled title="AI 辨識功能開發中,待完善後再開放使用" onclick="runPolicyOcr()" data-i18n="btn_ocr_policy">AI 辨識保單（暫未開放）</button>
         <div id="p-upload-loading" style="display:none;margin-top:12px;color:#1565C0;font-size:14px">
           <span style="display:inline-block;animation:spin 1s linear infinite;margin-right:8px">&#9696;</span>
           <span id="p-loading-text" data-i18n="msg_uploading">上傳中...</span>
@@ -2726,8 +2726,8 @@ var I18N = {
     opt_new_vehicle: '+ 新增車輛',
     lbl_reg_image: '行照圖片 (JPG/PNG)',
     btn_upload_reg: '上傳行照',
-    btn_ocr_reg: 'AI 辨識行照',
-    btn_ocr_autofill: 'AI 辨識自動填入',
+    btn_ocr_reg: 'AI 辨識行照（暫未開放）',
+    btn_ocr_autofill: 'AI 辨識自動填入（暫未開放）',
     msg_uploading: '上傳中...',
     msg_processing: '處理中...',
     h_ocr_result: 'AI 辨識結果',
@@ -2785,7 +2785,7 @@ var I18N = {
     upload_policy_hint: '上傳保單圖片，系統自動辨識保險公司、保單號碼、起迄日、保障項目等，一鍵建立保單。',
     lbl_policy_image: '保單圖片 (JPG/PNG)',
     btn_upload_policy: '上傳保單',
-    btn_ocr_policy: 'AI 辨識保單',
+    btn_ocr_policy: 'AI 辨識保單（暫未開放）',
     h_manual_policy: '手動新增保單',
     lbl_insurer: '保險公司',
     ph_insurer: '例：富邦產險',
@@ -2945,8 +2945,8 @@ var I18N = {
     opt_new_vehicle: '+ New vehicle',
     lbl_reg_image: 'Reg. Card Image (JPG/PNG)',
     btn_upload_reg: 'Upload',
-    btn_ocr_reg: 'AI OCR',
-    btn_ocr_autofill: 'AI OCR Autofill',
+    btn_ocr_reg: 'AI OCR (Coming Soon)',
+    btn_ocr_autofill: 'AI OCR Autofill (Coming Soon)',
     msg_uploading: 'Uploading...',
     msg_processing: 'Processing...',
     h_ocr_result: 'AI OCR Result',
@@ -3003,7 +3003,7 @@ var I18N = {
     upload_policy_hint: 'Upload a policy image; system auto-recognizes insurer, policy #, dates, coverage items and creates a policy with one click.',
     lbl_policy_image: 'Policy Image (JPG/PNG)',
     btn_upload_policy: 'Upload Policy',
-    btn_ocr_policy: 'AI OCR Policy',
+    btn_ocr_policy: 'AI OCR Policy (Coming Soon)',
     h_manual_policy: 'Manual New Policy',
     lbl_insurer: 'Insurer',
     ph_insurer: 'e.g., Fubon P&C',
@@ -4021,7 +4021,12 @@ async function uploadRegistration() {
   }
 }
 
+// AI 辨識功能總開關 — false=不可用（按鈕灰、點不到）, true=完整啟用
+// 未來功能完善後改為 true,並移除三個 OCR 按鈕的 disabled 屬性 + 灰色 style 即可
+var AI_OCR_ENABLED = false;
+
 async function runOcr() {
+  if (!AI_OCR_ENABLED) { alert('AI 辨識功能開發中,待完善後再開放使用'); return; }
   var vid = window._editVid || window._lastUploadVid;
   if (!vid) { showMsg('v-msg','err','請先上傳行照'); return; }
   document.getElementById('v-ocr-btn').disabled = true;
@@ -4440,6 +4445,7 @@ async function uploadRegistrationDirect() {
 }
 
 async function ocrRegistrationDirect() {
+  if (!AI_OCR_ENABLED) { alert('AI 辨識功能開發中,待完善後再開放使用'); return; }
   var vid = window._editVid;
   if (!vid) { showMsg('ve-msg','err','尚未選擇車輛'); return; }
   document.getElementById('ve-upload-loading').style.display = 'block';
@@ -4602,6 +4608,7 @@ async function uploadPolicy() {
 }
 
 async function runPolicyOcr() {
+  if (!AI_OCR_ENABLED) { alert('AI 辨識功能開發中,待完善後再開放使用'); return; }
   var fn = window._lastPolicyFilename;
   if (!fn) { showMsg('p-upload-msg','err', LANG==='en' ? 'Upload policy file first' : '請先上傳保單'); return; }
   var cid = currentCustomerId();
