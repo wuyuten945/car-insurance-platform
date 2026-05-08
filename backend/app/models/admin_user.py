@@ -26,6 +26,16 @@ class AdminUser(TimestampMixin, Base):
     # Token 版本號(改密碼/管理員強制登出時遞增,撤銷所有舊 token)
     token_version = Column(Integer, nullable=False, default=0, server_default="0")
 
+    # ── 訂閱制(super_admin 不被擋,agent 試用 7 天後月付 NT$149)─────────
+    # status: trial / active / past_due / cancelled / expired
+    # 詳見 SUBSCRIPTION_SPEC.md
+    subscription_status = Column(String(20), nullable=False, default="trial", server_default="trial")
+    trial_started_at = Column(DateTime(timezone=True))
+    subscription_period_end = Column(DateTime(timezone=True))   # trial 結束 OR paid 期末
+    subscription_cancelled_at = Column(DateTime(timezone=True))
+    subscription_price_twd = Column(Integer, nullable=False, default=149, server_default="149")
+    subscription_payment_ref = Column(String(100))   # 外部金流 ID(provider-agnostic)
+
     # 關聯
     assigned_customers = relationship("AgentCustomer", back_populates="agent", lazy="selectin")
     audit_logs = relationship("AuditLog", back_populates="admin_user", lazy="noload")

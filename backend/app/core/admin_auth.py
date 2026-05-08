@@ -106,6 +106,19 @@ def require_super_admin(admin: AdminUser = Depends(get_current_admin)) -> AdminU
     return admin
 
 
+def require_active_subscription(admin: AdminUser = Depends(get_current_admin)) -> AdminUser:
+    """要求有效訂閱(過期則 403)。super_admin 永遠通過。
+
+    可使用範圍:trial / active / cancelled(尚在 period_end 內)
+    被擋:past_due / expired
+    """
+    from app.services import subscription_service as _sub
+    status = _sub.compute_status(admin)
+    if not _sub.can_use_protected(status):
+        raise ForbiddenError("訂閱已過期,請至訂閱頁面續訂後再使用")
+    return admin
+
+
 async def get_accessible_customer_ids(admin: AdminUser, db: AsyncSession) -> list[str] | None:
     """取得管理員可存取的客戶 ID 列表。super_admin 回傳 None（全部）"""
     if admin.role == "super_admin":

@@ -154,7 +154,9 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   </button>
   <button id="lang-toggle-btn" type="button" onclick="toggleAdminLang()" title="Toggle Language" style="background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">EN</button>
   <button id="change-pw-btn" type="button" onclick="openChangePwModal()" style="display:none;background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer" data-i18n="btn_change_password">變更密碼</button>
+  <button id="sub-status-btn" type="button" onclick="openSubscriptionModal()" style="display:none;background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">💳 訂閱</button>
   <button class="btn danger" id="logout-btn" style="display:none;padding:4px 12px;font-size:12px;margin-left:10px" onclick="doLogout()" data-i18n="btn_logout">登出</button>
+  <div id="sub-banner" style="display:none;margin-top:10px;padding:10px 12px;border-radius:6px;font-size:13px;font-weight:600"></div>
   <div id="customer-bar" style="display:none;margin-top:10px;padding:10px;background:rgba(255,255,255,0.15);border-radius:6px;font-size:13px">
     <span style="margin-right:8px" data-i18n="cur_customer_label">操作客戶（新增車輛/保單時套用）：</span>
     <select id="cur-customer" style="background:#fff;color:#000;padding:4px 8px;border-radius:4px;border:0;min-width:280px"></select>
@@ -936,6 +938,20 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <button class="btn" onclick="loadLogs()" style="margin-bottom:8px" data-i18n="btn_load_latest">載入最新</button>
       <table><thead><tr><th data-i18n="th_time">時間</th><th data-i18n="th_admin">管理員</th><th data-i18n="th_action_col">操作</th><th data-i18n="th_target">目標</th><th data-i18n="th_detail">說明</th><th data-i18n="th_ip">IP</th></tr></thead>
       <tbody id="logs-table"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- 訂閱狀態 modal -->
+<div id="subscription-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
+  <div style="background:#fff;padding:24px;border-radius:14px;max-width:520px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+    <button type="button" onclick="closeSubscriptionModal()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;cursor:pointer;color:#888">×</button>
+    <h2 style="margin-top:0;color:#1565C0">💳 訂閱狀態</h2>
+    <div id="sub-content" style="font-size:14px;color:#333;margin-top:16px">
+      <div style="text-align:center;color:#999;padding:30px">載入中⋯</div>
+    </div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid #eee;text-align:right">
+      <button onclick="closeSubscriptionModal()" style="background:#999;color:#fff;border:0;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer">關閉</button>
     </div>
   </div>
 </div>
@@ -3198,6 +3214,9 @@ function _enterAdminUI(token, role, displayName) {
   document.getElementById('admin-panel').style.display = 'block';
   document.getElementById('logout-btn').style.display = 'inline-block';
   document.getElementById('change-pw-btn').style.display = 'inline-block';
+  document.getElementById('sub-status-btn').style.display = 'inline-block';
+  // 載入訂閱狀態 + 顯示 banner
+  loadSubscriptionBanner();
   // 依角色顯示/隱藏分頁
   var allTabs = ['vehicles','policies','claims','accidents','overview','quotes','agents','assign','logs'];
   var agentTabs = ['overview','quotes'];
@@ -3326,6 +3345,8 @@ function doLogout() {
   document.getElementById('admin-panel').style.display = 'none';
   document.getElementById('logout-btn').style.display = 'none';
   document.getElementById('change-pw-btn').style.display = 'none';
+  var sb = document.getElementById('sub-status-btn'); if (sb) sb.style.display = 'none';
+  var sban = document.getElementById('sub-banner'); if (sban) sban.style.display = 'none';
   document.getElementById('customer-bar').style.display = 'none';
   document.getElementById('login-section').style.display = 'block';
   document.getElementById('login-user').value = '';
@@ -3402,6 +3423,115 @@ async function loadCustomerList() {
   } catch(e) {
     if (msg) msg.textContent = t('msg_load_failed');
   }
+}
+
+// ────── 訂閱狀態 banner + modal ──────
+
+async function _fetchMySubscription() {
+  try {
+    var r = await fetch(CONSOLE_API.replace('/admin-console','') + '/billing/subscription/me', {
+      headers: {'Authorization':'Bearer '+ADMIN_TOKEN},
+    });
+    var d = await r.json();
+    if (!r.ok || !d.success) return null;
+    return d.data;
+  } catch(e) { return null; }
+}
+
+async function loadSubscriptionBanner() {
+  var sub = await _fetchMySubscription();
+  var banner = document.getElementById('sub-banner');
+  if (!banner || !sub) { if (banner) banner.style.display = 'none'; return; }
+  // super_admin 不顯示訂閱 banner
+  if (sub.status === 'super_admin') { banner.style.display = 'none'; return; }
+  var bg, color, text;
+  if (sub.status === 'trial') {
+    bg = 'linear-gradient(90deg,#1976D2,#42A5F5)'; color = '#fff';
+    text = '🎉 免費試用中,還剩 ' + sub.days_remaining + ' 天 — 試用結束前請完成訂閱';
+  } else if (sub.status === 'active') {
+    bg = 'linear-gradient(90deg,#388E3C,#66BB6A)'; color = '#fff';
+    var endStr = sub.period_end ? sub.period_end.substring(0,10) : '-';
+    text = '✓ 已訂閱(NT$' + sub.price_twd + '/月) — 下次扣款 ' + endStr;
+  } else if (sub.status === 'cancelled') {
+    bg = '#FFF3E0'; color = '#E65100';
+    var endStr2 = sub.period_end ? sub.period_end.substring(0,10) : '-';
+    text = '已取消訂閱,可使用至 ' + endStr2;
+  } else if (sub.status === 'past_due' || sub.status === 'expired') {
+    bg = 'linear-gradient(90deg,#C62828,#E53935)'; color = '#fff';
+    text = '⚠️ 訂閱已過期,大部分功能已停用,請點右上方「💳 訂閱」續訂';
+  } else {
+    banner.style.display = 'none'; return;
+  }
+  banner.style.background = bg;
+  banner.style.color = color;
+  banner.innerHTML = esc(text) + ' <button onclick="openSubscriptionModal()" style="margin-left:10px;background:rgba(255,255,255,.25);color:'+color+';border:1px solid '+color+';border-radius:4px;padding:2px 10px;font-size:11px;cursor:pointer">查看詳情 →</button>';
+  banner.style.display = 'block';
+}
+
+function openSubscriptionModal() {
+  document.getElementById('subscription-modal').style.display = 'flex';
+  _renderSubscriptionContent();
+}
+
+function closeSubscriptionModal() {
+  document.getElementById('subscription-modal').style.display = 'none';
+}
+
+async function _renderSubscriptionContent() {
+  var box = document.getElementById('sub-content');
+  box.innerHTML = '<div style="text-align:center;color:#999;padding:20px">載入中⋯</div>';
+  var sub = await _fetchMySubscription();
+  if (!sub) {
+    box.innerHTML = '<div style="background:#FFEBEE;color:#C62828;padding:10px;border-radius:6px">無法取得訂閱資料</div>';
+    return;
+  }
+  if (sub.status === 'super_admin') {
+    box.innerHTML = '<div style="background:#E8F5E9;color:#2E7D32;padding:14px;border-radius:6px">您是系統管理員,不需訂閱即可使用全部功能</div>';
+    return;
+  }
+  var statusLabel = {trial:'試用中',active:'已訂閱',cancelled:'已取消(到期前可繼續用)',past_due:'已過期',expired:'已過期'}[sub.status] || sub.status;
+  var endStr = sub.period_end ? sub.period_end.substring(0,16).replace('T',' ') : '-';
+  var html = '<div style="background:#F5F5F5;border-radius:8px;padding:12px;margin-bottom:14px">';
+  html += '<div style="font-size:13px;color:#666;margin-bottom:4px">目前狀態</div>';
+  html += '<div style="font-size:18px;font-weight:bold;color:#1565C0">' + esc(statusLabel) + '</div>';
+  html += '<div style="font-size:12px;color:#888;margin-top:4px">期間至:' + esc(endStr) + ' · 剩 ' + sub.days_remaining + ' 天</div>';
+  if (sub.payment_ref) html += '<div style="font-size:11px;color:#888;margin-top:2px">付款編號:' + esc(sub.payment_ref) + '</div>';
+  html += '</div>';
+
+  // 月費資訊
+  html += '<div style="font-size:13px;color:#333;line-height:1.7;margin-bottom:12px">';
+  html += '<b>月費:NT$' + sub.price_twd + ' / 30 天</b><br>';
+  html += '到期前 3 天有寬限期,寬限期後封鎖大部分功能';
+  html += '</div>';
+
+  // 動作按鈕
+  if (!sub.is_cancelled && (sub.status === 'trial' || sub.status === 'active')) {
+    html += '<div style="background:#FFF8E1;border-left:3px solid #FFA000;padding:10px;border-radius:4px;margin-bottom:10px;font-size:12px;color:#666">';
+    html += '<b>付款方式:</b><br>請聯繫您的 super_admin / 管理員,完成付款後系統會延長您的訂閱期間。<br>(綠界 / Stripe 自動扣款功能將在後續版本開放)';
+    html += '</div>';
+    html += '<button onclick="cancelMySubscription()" style="background:#fff;color:#C62828;border:1px solid #C62828;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px">取消訂閱</button>';
+  } else if (sub.status === 'cancelled') {
+    html += '<div style="background:#FFF3E0;color:#E65100;padding:10px;border-radius:4px;font-size:12px">您已取消訂閱,使用到 ' + esc(endStr) + ' 為止。如要重啟請聯繫管理員。</div>';
+  } else if (sub.status === 'past_due' || sub.status === 'expired') {
+    html += '<div style="background:#FFEBEE;color:#C62828;padding:10px;border-radius:4px;font-size:12px;margin-bottom:10px">';
+    html += '訂閱已過期。請聯繫您的管理員完成續訂後即可恢復使用。';
+    html += '</div>';
+  }
+  box.innerHTML = html;
+}
+
+async function cancelMySubscription() {
+  if (!confirm('確定要取消訂閱嗎?可繼續使用到當期結束,期末後將停權。')) return;
+  try {
+    var r = await fetch(CONSOLE_API.replace('/admin-console','') + '/billing/subscription/cancel', {
+      method:'POST', headers:{'Authorization':'Bearer '+ADMIN_TOKEN},
+    });
+    var d = await r.json();
+    if (!d.success) { alert('取消失敗:' + (d.message || '')); return; }
+    alert('已取消訂閱');
+    await _renderSubscriptionContent();
+    await loadSubscriptionBanner();
+  } catch(e) { alert('錯誤:' + e.message); }
 }
 
 // --- Tabs ---

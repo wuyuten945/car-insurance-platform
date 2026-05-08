@@ -226,6 +226,10 @@ async def create_agent(
         api_key=generate_api_key(),
         ip_whitelist=req.ip_whitelist,
     )
+    # agent 自動啟動 7 天試用(super_admin 不需訂閱)
+    if role == "agent":
+        from app.services import subscription_service as _sub
+        _sub.start_trial(agent)
     db.add(agent)
     await db.flush()
     await log_action(db, admin, "create", "agent", agent.id, f"新增業務員 {req.username}")

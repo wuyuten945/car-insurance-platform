@@ -16,9 +16,10 @@ from app.config import settings
 from app.core.rate_limit import limiter, _real_client_ip, _rate_limit_key
 from app.core.rate_limit_log import record_hit as _record_rate_hit
 from app.database import create_tables
-from app.routers import auth, customers, policies, renewal, accidents, claims, chatbot, notifications, rental, inspection, admin, oauth, admin_api, admin_console, line_bot, quote_requests, numerology
+from app.routers import auth, customers, policies, renewal, accidents, claims, chatbot, notifications, rental, inspection, admin, oauth, admin_api, admin_console, line_bot, quote_requests, numerology, billing
 from app.tasks.policy_expiry_notifier import check_policy_expiry
 from app.tasks.inspection_expiry_notifier import check_inspection_expiry
+from app.tasks.subscription_expiry_notifier import check_subscription_expiry
 
 logging.basicConfig(
     level=logging.INFO,
@@ -75,6 +76,13 @@ async def _ensure_columns():
         # Token 版本(密碼變更/強制登出時 +1,JWT 比對 tv claim)
         ("users",         "token_version",   "INTEGER NOT NULL DEFAULT 0"),
         ("admin_users",   "token_version",   "INTEGER NOT NULL DEFAULT 0"),
+        # 訂閱制(SUBSCRIPTION_SPEC.md)
+        ("admin_users",   "subscription_status",     "VARCHAR(20) NOT NULL DEFAULT 'trial'"),
+        ("admin_users",   "trial_started_at",        "TIMESTAMP WITH TIME ZONE"),
+        ("admin_users",   "subscription_period_end", "TIMESTAMP WITH TIME ZONE"),
+        ("admin_users",   "subscription_cancelled_at", "TIMESTAMP WITH TIME ZONE"),
+        ("admin_users",   "subscription_price_twd",  "INTEGER NOT NULL DEFAULT 149"),
+        ("admin_users",   "subscription_payment_ref","VARCHAR(100)"),
         ("policies",      "insured_name",       "VARCHAR(100)"),
         ("policies",      "insured_id_number",  "VARCHAR(20)"),
         ("policies",      "insured_birth_date", "DATE"),
@@ -194,8 +202,16 @@ async def lifespan(app: FastAPI):
         name="驗車到期通知排程",
         replace_existing=True,
     )
+    # 啟動排程：每日 09:45 檢查業務員訂閱到期
+    scheduler.add_job(
+        check_subscription_expiry,
+        trigger=CronTrigger(hour=9, minute=45),
+        id="subscription_expiry_check",
+        name="訂閱到期通知排程",
+        replace_existing=True,
+    )
     scheduler.start()
-    logger.info("排程啟動：09:00 保單到期 / 09:30 驗車到期")
+    logger.info("排程啟動：09:00 保單 / 09:30 驗車 / 09:45 訂閱到期")
 
     print(f"\n{'='*60}")
     print(f"  {settings.APP_NAME} v{settings.APP_VERSION}")
@@ -258,6 +274,68 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# 訂閱檢查 middleware:過期 agent 不能用大部分後台 endpoint
+# 白名單(永遠開放):login / change-password / billing / admin html / static
+_SUBSCRIPTION_EXEMPT_PREFIXES = (
+    "/api/v1/admin-console/login",
+    "/api/v1/admin-console/change-password",
+    "/api/v1/billing/",
+    "/admin",          # admin console html
+    "/uploads/",       # 已 mount 的靜態檔
+    "/openapi.json",
+    "/docs",
+    "/redoc",
+)
+
+
+@app.middleware("http")
+async def check_subscription_gate(request: Request, call_next):
+    path = request.url.path
+    # 只擋 /api/v1/admin-console/* 開頭的 API,其他 path(客戶 API、auth、line 等)放行
+    if not path.startswith("/api/v1/admin-console"):
+        return await call_next(request)
+    # 白名單放行
+    if any(path.startswith(p) for p in _SUBSCRIPTION_EXEMPT_PREFIXES):
+        return await call_next(request)
+
+    # 解 token → 看 admin → 看訂閱狀態
+    auth = request.headers.get("authorization", "")
+    if not auth.startswith("Bearer "):
+        return await call_next(request)   # 沒 token 留給 router 自己回 401
+    token = auth[7:]
+    try:
+        from app.core.security import decode_token
+        from app.services import subscription_service as _sub
+        from app.database import AsyncSessionLocal
+        from app.models.admin_user import AdminUser as _AU
+        from sqlalchemy import select as _select
+
+        payload = decode_token(token)
+        if not payload or payload.get("type") != "admin":
+            return await call_next(request)   # 無效 token 留給 router 處理 401
+
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(_select(_AU).where(_AU.id == payload.get("sub")))
+            admin = result.scalar_one_or_none()
+            if admin is None:
+                return await call_next(request)
+            status = _sub.compute_status(admin)
+            if not _sub.can_use_protected(status):
+                return JSONResponse(
+                    status_code=403,
+                    content={
+                        "success": False,
+                        "data": {"subscription_status": status},
+                        "message": "訂閱已過期,請至『訂閱』頁面續訂後再使用",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    },
+                )
+    except Exception:
+        # middleware 內部錯誤不該擋 request,放行讓 router 處理
+        pass
+    return await call_next(request)
 
 
 # Request ID middleware
@@ -324,6 +402,7 @@ app.include_router(inspection.router, prefix="/api/v1/inspection-stations", tags
 app.include_router(line_bot.router, prefix="/api/v1/line-bot", tags=["LINE Bot"])
 app.include_router(quote_requests.router, prefix="/api/v1/quote-requests", tags=["詢價工單"])
 app.include_router(numerology.router, prefix="/api/v1/numerology", tags=["數字易經"])
+app.include_router(billing.router, prefix="/api/v1/billing", tags=["訂閱"])
 
 
 @app.get("/api/v1/health", tags=["系統"])
