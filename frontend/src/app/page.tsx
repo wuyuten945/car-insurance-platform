@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle, FileText, ClipboardList, MessageCircle,
   ChevronRight, MapPin, Shield, Car, Calendar,
-  CircleCheck, CircleX, Sparkles,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
@@ -200,15 +200,29 @@ export default function DashboardPage() {
               const comp = p.zone_policy.compulsory;
               const canInsp = p.zone_can_inspect;
               return (
+                {/* 可驗車 badge tooltip — 進入可驗車期才綠色,其它時候用中性灰色（避免讓客戶覺得是錯誤狀態） */}
+                {(() => {
+                  const inspectTooltip = canInsp.can_inspect
+                    ? canInsp.window_status || '可立即驗車'
+                    : (canInsp.reasons && canInsp.reasons.length > 0
+                        ? canInsp.reasons.join('、')
+                        : (canInsp.window_status || '尚未到可驗車期間'));
+
+                  const compTooltip = !comp.has
+                    ? '尚未登錄強制險資料'
+                    : comp.ok_for_inspect
+                      ? `強制險到期日 ${comp.expiry}（剩 ${comp.days} 天,足夠驗車）`
+                      : `強制險到期日 ${comp.expiry}（剩 ${comp.days} 天,驗車前需先續保至剩餘 ≥ 30 天）`;
+
+                  return (
                 <div key={`insp_${p.id}`} className="rounded-xl bg-white p-3.5 shadow-sm border border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Car className="h-4 w-4 text-orange-500" />
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                      <Car className="h-4 w-4 text-orange-500 shrink-0" />
                       <span className="font-bold text-gray-900 text-sm">{p.vehicle.plate}</span>
                       {insp.days_left != null && (
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                          insp.days_left < 0 ? 'bg-red-100 text-red-700' :
-                          insp.days_left <= 30 ? 'bg-orange-100 text-orange-700' :
+                          insp.days_left <= 30 && insp.days_left >= 0 ? 'bg-orange-100 text-orange-700' :
                           'bg-gray-100 text-gray-600'
                         }`}>
                           {insp.days_left < 0 ? t('dash.inspectOverdue', { days: Math.abs(insp.days_left) }) :
@@ -217,30 +231,37 @@ export default function DashboardPage() {
                         </span>
                       )}
                     </div>
-                    {canInsp.can_inspect ? (
-                      <CircleCheck className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <CircleX className="h-4 w-4 text-red-400" />
-                    )}
+                    <span
+                      title={inspectTooltip}
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border cursor-help transition ${
+                        canInsp.can_inspect
+                          ? 'bg-green-50 text-green-700 border-green-300'
+                          : 'bg-gray-50 text-gray-500 border-gray-200'
+                      }`}
+                    >
+                      可驗車
+                    </span>
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-[11px]">
+                  <div className="mt-2 flex items-center justify-between gap-2 text-[11px]">
                     <span className="text-gray-500">
                       {insp.window_start && insp.window_end
                         ? t('dash.inspectWindow', { start: insp.window_start, end: insp.window_end })
                         : t('dash.inspectNoDate')}
                     </span>
-                    <span className={`font-medium ${comp.has ? 'text-green-600' : 'text-red-500'}`}>
-                      {t('dash.compulsoryShort', { status: comp.has ? t('dash.statusYes') : t('dash.statusNo') })}
+                    <span
+                      title={compTooltip}
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border cursor-help transition ${
+                        comp.has && comp.ok_for_inspect
+                          ? 'bg-green-50 text-green-700 border-green-300'
+                          : 'bg-gray-50 text-gray-500 border-gray-200'
+                      }`}
+                    >
+                      強制險
                     </span>
                   </div>
-                  {/* 不可驗車原因(後端 zone_can_inspect.reasons) — 讓使用者懂為什麼是紅圈叉 */}
-                  {!canInsp.can_inspect && canInsp.reasons && canInsp.reasons.length > 0 && (
-                    <div className="mt-2 rounded-md bg-red-50 border border-red-200 px-2 py-1.5 text-[11px] text-red-700 leading-relaxed">
-                      <span className="font-bold">⚠️ 目前不可驗車：</span>
-                      {canInsp.reasons.join('、')}
-                    </div>
-                  )}
                 </div>
+                  );
+                })()}
               );
             })}
           </div>
