@@ -155,7 +155,14 @@ class UserService:
         if not vehicle:
             raise NotFoundError("車輛不存在")
         self._assert_can_edit_vehicle(vehicle, restrict_to_source)
+        # 記下要清的行照圖,DB 刪除後才執行
+        registration_image_url = getattr(vehicle, "registration_image_url", None)
         await self.db.delete(vehicle)
+        await self.db.flush()
+        # 清上傳檔(best-effort)
+        if registration_image_url:
+            from app.core.file_cleanup import cleanup_files
+            cleanup_files(registration_image_url)
 
     async def patch_vehicle(
         self, user_id: str, vehicle_id: str, data: VehicleUpdate,

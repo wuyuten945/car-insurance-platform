@@ -57,6 +57,34 @@ _PROFILES = {
 }
 
 
+# 圖檔解碼後最大像素(防 decompression bomb / pixel flood)
+# 100MP 已遠超手機相機(典型 12-50MP),夠寬鬆但能擋 100K x 100K 的攻擊用 PNG
+MAX_IMAGE_PIXELS = 100_000_000
+
+
+def _validate_image_dimensions(data: bytes) -> None:
+    """
+    驗證圖片解碼後尺寸不會把 RAM 吃光。Pillow 解碼大尺寸 PNG 會把每個 pixel 展開成
+    至少 4 bytes,100K x 100K = 40GB,足以打死 Render free tier。
+
+    用 ImageFile.LOAD_TRUNCATED_IMAGES 讀 header 不真的解碼,夠快。
+    """
+    try:
+        from PIL import Image
+        import io
+        with Image.open(io.BytesIO(data)) as img:
+            w, h = img.size
+            if w * h > MAX_IMAGE_PIXELS:
+                raise BadRequestError(
+                    f"圖片尺寸過大 ({w}x{h} = {w*h:,} px),上限 {MAX_IMAGE_PIXELS:,} px"
+                )
+    except BadRequestError:
+        raise
+    except Exception:
+        # 不是圖片或解析失敗都讓上層處理(此函式只負責 pixel-flood 防護)
+        pass
+
+
 async def validate_upload(
     file: UploadFile,
     *,
@@ -105,6 +133,10 @@ async def validate_upload(
         head = data[:16]
         if not any(head.startswith(sig) for sig in profile["magic"]):
             raise BadRequestError("檔案內容與宣稱類型不符(magic bytes 驗證失敗)")
+
+    # ── 5. 圖檔像素 flood 防護(只對宣稱是圖片的檔案驗) ──
+    if content_type.startswith("image/"):
+        _validate_image_dimensions(data)
 
     # 把 file pointer 重置回頭,讓 caller 還可以用 file.read() 或 file.file 操作
     try:

@@ -265,11 +265,16 @@ class PolicyService:
             raise BadRequestError(
                 "此保單由業務員 / 平台建檔，不能刪除。如需處理請聯繫您的業務員或透過 LINE 與我們聯繫。"
             )
+        # 記下要清掉的檔案,DB 刪除成功後才執行
+        document_url = policy.document_url
         # 刪除關聯的保障項目
         for item in policy.items:
             await self.db.delete(item)
         await self.db.delete(policy)
         await self.db.flush()
+        # 清理上傳檔(best-effort,失敗不影響 DB 刪除)
+        from app.core.file_cleanup import cleanup_files
+        cleanup_files(document_url)
 
     # ===== PolicyItem CRUD =====
 

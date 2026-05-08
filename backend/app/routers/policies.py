@@ -1,8 +1,9 @@
 import uuid
 from pathlib import Path
-from fastapi import APIRouter, Depends, Query, UploadFile, File
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date
+from app.core.rate_limit import limiter
 from app.dependencies import get_db, get_current_user
 from app.models.user import User
 from app.config import settings
@@ -22,7 +23,9 @@ router = APIRouter()
 # ===== Policy Image Upload + OCR =====
 
 @router.post("/upload-scan", response_model=APIResponse)
+@limiter.limit("20/hour")  # 防上傳濫用:單帳號每小時最多 20 張保單
 async def upload_policy_scan(
+    request: Request,
     file: UploadFile = File(..., description="保單圖片或 PDF"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

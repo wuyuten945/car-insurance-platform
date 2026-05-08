@@ -10,11 +10,11 @@ import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from app.config import settings
+from app.core.rate_limit import limiter
 from app.database import create_tables
 from app.routers import auth, customers, policies, renewal, accidents, claims, chatbot, notifications, rental, inspection, admin, oauth, admin_api, admin_console, line_bot, quote_requests, numerology
 from app.tasks.policy_expiry_notifier import check_policy_expiry
@@ -30,47 +30,7 @@ logger = logging.getLogger(__name__)
 # APScheduler 實例
 scheduler = AsyncIOScheduler()
 
-# ─────────────────────────────────────────────────────────────
-# 全域速率限制(slowapi)— 防 DDoS / 防爆破
-# 使用 Authorization header 中的 token 為 key,沒 token 退而求其次用 IP
-# 每個 endpoint 可用 @limiter.limit("5/minute") 加嚴
-# 預設 default_limits = ["120/minute", "1000/hour"] 對所有 endpoint 生效
-# ─────────────────────────────────────────────────────────────
-def _real_client_ip(request: Request) -> str:
-    """Render/Cloudflare 等代理後的真實 client IP。
-    沒處理會讓所有請求看起來來自同一個 proxy IP,rate limit 失效。
-
-    優先序:
-      1. X-Forwarded-For 第一個值(原始 client,後面是各代理層)
-      2. X-Real-IP (Nginx 風格)
-      3. request.client.host (直連)
-    """
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        # XFF 格式: "client, proxy1, proxy2"
-        first = fwd.split(",")[0].strip()
-        if first:
-            return first
-    real = request.headers.get("x-real-ip")
-    if real:
-        return real.strip()
-    return get_remote_address(request)
-
-
-def _rate_limit_key(request: Request) -> str:
-    auth = request.headers.get("authorization") or ""
-    if auth.startswith("Bearer "):
-        token = auth[7:]
-        # 用 token 前 16 字當識別(避免太長,也避免直接拿全 token 入 cache)
-        return f"tok:{token[:16]}"
-    return f"ip:{_real_client_ip(request)}"
-
-
-limiter = Limiter(
-    key_func=_rate_limit_key,
-    default_limits=["120/minute", "2000/hour"],
-    headers_enabled=True,
-)
+# 速率限制器在 app/core/rate_limit.py 定義(讓 router 也能 import 來用 @limiter.limit())
 
 
 async def _ensure_columns():

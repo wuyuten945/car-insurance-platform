@@ -1,7 +1,8 @@
 from pathlib import Path
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Request
 from sqlalchemy import select, update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.rate_limit import limiter
 from app.dependencies import get_db, get_current_user
 from app.models.user import User, UserConsent
 from app.models.vehicle import UserVehicle
@@ -325,7 +326,9 @@ async def delete_vehicle(
 
 
 @router.post("/vehicles/{vehicle_id}/registration", response_model=APIResponse)
+@limiter.limit("15/hour")  # 防上傳濫用:單帳號每小時最多 15 張行照
 async def upload_registration(
+    request: Request,
     vehicle_id: str,
     file: UploadFile = File(..., description="行照圖片或 PDF"),
     current_user: User = Depends(get_current_user),

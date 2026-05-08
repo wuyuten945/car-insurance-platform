@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, Request
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.rate_limit import limiter
 from app.dependencies import get_db, get_current_user
 from app.exceptions import BadRequestError
 from app.models.user import User
@@ -63,7 +64,9 @@ async def get_accident(
 
 
 @router.post("/{accident_id}/photos", response_model=APIResponse)
+@limiter.limit("30/hour")  # 防上傳濫用:單帳號每小時最多 30 張事故照
 async def upload_photo(
+    request: Request,
     accident_id: str,
     file: UploadFile = File(...),
     photo_type: str = Form(None),

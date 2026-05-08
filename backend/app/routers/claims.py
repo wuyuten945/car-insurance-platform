@@ -1,9 +1,10 @@
 import csv
 import io
 from datetime import datetime
-from fastapi import APIRouter, Depends, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, Request
 from fastapi.responses import StreamingResponse, HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.rate_limit import limiter
 from app.dependencies import get_db, get_current_user
 from app.models.user import User
 from app.schemas.claim import ClaimCreate, ClaimOut, ClaimProgressOut, ClaimDocumentOut
@@ -62,7 +63,9 @@ async def get_claim_progress(
 
 
 @router.post("/{claim_id}/documents", response_model=APIResponse)
+@limiter.limit("20/hour")  # 防上傳濫用:單帳號每小時最多 20 個理賠文件
 async def upload_document(
+    request: Request,
     claim_id: str,
     file: UploadFile = File(...),
     document_type: str = Form(...),
