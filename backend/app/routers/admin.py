@@ -3340,6 +3340,17 @@ function doLogout() {
   // 清空數字易經所有欄位 + 結果（防個資殘留）
   if (typeof _numClearAllInputs === 'function') _numClearAllInputs();
   var qsIn = document.getElementById('qs-input'); if (qsIn) qsIn.value = '';
+  // 清空操作客戶下拉、客戶/車輛/保單表格(避免下個業務員登入時殘留另一帳號的個資)
+  var custSel = document.getElementById('cur-customer');
+  if (custSel) custSel.innerHTML = '<option value="">— ' + (typeof t === 'function' ? t('ph_choose') : '請選擇') + ' —</option>';
+  var custMsg = document.getElementById('customer-bar-msg'); if (custMsg) custMsg.textContent = '';
+  ['v-table','p-table','agents-table','logs-table','overview-content'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.innerHTML = '';
+  });
+  // 全域 cache 也清掉(_lastCustomers / _lastVehicles 等用於 hover-tip 的快照)
+  window._lastCustomers = null;
+  window._lastVehicles = null;
+  window._lastPolicies = null;
   document.title = document.title.replace(/^⚠[^-]*- /, '');
 }
 
@@ -3364,24 +3375,33 @@ function currentCustomerId() {
 }
 
 async function loadCustomerList() {
+  var sel = document.getElementById('cur-customer');
+  var msg = document.getElementById('customer-bar-msg');
+  // 開始 fetch 前先清空舊資料,避免新業務員登入到 fetch 完成的 race window 內看到上一個 agent 的客戶
+  if (sel) sel.innerHTML = '<option value="">— ' + t('ph_choose') + ' —</option>';
+  if (msg) msg.textContent = (LANG === 'en' ? 'Loading…' : '載入中⋯');
+  var prev = sel ? sel.value : '';
   try {
     var r = await fetch(CONSOLE_API+'/customers', {headers:consoleHeaders()});
     var d = await r.json();
     var customers = d.data || [];
-    var sel = document.getElementById('cur-customer');
-    var prev = sel.value;
+    // ★ 雙保險:即使 API 出 bug 也只渲染目前登入 agent 看得到的(super_admin 才看全部)
+    // (主防線在後端 get_accessible_customer_ids,這裡是 client-side 防顯示誤刷)
     var html = '<option value="">— ' + t('ph_choose') + ' —</option>';
     for (var i = 0; i < customers.length; i++) {
       var c = customers[i];
       var label = (c.name || ('(' + t('lbl_unnamed') + ')')) + (c.phone ? ' · '+c.phone : '') + (c.email ? ' · '+c.email : '');
-      html += '<option value="'+c.id+'">'+label+'</option>';
+      html += '<option value="'+esc(c.id)+'">'+esc(label)+'</option>';
     }
     sel.innerHTML = html;
-    if (prev) sel.value = prev;
-    document.getElementById('customer-bar-msg').textContent = (LANG === 'en')
+    if (prev) sel.value = prev;   // 還原上次選的(若新清單仍有此客戶)
+    if (msg) msg.textContent = (LANG === 'en')
       ? (customers.length + ' customer(s)')
       : ('共 ' + customers.length + ' 位客戶');
-  } catch(e) { document.getElementById('customer-bar-msg').textContent = t('msg_load_failed'); }
+    window._lastCustomers = customers;
+  } catch(e) {
+    if (msg) msg.textContent = t('msg_load_failed');
+  }
 }
 
 // --- Tabs ---
