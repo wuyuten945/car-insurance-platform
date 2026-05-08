@@ -125,8 +125,8 @@ class AuthService:
             }
 
         user.last_login_at = datetime.now(timezone.utc)
-        access_token = create_access_token(user.id)
-        refresh_token = create_refresh_token(user.id)
+        access_token = create_access_token(user.id, user.token_version)
+        refresh_token = create_refresh_token(user.id, user.token_version)
 
         return {
             "step": "logged_in",
@@ -165,8 +165,8 @@ class AuthService:
             user.password_hash = _hash_password(password)
 
         user.last_login_at = datetime.now(timezone.utc)
-        access_token = create_access_token(user.id)
-        refresh_token = create_refresh_token(user.id)
+        access_token = create_access_token(user.id, user.token_version)
+        refresh_token = create_refresh_token(user.id, user.token_version)
         return {
             "step": "logged_in",
             "user": user,
@@ -174,6 +174,10 @@ class AuthService:
             "refresh_token": refresh_token,
             "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         }
+
+    async def _bump_token_version(self, user) -> None:
+        """改密碼/移除密碼時遞增 token_version,撤銷所有舊 token"""
+        user.token_version = (user.token_version or 0) + 1
 
     async def set_advanced_password(self, user_id: str, new_password: str,
                                      current_password: str | None) -> None:
@@ -192,6 +196,7 @@ class AuthService:
             if new_password == current_password:
                 raise BadRequestError(t("pw_same_as_current"))
         user.password_hash = _hash_password(new_password)
+        await self._bump_token_version(user)   # 撤銷所有舊 token
         await self.db.flush()
 
     async def remove_advanced_password(self, user_id: str, current_password: str) -> None:
@@ -205,6 +210,7 @@ class AuthService:
         if not _verify_password(current_password, user.password_hash):
             raise BadRequestError(t("pw_current_wrong"))
         user.password_hash = None
+        await self._bump_token_version(user)   # 撤銷所有舊 token
         await self.db.flush()
 
     async def refresh_tokens(self, refresh_token: str) -> dict:
@@ -219,8 +225,8 @@ class AuthService:
         if not user or not user.is_active:
             raise UnauthorizedError(t("user_not_active"))
 
-        new_access = create_access_token(user.id)
-        new_refresh = create_refresh_token(user.id)
+        new_access = create_access_token(user.id, user.token_version)
+        new_refresh = create_refresh_token(user.id, user.token_version)
 
         return {
             "access_token": new_access,

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Index
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Index, Integer
 from sqlalchemy.orm import relationship
 from app.database import Base, TimestampMixin, generate_uuid
 
@@ -34,6 +34,10 @@ class User(TimestampMixin, Base):
     # 進階保護密碼（選填二因子）— 設了之後 OTP 通過還要再驗密碼
     # null 表示未啟用，登入維持單因子 OTP；有值（hashed）→ OTP + password 雙因子
     password_hash = Column(String(255), nullable=True)
+
+    # Token 版本號(改密碼/移除密碼/管理員強制登出時遞增)— JWT 含 tv claim,
+    # 解 token 時 tv != user.token_version 就拒絕。立刻撤銷所有舊 token。
+    token_version = Column(Integer, nullable=False, default=0, server_default="0")
 
     # 通知偏好設定 ─ 提醒天數（CSV，例 "60,30,14,7,1"），空 = 用預設 [30,14,7,1]
     policy_notify_days = Column(String(64), nullable=True)

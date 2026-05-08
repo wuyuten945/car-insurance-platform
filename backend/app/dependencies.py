@@ -42,4 +42,9 @@ async def get_current_user(
     if not user or not user.is_active:
         raise UnauthorizedError("使用者不存在或已停用")
 
+    # Token version 檢查:密碼變更時 user.token_version 會 +1,所有舊 token 立刻失效
+    token_tv = int(payload.get("tv", 0))
+    if token_tv != int(user.token_version or 0):
+        raise UnauthorizedError("Token 已失效,請重新登入")
+
     return user

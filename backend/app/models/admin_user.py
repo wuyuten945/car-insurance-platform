@@ -1,7 +1,7 @@
 """
 管理員帳號 + 客戶分配 + 操作日誌（獨立於客戶系統）
 """
-from sqlalchemy import Column, String, Boolean, DateTime, Text, ForeignKey, Index
+from sqlalchemy import Column, String, Boolean, DateTime, Text, ForeignKey, Index, Integer
 from sqlalchemy.orm import relationship
 from app.database import Base, TimestampMixin, generate_uuid
 from datetime import datetime, timezone
@@ -23,6 +23,8 @@ class AdminUser(TimestampMixin, Base):
     ip_whitelist = Column(Text)  # 允許的 IP，逗號分隔，空=不限制
     last_login_at = Column(DateTime(timezone=True))
     login_fail_count = Column(String(10), default="0")  # 連續失敗次數
+    # Token 版本號(改密碼/管理員強制登出時遞增,撤銷所有舊 token)
+    token_version = Column(Integer, nullable=False, default=0, server_default="0")
 
     # 關聯
     assigned_customers = relationship("AgentCustomer", back_populates="agent", lazy="selectin")

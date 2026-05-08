@@ -34,8 +34,8 @@ async def _oauth_login(db: AsyncSession, email: str, name: str = "", provider: s
 
     user.last_login_at = datetime.now(timezone.utc)
 
-    access_token = create_access_token(user.id)
-    refresh_token = create_refresh_token(user.id)
+    access_token = create_access_token(user.id, getattr(user, "token_version", 0) or 0)
+    refresh_token = create_refresh_token(user.id, getattr(user, "token_version", 0) or 0)
 
     return {
         "access_token": access_token,
@@ -329,8 +329,8 @@ async def line_callback(code: str = Query(...), db: AsyncSession = Depends(get_d
 
     found.last_login_at = datetime.now(timezone.utc)
 
-    access_token = create_access_token(found.id)
-    refresh_token = create_refresh_token(found.id)
+    access_token = create_access_token(found.id, getattr(found, "token_version", 0) or 0)
+    refresh_token = create_refresh_token(found.id, getattr(found, "token_version", 0) or 0)
 
     return RedirectResponse(
         f"{settings.OAUTH_REDIRECT_BASE}/auth/callback/success"

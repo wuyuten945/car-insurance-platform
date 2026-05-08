@@ -67,6 +67,9 @@ async def get_current_admin(
         admin_id = payload.get("sub")
         result = await db.execute(select(AdminUser).where(AdminUser.id == admin_id))
         admin = result.scalar_one_or_none()
+        # Token version 檢查:改密碼時 admin.token_version +1,舊 token 立刻失效
+        if admin and int(payload.get("tv", 0)) != int(admin.token_version or 0):
+            raise UnauthorizedError(_t("token_invalid"))
 
     elif authorization.startswith("ApiKey "):
         api_key = authorization[7:]

@@ -125,7 +125,7 @@ async def admin_login(req: AdminLoginRequest, request: Request, db: AsyncSession
     if needs_rehash(admin.password_hash):
         admin.password_hash = hash_password(req.password)
 
-    # 產生管理員專用 JWT（type=admin）
+    # 產生管理員專用 JWT（type=admin,含 tv claim 供撤銷檢查）
     from jose import jwt
     from app.config import settings
     import time
@@ -133,6 +133,7 @@ async def admin_login(req: AdminLoginRequest, request: Request, db: AsyncSession
         "sub": admin.id,
         "type": "admin",
         "role": admin.role,
+        "tv": int(admin.token_version or 0),
         "exp": int(time.time()) + 28800,  # 8 小時
     }, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
@@ -180,6 +181,8 @@ async def change_password(
         raise BadRequestError(i18n_t("pw_same_as_current"))
 
     admin.password_hash = hash_password(req.new_password)
+    # 改密碼後立刻撤銷所有舊 token(包含這次用來改密碼的 token)
+    admin.token_version = (admin.token_version or 0) + 1
     # 重置失敗計數
     admin.login_fail_count = "0"
     await log_action(db, admin, "update", "self_password", admin.id, "變更自己密碼")
@@ -537,18 +540,20 @@ async def list_audit_logs(
 
 @router.get("/all/vehicles")
 async def get_all_vehicles(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(2000, ge=1, le=2000),
     admin: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """列出可存取的全部車輛（含客戶資訊與行照）。
 
-    為相容既有 admin.py UI，車輛欄位用「長 key」（plate_number 等）。
+    為相容既有 admin.py UI，車輛欄位用「長 key」（plate_number 等）。加 per_page 上限防 OOM。
     """
     accessible = await get_accessible_customer_ids(admin, db)
     query = select(UserVehicle).options(selectinload(UserVehicle.user))
     if accessible is not None:
         query = query.where(UserVehicle.user_id.in_(accessible))
-    query = query.order_by(UserVehicle.created_at.desc())
+    query = query.order_by(UserVehicle.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
     rows = []
     for v in result.scalars().all():
@@ -581,10 +586,12 @@ async def get_all_vehicles(
 
 @router.get("/all/policies")
 async def get_all_policies(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(2000, ge=1, le=2000),
     admin: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """列出可存取的全部保單（含客戶資訊、車輛、items）"""
+    """列出可存取的全部保單（含客戶資訊、車輛、items）— 加 per_page 上限防 OOM"""
     accessible = await get_accessible_customer_ids(admin, db)
     query = (
         select(Policy)
@@ -592,7 +599,7 @@ async def get_all_policies(
     )
     if accessible is not None:
         query = query.where(Policy.user_id.in_(accessible))
-    query = query.order_by(Policy.start_date.desc())
+    query = query.order_by(Policy.start_date.desc()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
     rows = []
     for p in result.scalars().all():
