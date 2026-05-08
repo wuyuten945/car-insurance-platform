@@ -229,7 +229,7 @@ export default function DashboardPage() {
                     </div>
                     <span
                       title={inspectTooltip}
-                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border cursor-help transition ${
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition ${
                         canInsp.can_inspect
                           ? 'bg-green-50 text-green-700 border-green-300'
                           : 'bg-gray-50 text-gray-500 border-gray-200'
@@ -246,7 +246,7 @@ export default function DashboardPage() {
                     </span>
                     <span
                       title={compTooltip}
-                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border cursor-help transition ${
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition ${
                         comp.has && comp.ok_for_inspect
                           ? 'bg-green-50 text-green-700 border-green-300'
                           : 'bg-gray-50 text-gray-500 border-gray-200'
