@@ -1,0 +1,19 @@
+# gitleaks 設定:擋掉誤報但保留真有風險的偵測。
+# default rule set 已足夠,這裡只列 allowlist(已知安全的字串)。
+
+[allowlist]
+description = "已知安全的測試/範例字串"
+paths = [
+  '''\.env\.example$''',
+  '''alembic/versions/.*\.py$''',          # alembic migration 偶爾有看似 hash 的字串
+  '''backend/tests/.*\.py$''',             # 測試裡的 dummy hash / dummy secret
+  '''_numerology_src/''',                  # 上游服務的 reference clone(已 gitignored)
+]
+
+regexes = [
+  # 範本/dev 文件的 placeholder
+  '''change-this-to-a-random-secret-key''',
+  '''dev-secret-key-change-in-production''',
+  '''test-secret-key''',
+  '''ci-test-secret''',
+]
