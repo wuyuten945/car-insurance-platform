@@ -199,22 +199,18 @@ export default function DashboardPage() {
               const insp = p.zone_inspection;
               const comp = p.zone_policy.compulsory;
               const canInsp = p.zone_can_inspect;
+              // tooltip 文字（hover 顯示）— 進入可驗車期才綠色,其它時候用中性灰色（避免讓客戶覺得是錯誤狀態）
+              const inspectTooltip = canInsp.can_inspect
+                ? canInsp.window_status || '可立即驗車'
+                : (canInsp.reasons && canInsp.reasons.length > 0
+                    ? canInsp.reasons.join('、')
+                    : (canInsp.window_status || '尚未到可驗車期間'));
+              const compTooltip = !comp.has
+                ? '尚未登錄強制險資料'
+                : comp.ok_for_inspect
+                  ? `強制險到期日 ${comp.expiry}（剩 ${comp.days} 天,足夠驗車）`
+                  : `強制險到期日 ${comp.expiry}（剩 ${comp.days} 天,驗車前需先續保至剩餘 ≥ 30 天）`;
               return (
-                {/* 可驗車 badge tooltip — 進入可驗車期才綠色,其它時候用中性灰色（避免讓客戶覺得是錯誤狀態） */}
-                {(() => {
-                  const inspectTooltip = canInsp.can_inspect
-                    ? canInsp.window_status || '可立即驗車'
-                    : (canInsp.reasons && canInsp.reasons.length > 0
-                        ? canInsp.reasons.join('、')
-                        : (canInsp.window_status || '尚未到可驗車期間'));
-
-                  const compTooltip = !comp.has
-                    ? '尚未登錄強制險資料'
-                    : comp.ok_for_inspect
-                      ? `強制險到期日 ${comp.expiry}（剩 ${comp.days} 天,足夠驗車）`
-                      : `強制險到期日 ${comp.expiry}（剩 ${comp.days} 天,驗車前需先續保至剩餘 ≥ 30 天）`;
-
-                  return (
                 <div key={`insp_${p.id}`} className="rounded-xl bg-white p-3.5 shadow-sm border border-gray-100">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -260,8 +256,6 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 </div>
-                  );
-                })()}
               );
             })}
           </div>
