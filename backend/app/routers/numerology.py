@@ -166,15 +166,23 @@ async def recommend_numbers(
     payload: RecommendIn,
     _auth: dict = Depends(require_any_auth),
 ):
-    """智能建議：依個人凶星避開 + 補對應吉星，產生 N 組高分號碼。"""
+    """智能建議:依個人凶星避開 + 補對應吉星,產生 N 組高分號碼。
+
+    Server-side 規則:**強制排除所有 4 個凶星**(絕命/五鬼/六煞/禍害),
+    無論前端傳什麼,生成的號碼一律不含任何凶星磁場。
+    """
     top_n = max(1, min(payload.top_n, 50))
+    # 強制把 4 個凶星全部加進 exclude(用 set 去重後仍以 list 傳遞)
+    _user_exclude = payload.exclude_magnets or []
+    _forced_exclude = list({*_user_exclude, *engine.BAD_MAGNETS})
     constraints = {
         "purpose": payload.purpose,
         "length": int(payload.length),
         "prefix": payload.prefix,
-        "exclude_magnets": payload.exclude_magnets,
+        "exclude_magnets": _forced_exclude,
         "require_magnets": payload.require_magnets,
-        "candidate_pool": 2000,
+        # 排除全 4 個凶星後候選池要更大(~512 倍稀疏度),從 2000 拉到 8000
+        "candidate_pool": 8000,
     }
     loop = asyncio.get_running_loop()
     try:
@@ -186,4 +194,9 @@ async def recommend_numbers(
     except Exception as e:
         logger.exception(f"numerology recommend failed: {e}")
         raise BadRequestError("智能建議產生失敗,請調整條件後重試")
+    if not recs:
+        # 完全找不到無凶星號碼(極稀有 — 通常 prefix 限制太嚴格)
+        raise BadRequestError(
+            "在此 prefix / 長度條件下找不到完全無凶星的號碼,請放寬 prefix 或調整長度後再試。"
+        )
     return APIResponse(data={"recommendations": recs, "constraints": constraints})
