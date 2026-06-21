@@ -911,7 +911,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <div class="row"><div><label data-i18n="lbl_username">帳號</label><input id="ag-user" placeholder="agent01"></div><div><label data-i18n="lbl_password">密碼</label><div class="pw-wrap"><input id="ag-pass" type="password"><button type="button" class="pw-toggle" onclick="togglePw('ag-pass',this)">👁</button></div></div></div>
       <div class="row"><div><label data-i18n="lbl_display_name">顯示名稱</label><input id="ag-name"></div><div><label>Email</label><input id="ag-email"></div></div>
       <div class="row"><div><label data-i18n="lbl_phone">電話</label><input id="ag-phone"></div><div><label data-i18n="lbl_ip_whitelist">IP 白名單（逗號分隔，空=不限）</label><input id="ag-ip"></div></div>
-      <button class="btn" onclick="createAgent()" data-i18n="btn_add_agent">新增業務員</button>
+      <div class="row"><div><label data-i18n="lbl_role">角色</label><select id="ag-role"><option value="agent" data-i18n="role_agent">業務員</option><option value="super_admin" data-i18n="role_admin">管理員（super admin）</option></select></div><div></div></div>
+      <button class="btn" onclick="createAgent()" data-i18n="btn_add_agent">新增帳號</button>
       <div id="ag-msg" class="msg"></div>
     </div>
     <div class="card">
@@ -2854,7 +2855,7 @@ var I18N = {
     h_claims: '理賠申請管理', claims_hint: '客戶送出的理賠申請', btn_load_claims: '載入理賠列表',
     h_accidents: '事故照片管理', accidents_hint: '客戶透過緊急救援上傳的事故現場照片', btn_load_accidents: '載入事故列表',
     h_overview: '系統資料總覽',
-    h_add_agent: '新增業務員', btn_add_agent: '新增業務員',
+    h_add_agent: '新增帳號', btn_add_agent: '新增帳號', lbl_role: '角色', role_agent: '業務員', role_admin: '管理員（super admin）',
     lbl_display_name: '顯示名稱', lbl_phone: '電話',
     lbl_ip_whitelist: 'IP 白名單（逗號分隔，空=不限）',
     h_agent_list: '業務員列表',
@@ -3071,7 +3072,7 @@ var I18N = {
     h_claims: 'Claims', claims_hint: 'Customer-submitted claims', btn_load_claims: 'Load Claims',
     h_accidents: 'Accident Photos', accidents_hint: 'Photos uploaded via emergency assistance', btn_load_accidents: 'Load Accidents',
     h_overview: 'System Overview',
-    h_add_agent: 'New Agent', btn_add_agent: 'Add Agent',
+    h_add_agent: 'New Account', btn_add_agent: 'Add Account', lbl_role: 'Role', role_agent: 'Agent', role_admin: 'Admin (super admin)',
     lbl_display_name: 'Display Name', lbl_phone: 'Phone',
     lbl_ip_whitelist: 'IP whitelist (comma-separated, empty = no limit)',
     h_agent_list: 'Agent List',
@@ -5756,11 +5757,20 @@ async function loadAgents() {
     for (var i = 0; i < agents.length; i++) {
       var a = agents[i];
       var st = a.is_active ? '<span style="color:#22c55e;font-weight:bold">啟用</span>' : '<span style="color:#ef4444;font-weight:bold">停用</span>';
-      html += '<tr><td><b>'+esc(a.username)+'</b></td><td>'+esc(a.display_name)+'</td><td>'+st+'</td>';
+      var roleBadge = (a.role === 'super_admin')
+        ? '<span style="background:#5E35B1;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;margin-left:4px">管理員</span>'
+        : '<span style="background:#eee;color:#666;padding:1px 6px;border-radius:4px;font-size:10px;margin-left:4px">業務員</span>';
+      html += '<tr><td><b>'+esc(a.username)+'</b>'+roleBadge+'</td><td>'+esc(a.display_name)+'</td><td>'+st+'</td>';
       // 訂閱欄
       html += '<td>' + _renderSubBadge(subs[a.id]) + '</td>';
       html += '<td>'+esc(a.customer_count)+'</td><td style="font-size:11px">'+esc(a.last_login||'-')+'</td>';
       html += '<td style="white-space:nowrap">';
+      // 角色切換：設為管理員 / 降為業務員
+      if (a.role === 'super_admin') {
+        html += '<button class="btn" style="padding:3px 8px;font-size:11px;margin:1px;background:#7E57C2;color:#fff" onclick="setAgentRole(&quot;'+a.id+'&quot;,&quot;agent&quot;)">降為業務員</button>';
+      } else {
+        html += '<button class="btn" style="padding:3px 8px;font-size:11px;margin:1px;background:#5E35B1;color:#fff" onclick="setAgentRole(&quot;'+a.id+'&quot;,&quot;super_admin&quot;)">設為管理員</button>';
+      }
       // 訂閱操作按鈕(只對 agent role 顯示;super_admin 沒 subscription)
       if (subs[a.id] && subs[a.id].status !== 'super_admin') {
         html += '<button class="btn" style="padding:3px 8px;font-size:11px;margin:1px;background:#1976D2;color:#fff" onclick="openExtendSubscription(&quot;'+a.id+'&quot;)">💳 延長</button>';
@@ -5845,7 +5855,8 @@ async function reactivateSubscription(agentId) {
 async function createAgent() {
   var body = {username:document.getElementById('ag-user').value, password:document.getElementById('ag-pass').value,
     display_name:document.getElementById('ag-name').value, email:document.getElementById('ag-email').value,
-    phone:document.getElementById('ag-phone').value, ip_whitelist:document.getElementById('ag-ip').value};
+    phone:document.getElementById('ag-phone').value, ip_whitelist:document.getElementById('ag-ip').value,
+    role:document.getElementById('ag-role').value};
   if (!body.username || !body.password) { showMsg('ag-msg','err','帳號和密碼必填'); return; }
   var r = await fetch(CONSOLE_API+'/agents', {method:'POST', headers:consoleHeaders(true), body:JSON.stringify(body)});
   var d = await r.json();
@@ -5854,6 +5865,14 @@ async function createAgent() {
 async function toggleAgent(id, active) {
   await fetch(CONSOLE_API+'/agents/'+id, {method:'PATCH', headers:consoleHeaders(true), body:JSON.stringify({is_active:active})});
   loadAgents();
+}
+async function setAgentRole(id, role) {
+  var label = (role === 'super_admin') ? '設為管理員(super admin)' : '降為業務員';
+  if (!confirm('確定要將此帳號' + label + '？')) return;
+  var r = await fetch(CONSOLE_API+'/agents/'+id, {method:'PATCH', headers:consoleHeaders(true), body:JSON.stringify({role:role})});
+  var d = await r.json();
+  if (r.ok && d.success !== false) { loadAgents(); }
+  else { alert('變更失敗：' + (d.message || d.detail || '')); }
 }
 
 // ═══ Console: Assign ═══

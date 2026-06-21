@@ -255,8 +255,9 @@ async def list_agents(
     result = await db.execute(
         select(AdminUser, cnt_subq.c.cnt)
         .outerjoin(cnt_subq, AdminUser.id == cnt_subq.c.agent_id)
-        .where(AdminUser.role == "agent")
-        .order_by(AdminUser.created_at.desc())
+        .where(AdminUser.role.in_(["agent", "super_admin"]))
+        # super_admin 排前面，方便管理
+        .order_by(AdminUser.role.desc(), AdminUser.created_at.desc())
     )
     agents = []
     for a, customer_count in result.all():
@@ -304,12 +305,23 @@ async def update_agent(
     if req.password is not None:
         agent.password_hash = hash_password(req.password); changes.append("密碼")
     if req.is_active is not None:
+        if req.is_active is False and agent.id == admin.id:
+            raise BadRequestError("不能停用自己的帳號")
         agent.is_active = req.is_active; changes.append("啟用" if req.is_active else "停用")
     if req.ip_whitelist is not None:
         agent.ip_whitelist = req.ip_whitelist; changes.append("IP白名單")
     if req.role is not None:
         if req.role not in ("agent", "super_admin"):
             raise BadRequestError(i18n_t("pw_invalid_role", role=req.role))
+        # 防呆：把管理員降為業務員時，不能降自己、不能降掉最後一位管理員
+        if agent.role == "super_admin" and req.role != "super_admin":
+            if agent.id == admin.id:
+                raise BadRequestError("不能調降自己的管理員權限")
+            sa_count = (await db.execute(
+                select(func.count()).select_from(AdminUser).where(AdminUser.role == "super_admin")
+            )).scalar_one()
+            if sa_count <= 1:
+                raise BadRequestError("系統至少需保留一位管理員，無法調降最後一位")
         agent.role = req.role; changes.append(f"角色={req.role}")
 
     await log_action(db, admin, "update", "agent", agent_id, f"更新: {','.join(changes)}")
