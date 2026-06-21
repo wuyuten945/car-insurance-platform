@@ -1,9 +1,9 @@
 'use client';
 
-import { use } from 'react';
+import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, User, FileText, Phone } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api-client';
 import { CLAIM_STAGES } from '@/lib/constants';
 
@@ -46,8 +46,8 @@ const CLAIM_TYPE_MAP: Record<string, string> = {
   other: '其他',
 };
 
-export default function ClaimDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function ClaimDetailContent() {
+  const id = useSearchParams().get('id') ?? '';
   const router = useRouter();
 
   const { data: claim, isLoading } = useQuery({
@@ -56,6 +56,7 @@ export default function ClaimDetailPage({ params }: { params: Promise<{ id: stri
       const res = await api.get(`/api/v1/claims/${id}`);
       return res.data.data as ClaimDetail;
     },
+    enabled: !!id,
   });
 
   if (isLoading) {
@@ -229,5 +230,19 @@ export default function ClaimDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </section>
     </div>
+  );
+}
+
+export default function ClaimDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+        </div>
+      }
+    >
+      <ClaimDetailContent />
+    </Suspense>
   );
 }

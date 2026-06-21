@@ -95,7 +95,7 @@ export default function ClaimsPage() {
             return (
               <Link
                 key={claim.id}
-                href={`/claims/${claim.id}`}
+                href={`/claims/view?id=${claim.id}`}
                 className="block rounded-xl bg-white p-4 shadow-sm border border-gray-100 active:bg-gray-50"
               >
                 <div className="flex items-start justify-between">

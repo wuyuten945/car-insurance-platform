@@ -1,10 +1,10 @@
 'use client';
 
-import { use } from 'react';
+import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Shield, Calendar, DollarSign, AlertCircle, Loader2, ChevronRight, Printer } from 'lucide-react';
+import { ArrowLeft, Shield, DollarSign, AlertCircle, Loader2, ChevronRight, Printer } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api-client';
 
 interface PolicyItem {
@@ -111,8 +111,8 @@ function exportPolicyPdf(policy: PolicyDetail, exclusions?: Exclusion[]) {
   }
 }
 
-export default function PolicyDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function PolicyDetailContent() {
+  const id = useSearchParams().get('id') ?? '';
   const router = useRouter();
 
   const { data: policy, isLoading } = useQuery({
@@ -121,6 +121,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
       const res = await api.get(`/api/v1/policies/${id}`);
       return res.data.data as PolicyDetail;
     },
+    enabled: !!id,
   });
 
   const { data: exclusions } = useQuery({
@@ -129,6 +130,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
       const res = await api.get(`/api/v1/policies/${id}/exclusions`);
       return res.data.data.exclusions as Exclusion[];
     },
+    enabled: !!id,
   });
 
   if (isLoading) {
@@ -281,5 +283,19 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
         )}
       </section>
     </div>
+  );
+}
+
+export default function PolicyDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+        </div>
+      }
+    >
+      <PolicyDetailContent />
+    </Suspense>
   );
 }

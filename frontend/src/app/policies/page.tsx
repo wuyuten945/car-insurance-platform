@@ -204,7 +204,7 @@ export default function PoliciesPage() {
             const isSelf = (policy.data_source || 'agent') === 'self';
             return (
               <div key={policy.id} className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-                <Link href={`/policies/${policy.id}`} className="block active:bg-gray-50 -m-4 p-4">
+                <Link href={`/policies/view?id=${policy.id}`} className="block active:bg-gray-50 -m-4 p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
