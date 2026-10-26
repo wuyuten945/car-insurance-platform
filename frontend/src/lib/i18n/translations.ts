@@ -281,6 +281,22 @@ const zh: Dict = {
   'cookie.banner.text': '本平台使用必要 Cookie 維持登入狀態與偏好設定，繼續使用即視為同意。',
   'cookie.banner.more': '了解更多',
   'cookie.banner.accept': '我同意',
+  // ===== 首頁方塊 =====
+  'tile.section.service': '緊急與服務',
+  'tile.section.policy': '車輛與保單',
+  'tile.section.mine': '我的',
+  'tile.section.vehicles': '車輛狀態',
+  'tile.vehicles': '我的車輛',
+  'tile.quote': '保費試算',
+  'tile.quoteRequests': '續期詢價',
+  'tile.notifications': '通知中心',
+  'tile.numerology': '數字易經',
+  'tile.profile': '個人資料',
+  'tile.compulsory': '強制險 {days} 天',
+  'tile.compulsoryNone': '強制險 未投保',
+  'tile.inspect': '驗車 {status}',
+  'tile.canInspect': '可驗車',
+
 };
 
 const en: Dict = {
@@ -554,6 +570,22 @@ const en: Dict = {
   'cookie.banner.text': 'We use essential cookies to maintain your login and preferences. By continuing you accept this.',
   'cookie.banner.more': 'Learn more',
   'cookie.banner.accept': 'I Accept',
+  // ===== Home tiles =====
+  'tile.section.service': 'Emergency & Service',
+  'tile.section.policy': 'Vehicles & Policies',
+  'tile.section.mine': 'My Account',
+  'tile.section.vehicles': 'Vehicle Status',
+  'tile.vehicles': 'Vehicles',
+  'tile.quote': 'Quote',
+  'tile.quoteRequests': 'Renewal Quotes',
+  'tile.notifications': 'Notifications',
+  'tile.numerology': 'Numerology',
+  'tile.profile': 'Profile',
+  'tile.compulsory': 'Compulsory {days}d',
+  'tile.compulsoryNone': 'No compulsory',
+  'tile.inspect': 'Inspect {status}',
+  'tile.canInspect': 'Can inspect',
+
 };
 
 export const dictionaries: Record<Lang, Dict> = { zh, en };
