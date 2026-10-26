@@ -8,13 +8,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   User, LogOut, Loader2, Save, Car, Bell, MessageCircle, MapPin,
-  Mail, Phone, Calendar, IdCard, Home, FileText, Heart, Lock, ShieldCheck, Calculator, Sparkles,
+  Mail, Phone, Calendar, IdCard, Home, FileText, Heart, Lock, ShieldCheck, Calculator, Sparkles, Send, BellRing, MessageSquare,
 } from 'lucide-react';
-import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { AppTile, TileSection, TilePanel } from '@/components/AppTile';
 import { useIdleLogout } from '@/lib/useIdleLogout';
 
 type ProfileForm = {
@@ -52,26 +52,26 @@ export default function ProfilePage() {
   const { ready: __authReady } = useAuthGuard();
   useIdleLogout();
   const router = useRouter();
-  const { user, loadUser, logout, isAuthenticated } = useAuthStore();
+  const { user, loadUser, logout } = useAuthStore();
   const { t } = useT();
 
   const MENU_ITEMS = [
-    { href: '/vehicles', icon: Car, label: t('profile.menu.vehicles') },
-    { href: '/quote', icon: Calculator, label: '保費簡易試算(參考)' },
-    { href: '/quote-requests', icon: FileText, label: '我的車險續期保費詢價' },
-    { href: '/notifications', icon: Bell, label: t('profile.menu.notifications') },
-    { href: '/chatbot', icon: MessageCircle, label: t('profile.menu.chatbot') },
-    { href: '/inspection', icon: MapPin, label: t('profile.menu.inspection') },
-    { href: '/numerology', icon: Sparkles, label: '幫人生拿副好牌（數字易經）' },
+    { href: '/vehicles', icon: Car, label: t('tile.vehicles'), color: '#455a64' },
+    { href: '/quote', icon: Calculator, label: t('tile.quote'), color: '#6d4c41' },
+    { href: '/quote-requests', icon: Send, label: t('tile.quoteRequests'), color: '#00838f' },
+    { href: '/notifications', icon: Bell, label: t('tile.notifications'), color: '#f9a825' },
+    { href: '/chatbot', icon: MessageCircle, label: t('profile.menu.chatbot'), color: '#3949ab' },
+    { href: '/inspection', icon: MapPin, label: t('dash.quickAction.inspection'), color: '#00897b' },
+    { href: '/numerology', icon: Sparkles, label: t('tile.numerology'), color: '#8e24aa' },
   ];
 
+  // 設定類方塊：點了在方塊下方展開該區塊，再點一次收起
+  const [openSec, setOpenSec] = useState<'' | 'profile' | 'notify' | 'line' | 'password'>('');
+  const toggleSec = (k: typeof openSec) => setOpenSec((cur) => (cur === k ? '' : k));
+
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/login');
-      return;
-    }
-    if (!user) loadUser();
-  }, [isAuthenticated, user, loadUser, router]);
+    if (__authReady && !user) loadUser();
+  }, [__authReady, user, loadUser]);
 
   const profileSchema = makeProfileSchema(t);
   const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<ProfileForm>({
@@ -129,7 +129,6 @@ export default function ProfilePage() {
     router.replace('/login');
   };
 
-  if (!isAuthenticated) return null;
 
   const inputClass = 'w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100';
   const inputClassNoIcon = 'w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100';
@@ -139,7 +138,7 @@ export default function ProfilePage() {
   if (!__authReady) return null;
 
   return (
-    <div className="px-4 py-5 space-y-6">
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
       {/* User Avatar + Name */}
       <div className="flex items-center gap-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">
@@ -151,47 +150,19 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Quick Menu */}
-      <div className="rounded-xl bg-white shadow-sm border border-gray-100 divide-y divide-gray-50">
-        {MENU_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isExt = 'external' in item && (item as { external?: boolean }).external;
-          if (isExt) {
-            return (
-              <a
-                key={item.href}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 px-4 py-3.5"
-              >
-                <Icon className="h-5 w-5 text-primary-500" />
-                <span className="text-sm font-medium text-gray-700">{item.label}</span>
-              </a>
-            );
-          }
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 px-4 py-3.5"
-            >
-              <Icon className="h-5 w-5 text-primary-500" />
-              <span className="text-sm font-medium text-gray-700">{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
+      <TileSection title={t('tile.section.settings')}>
+        <AppTile onClick={() => toggleSec('profile')} active={openSec === 'profile'} icon={User} label={t('tile.profile')} color="#5c6bc0" />
+        <AppTile onClick={() => toggleSec('notify')} active={openSec === 'notify'} icon={BellRing} label={t('tile.notifyPref')} color="#ef6c00" />
+        <AppTile onClick={() => toggleSec('line')} active={openSec === 'line'} icon={MessageSquare} label={t('tile.lineBind')} color="#06a74b" />
+        <AppTile onClick={() => toggleSec('password')} active={openSec === 'password'} icon={ShieldCheck} label={t('tile.password')} color="#37474f" />
+        <AppTile onClick={handleLogout} icon={LogOut} label={t('profile.logout')} color="#c62828" />
+      </TileSection>
 
-      {/* 通知偏好 */}
-      <NotifyPreferenceSection />
-
-      {/* LINE binding section */}
-      <LineBindingSection />
-
-      {/* 進階保護密碼 */}
-      <AdvancedPasswordSection />
-
+      {openSec === 'notify' && <TilePanel bare title="notify"><NotifyPreferenceSection /></TilePanel>}
+      {openSec === 'line' && <TilePanel bare title="line"><LineBindingSection /></TilePanel>}
+      {openSec === 'password' && <TilePanel bare title="password"><AdvancedPasswordSection /></TilePanel>}
+      {openSec === 'profile' && (
+      <TilePanel bare title="profile">
       {/* Profile Edit Form */}
       <section className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
         <h2 className="text-base font-bold text-gray-900 mb-4">{t('profile.section.title')}</h2>
@@ -361,14 +332,14 @@ export default function ProfilePage() {
           </button>
         </form>
       </section>
+      </TilePanel>
+      )}
 
-      {/* Logout */}
-      <button
-        onClick={handleLogout}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 transition"
-      >
-        <LogOut className="h-4 w-4" /> {t('profile.logout')}
-      </button>
+      <TileSection title={t('tile.section.features')}>
+        {MENU_ITEMS.map((item) => (
+          <AppTile key={item.href} href={item.href} icon={item.icon} label={item.label} color={item.color} />
+        ))}
+      </TileSection>
     </div>
   );
 }

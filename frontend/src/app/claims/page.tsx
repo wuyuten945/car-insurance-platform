@@ -1,13 +1,15 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ClipboardList, ChevronRight, Plus, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { ClipboardList, ChevronRight, Loader2, FilePlus, Hourglass, CircleCheck } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { CLAIM_STAGES } from '@/lib/constants';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 interface Claim {
   id: string;
@@ -49,6 +51,16 @@ export default function ClaimsPage() {
     },
   });
 
+  // 篩選方塊：已結案＝closed/rejected，其餘都算處理中
+  const [filter, setFilter] = useState<'all' | 'open' | 'done'>('all');
+  const isDone = (c: Claim) => c.status === 'closed' || c.status === 'rejected';
+  const FILTERS = [
+    { key: 'all' as const, label: t('claims.filter.all'), icon: ClipboardList, color: '#1565c0', match: () => true },
+    { key: 'open' as const, label: t('claims.filter.open'), icon: Hourglass, color: '#f9a825', match: (c: Claim) => !isDone(c) },
+    { key: 'done' as const, label: t('claims.filter.done'), icon: CircleCheck, color: '#757575', match: (c: Claim) => isDone(c) },
+  ];
+  const shown = (claims ?? []).filter(FILTERS.find((f) => f.key === filter)!.match);
+
   const getStageLabel = (status: string) => {
     const stage = CLAIM_STAGES.find((s) => s.key === status);
     return stage?.label ?? status;
@@ -62,35 +74,35 @@ export default function ClaimsPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="px-4 py-5 space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">{t('claims.title')}</h1>
-        <Link
-          href="/claims/new"
-          className="flex items-center gap-1 rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm"
-        >
-          <Plus className="h-4 w-4" /> {t('claims.btnNew')}
-        </Link>
-      </div>
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-5">
+      <h1 className="text-xl font-bold text-gray-900">{t('claims.title')}</h1>
+
+      <TileSection>
+        <AppTile href="/claims/new" icon={FilePlus} label={t('claims.btnApply')} color="#ef6c00" />
+        {FILTERS.map((f) => (
+          <AppTile
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            active={filter === f.key}
+            icon={f.icon}
+            label={`${f.label}（${(claims ?? []).filter(f.match).length}）`}
+            color={f.color}
+          />
+        ))}
+      </TileSection>
 
       {isLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
         </div>
-      ) : !claims || claims.length === 0 ? (
+      ) : shown.length === 0 ? (
         <div className="flex flex-col items-center py-20">
           <ClipboardList className="h-16 w-16 text-gray-200 mb-3" />
           <p className="text-sm text-gray-400">{t('claims.empty')}</p>
-          <Link
-            href="/claims/new"
-            className="mt-4 rounded-xl bg-primary-500 px-6 py-2.5 text-sm font-semibold text-white"
-          >
-            {t('claims.btnApply')}
-          </Link>
         </div>
       ) : (
         <div className="space-y-3">
-          {claims.map((claim) => {
+          {shown.map((claim) => {
             const stageIndex = CLAIM_STAGES.findIndex((s) => s.key === claim.status);
             return (
               <Link

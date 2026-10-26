@@ -4,14 +4,15 @@ import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Phone, MapPin, AlertTriangle, Shield, Loader2, CheckCircle,
-  ChevronDown, ChevronUp, Navigation, ExternalLink, Truck, Building2,
-  Camera, Upload, Check,
+  Navigation, ExternalLink, Truck, Building2,
+  Camera, Upload, Check, Ambulance,
 } from 'lucide-react';
 import api from '@/lib/api-client';
 import { useEligibility } from '@/lib/useEligibility';
 import LockedFeatureNotice from '@/components/LockedFeatureNotice';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
+import { AppTile, TileSection, TilePanel } from '@/components/AppTile';
 
 interface NearbyResource {
   id: string;
@@ -82,10 +83,10 @@ const PHOTO_SLOTS = [
 
 export default function EmergencyPage() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [showGuide, setShowGuide] = useState(false);
   const [sosTriggered, setSosTriggered] = useState(false);
-  const [showRescue, setShowRescue] = useState(false);
-  const [showInsurer, setShowInsurer] = useState(false);
+  // 方塊點開的面板（一次只開一個，再點一次收起）
+  const [openSec, setOpenSec] = useState<'' | 'rescue' | 'insurer' | 'guide' | 'nearby'>('');
+  const toggleSec = (k: typeof openSec) => setOpenSec((cur) => (cur === k ? '' : k));
   const [uploadedPhotos, setUploadedPhotos] = useState<Record<string, string>>({});
   const [uploadingKey, setUploadingKey] = useState('');
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -165,7 +166,7 @@ export default function EmergencyPage() {
   if (!authReady) return null;
 
   return (
-    <div className="px-4 py-5 space-y-6">
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
       {/* SOS Section */}
       <div className="flex flex-col items-center py-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">緊急救援</h1>
@@ -201,53 +202,20 @@ export default function EmergencyPage() {
         )}
       </div>
 
-      {/* Emergency Contacts — Fixed: 報警 + 消防 */}
-      <section>
-        <h2 className="text-lg font-bold text-gray-900 mb-3">緊急聯絡</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <a
-            href="tel:110"
-            className="flex items-center gap-3 rounded-xl bg-red-600 p-4 text-white shadow-sm active:opacity-90"
-          >
-            <Phone className="h-6 w-6 shrink-0" />
-            <div>
-              <p className="text-base font-bold leading-tight">報警 (110)</p>
-              <p className="text-sm text-white/80">110</p>
-            </div>
-          </a>
-          <a
-            href="tel:119"
-            className="flex items-center gap-3 rounded-xl bg-red-700 p-4 text-white shadow-sm active:opacity-90"
-          >
-            <Phone className="h-6 w-6 shrink-0" />
-            <div>
-              <p className="text-base font-bold leading-tight">消防/救護 (119)</p>
-              <p className="text-sm text-white/80">119</p>
-            </div>
-          </a>
-        </div>
-      </section>
+      <TileSection>
+        <AppTile href="tel:110" icon={Phone} label="報警 110" color="#c62828" />
+        <AppTile href="tel:119" icon={Ambulance} label="消防救護 119" color="#b71c1c" />
+        <AppTile onClick={() => toggleSec('rescue')} active={openSec === 'rescue'} icon={Truck} label="道路救援" color="#ef6c00" />
+        <AppTile onClick={() => toggleSec('insurer')} active={openSec === 'insurer'} icon={Building2} label="保險公司客服" color="#1565c0" />
+        <AppTile onClick={() => toggleSec('guide')} active={openSec === 'guide'} icon={Shield} label="事故處理指南" color="#00897b" />
+        {nearby && nearby.length > 0 && (
+          <AppTile onClick={() => toggleSec('nearby')} active={openSec === 'nearby'} icon={MapPin} label="附近資源" color="#6a1b9a" badge={nearby.length} />
+        )}
+      </TileSection>
 
-      {/* Road Rescue — Dropdown + Google Map */}
-      <section>
-        <button
-          onClick={() => setShowRescue(!showRescue)}
-          className="flex w-full items-center justify-between rounded-xl bg-orange-600 p-4 text-white shadow-sm active:opacity-90"
-        >
-          <div className="flex items-center gap-3">
-            <Truck className="h-6 w-6 shrink-0" />
-            <div className="text-left">
-              <p className="text-base font-bold leading-tight">道路救援</p>
-              <p className="text-sm text-white/80">選擇服務 &amp; Google Map 導航</p>
-            </div>
-          </div>
-          {showRescue
-            ? <ChevronUp className="h-5 w-5 shrink-0" />
-            : <ChevronDown className="h-5 w-5 shrink-0" />}
-        </button>
-
-        {showRescue && (
-          <div className="mt-2 rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+      {openSec === 'rescue' && (
+        <TilePanel title="道路救援">
+          <div className="-mx-4 -mb-4 divide-y divide-gray-100 border-t border-gray-100">
             {ROAD_RESCUE_SERVICES.map((svc) => (
               <div key={svc.phone} className="flex items-center justify-between px-4 py-3">
                 <div className="flex-1 min-w-0">
@@ -283,29 +251,12 @@ export default function EmergencyPage() {
               Google Map 搜尋附近所有道路救援
             </a>
           </div>
-        )}
-      </section>
+        </TilePanel>
+      )}
 
-      {/* Insurance Company — Dropdown */}
-      <section>
-        <button
-          onClick={() => setShowInsurer(!showInsurer)}
-          className="flex w-full items-center justify-between rounded-xl bg-primary-500 p-4 text-white shadow-sm active:opacity-90"
-        >
-          <div className="flex items-center gap-3">
-            <Building2 className="h-6 w-6 shrink-0" />
-            <div className="text-left">
-              <p className="text-base font-bold leading-tight">保險公司客服</p>
-              <p className="text-sm text-white/80">選擇產險公司撥打客服</p>
-            </div>
-          </div>
-          {showInsurer
-            ? <ChevronUp className="h-5 w-5 shrink-0" />
-            : <ChevronDown className="h-5 w-5 shrink-0" />}
-        </button>
-
-        {showInsurer && (
-          <div className="mt-2 rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+      {openSec === 'insurer' && (
+        <TilePanel title="保險公司客服">
+          <div className="-mx-4 -mb-4 divide-y divide-gray-100 border-t border-gray-100">
             {INSURANCE_COMPANIES.map((ins) => (
               <a
                 key={ins.phone}
@@ -329,13 +280,12 @@ export default function EmergencyPage() {
               </a>
             ))}
           </div>
-        )}
-      </section>
+        </TilePanel>
+      )}
 
       {/* Nearby Resources */}
-      {nearby && nearby.length > 0 && (
-        <section>
-          <h2 className="text-lg font-bold text-gray-900 mb-3">附近資源</h2>
+      {openSec === 'nearby' && nearby && nearby.length > 0 && (
+        <TilePanel title="附近資源">
           <div className="space-y-2">
             {nearby.map((r) => (
               <div key={r.id} className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm border border-gray-100">
@@ -357,23 +307,11 @@ export default function EmergencyPage() {
               </div>
             ))}
           </div>
-        </section>
+        </TilePanel>
       )}
 
-      {/* Accident Guide */}
-      <section>
-        <button
-          onClick={() => setShowGuide(!showGuide)}
-          className="flex w-full items-center justify-between rounded-xl bg-white p-4 shadow-sm border border-gray-100"
-        >
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary-500" />
-            <span className="text-base font-bold text-gray-900">事故處理步驟指南</span>
-          </div>
-          {showGuide ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}
-        </button>
-
-        {showGuide && (
+      {openSec === 'guide' && (
+        <TilePanel title="事故處理步驟指南">
           <div className="mt-3 space-y-4">
             {ACCIDENT_STEPS.map((s: { step: number; title: string; desc: string; isUpload?: boolean }) => (
               <div key={s.step}>
@@ -451,8 +389,8 @@ export default function EmergencyPage() {
               </div>
             ))}
           </div>
-        )}
-      </section>
+        </TilePanel>
+      )}
     </div>
   );
 }

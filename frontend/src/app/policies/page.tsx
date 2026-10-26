@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, ChevronRight, Loader2, Phone, Truck, Plus, Pencil, Trash2 } from 'lucide-react';
+import { FileText, ChevronRight, Loader2, Phone, Truck, Plus, Pencil, Trash2, Files, ShieldCheck, ShieldOff } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useT } from '@/lib/i18n/LanguageProvider';
@@ -10,6 +10,7 @@ import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
 import PolicyFormModal, { type PolicyPayload } from '@/components/PolicyFormModal';
 import AddToCalendar from '@/components/AddToCalendar';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 interface PolicyItem {
   item_name: string;
@@ -95,9 +96,9 @@ export default function PoliciesPage() {
   const { t } = useT();
 
   const TABS = [
-    { key: 'all', label: t('policies.filter.all') },
-    { key: 'active', label: t('policies.filter.active') },
-    { key: 'expired', label: t('policies.filter.expired') },
+    { key: 'all', label: t('policies.filter.all'), icon: Files, color: '#1565c0' },
+    { key: 'active', label: t('policies.filter.active'), icon: ShieldCheck, color: '#00897b' },
+    { key: 'expired', label: t('policies.filter.expired'), icon: ShieldOff, color: '#757575' },
   ];
 
   const STATUS_LABEL: Record<string, string> = {
@@ -155,6 +156,9 @@ export default function PoliciesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['policies'] }),
   });
 
+  const countOf = (key: string) =>
+    (policies ?? []).filter((p) => key === 'all' || p.status === key).length;
+
   const filtered = policies?.filter((p) =>
     activeTab === 'all' ? true : p.status === activeTab
   ) ?? [];
@@ -162,29 +166,23 @@ export default function PoliciesPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="px-4 py-5">
-      <div className="flex items-center mb-4">
-        <h1 className="text-xl font-bold text-gray-900 flex-1">{t('policies.title')}</h1>
-        <button onClick={handleAdd} className="flex items-center gap-1 rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700">
-          <Plus className="h-4 w-4" /> 新增保單
-        </button>
-      </div>
+    <div className="mx-auto max-w-lg px-4 py-5">
+      <h1 className="text-xl font-bold text-gray-900 mb-4">{t('policies.title')}</h1>
 
-      {/* Tab Filters */}
-      <div className="flex gap-2 mb-5">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              activeTab === tab.key
-                ? 'bg-primary-500 text-white'
-                : 'bg-white text-gray-600 border border-gray-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="mb-5">
+        <TileSection>
+          {TABS.map((tab) => (
+            <AppTile
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              active={activeTab === tab.key}
+              icon={tab.icon}
+              label={`${tab.label}（${countOf(tab.key)}）`}
+              color={tab.color}
+            />
+          ))}
+          <AppTile onClick={handleAdd} icon={Plus} label="新增保單" color="#2e7d32" />
+        </TileSection>
       </div>
 
       {isLoading ? (

@@ -296,6 +296,14 @@ const zh: Dict = {
   'tile.compulsoryNone': '強制險 未投保',
   'tile.inspect': '驗車 {status}',
   'tile.canInspect': '可驗車',
+  'tile.section.settings': '帳號設定',
+  'claims.filter.all': '全部',
+  'claims.filter.open': '處理中',
+  'claims.filter.done': '已結案',
+  'tile.section.features': '功能',
+  'tile.notifyPref': '通知偏好',
+  'tile.lineBind': 'LINE 綁定',
+  'tile.password': '進階密碼',
 
 };
 
@@ -585,6 +593,14 @@ const en: Dict = {
   'tile.compulsoryNone': 'No compulsory',
   'tile.inspect': 'Inspect {status}',
   'tile.canInspect': 'Can inspect',
+  'tile.section.settings': 'Account',
+  'claims.filter.all': 'All',
+  'claims.filter.open': 'In Progress',
+  'claims.filter.done': 'Closed',
+  'tile.section.features': 'Features',
+  'tile.notifyPref': 'Alerts',
+  'tile.lineBind': 'LINE Link',
+  'tile.password': 'Password',
 
 };
 
