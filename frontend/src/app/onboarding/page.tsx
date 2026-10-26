@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, ArrowRight, Loader2, User, Calendar, IdCard, Phone, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Shield, ArrowRight, Loader2, User, Calendar, IdCard, Phone, AlertCircle, CheckCircle2, Merge, Home } from 'lucide-react';
 import api from '@/lib/api-client';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 interface MatchResult {
   matched: boolean;
@@ -110,7 +111,7 @@ export default function OnboardingPage() {
         <p className="mt-2 text-sm text-white/70 text-center">為了服務您的車險權益，請補齊以下資料</p>
       </div>
 
-      <div className="rounded-t-3xl bg-white px-6 pt-8 pb-10 shadow-2xl">
+      <div className="rounded-t-3xl bg-white px-4 pt-8 pb-10 shadow-2xl">
         {!done ? (
           <>
             <h2 className="text-lg font-bold text-gray-900 mb-1">基本資料</h2>
@@ -217,17 +218,9 @@ export default function OnboardingPage() {
                   {match.name_hint && <div className="text-gray-700">姓名：<span className="font-mono">{match.name_hint}</span></div>}
                   {match.masked_phone && <div className="text-gray-700">電話：<span className="font-mono">{match.masked_phone}</span></div>}
                 </div>
-                <p className="text-xs text-amber-800 mb-3">
+                <p className="text-xs text-amber-800">
                   比對身份證字號相符。可一鍵合併到您目前登入的帳號，之後就能在 App 中看到既有保單與車輛。
                 </p>
-                <button
-                  onClick={handleClaim}
-                  disabled={claiming}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50"
-                >
-                  {claiming ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  合併資料到我的帳號
-                </button>
               </div>
             ) : (
               <div className="mb-4 rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700">
@@ -235,13 +228,18 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <button
-              onClick={goHome}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 py-3.5 text-base font-semibold text-white transition hover:bg-primary-700"
-            >
-              <ArrowRight className="h-5 w-5" />
-              進入車險服務平台
-            </button>
+            <TileSection>
+              {match?.matched && !claimResult && (
+                // 合併中再點不會重送
+                <AppTile
+                  onClick={() => { if (!claiming) handleClaim(); }}
+                  icon={claiming ? Loader2 : Merge}
+                  label={claiming ? '合併中…' : '合併資料'}
+                  color="#e65100"
+                />
+              )}
+              <AppTile onClick={goHome} icon={Home} label="進入平台" color="#1565c0" />
+            </TileSection>
           </>
         )}
       </div>
