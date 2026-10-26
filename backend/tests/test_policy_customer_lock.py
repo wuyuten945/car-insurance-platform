@@ -4,8 +4,7 @@
 涵蓋:
   1. 新增保單、修改保單、上傳掃描、AI 辨識建檔 → 403
   2. 保障項目新增/修改/刪除 → 403（原本只檢查擁有者,連後台建檔的保單都能被客戶改）
-  3. 仍可:查看保單列表/明細、刪除自己以前自填的保單
-  4. 後台建檔的保單,客戶刪不掉
+  3. 刪除也不行(自填、後台建檔都一樣);仍可查看保單列表/明細
 """
 from datetime import date, timedelta
 
@@ -80,12 +79,11 @@ async def test_customer_cannot_create_or_edit(client):
 
 
 @pytest.mark.asyncio
-async def test_customer_can_delete_own_self_entered_only(client):
+async def test_customer_cannot_delete_any_policy(client):
     uid, self_id, agent_id, _ = await _seed()
     h = _auth(uid)
-    r = await client.delete(f"/api/v1/policies/{agent_id}", headers=h)
-    assert r.status_code in (400, 403, 404)     # 後台建檔的刪不掉（既有邏輯回 400）
-    r = await client.delete(f"/api/v1/policies/{self_id}", headers=h)
-    assert r.status_code == 200                 # 自己以前自填的可以刪
+    for pid in (agent_id, self_id):             # 後台建檔、自己以前自填的都不能刪
+        r = await client.delete(f"/api/v1/policies/{pid}", headers=h)
+        assert r.status_code == 403, r.text
     r = await client.get("/api/v1/policies", headers=h)
-    assert [p["policy_number"] for p in r.json()["data"]] == ["AGT-001"]
+    assert sorted(p["policy_number"] for p in r.json()["data"]) == ["AGT-001", "SELF-001"]

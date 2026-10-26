@@ -19,8 +19,7 @@ router = APIRouter()
 
 
 # 保單一律由業務員從後台建立/修改（用戶 2026-10-26 決定）。
-# 前台客戶的新增、修改、上傳辨識、保障項目增刪改全部關閉；
-# 只保留「刪除自己以前自填的保單」（restrict_to_source="self"，碰不到後台建檔的保單）。
+# 前台客戶的新增、修改、刪除、上傳辨識、保障項目增刪改全部關閉（前台對保單唯讀）。
 POLICY_LOCKED_MSG = "保單需由業務員從後台建立或修改，如需新增或更正請聯繫您的業務員"
 
 
@@ -295,6 +294,7 @@ async def delete_policy(
     db: AsyncSession = Depends(get_db),
 ):
     """刪除保單（前台只能刪自填的紀錄）"""
+    _policy_write_locked()
     svc = PolicyService(db)
     await svc.delete_policy(current_user.id, policy_id, restrict_to_source="self")
     return APIResponse(message="保單已刪除")
