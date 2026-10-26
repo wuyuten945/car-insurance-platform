@@ -266,3 +266,48 @@ button.apptile { background: none; border: none; padding: 0; cursor: pointer; fo
 .picktile.is-active { background: #1565c0; border-color: #1565c0; color: #fff; }
 .picktile.is-active span { color: #e3f2fd; }
 .picktile-edit { position: absolute; top: 5px; right: 6px; width: 13px; height: 13px; opacity: .85; }
+
+/* ─── 法律條款：正式文件外框（深藍外框＋金色內線） ─── */
+.legal-doc {
+  background: #fff;
+  border: 2px solid #1a2b4c;
+  border-radius: 4px;
+  padding: 28px 22px 24px;
+  box-shadow: inset 0 0 0 5px #fff, inset 0 0 0 6px #b8932f, 0 4px 16px rgba(26, 43, 76, .12);
+  color: #1a1a1a;
+}
+.legal-doc-head {
+  text-align: center;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #1a2b4c;
+  position: relative;
+}
+/* 抬頭下方第二條細金線，與外框呼應 */
+.legal-doc-head::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -4px;
+  border-bottom: 1px solid #b8932f;
+}
+.legal-doc-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1a2b4c;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .25em;
+}
+.legal-doc-brand img { width: 28px; height: 28px; object-fit: contain; }
+.legal-doc-head h1 {
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a2b4c;
+  letter-spacing: .08em;
+}
+/* Tailwind 預設把清單符號清掉；條款要有項目符號才像正式文件 */
+.legal-prose ul { list-style: disc; }
+.legal-prose ol { list-style: decimal; }
+.legal-prose li::marker { color: #1a2b4c; }

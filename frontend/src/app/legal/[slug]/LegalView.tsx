@@ -1,6 +1,5 @@
 'use client';
 
-import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { LEGAL_DOCS, type LegalKey } from '@/components/legal/legal-content';
@@ -25,13 +24,20 @@ export default function LegalView({ slug }: { slug: string }) {
 
   return (
     <div className="px-4 py-5 max-w-[552px] mx-auto">
-      <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+      {/* 正式文件版面：雙線外框（深藍外框＋金色內線）＋品牌抬頭 */}
+      <div className="legal-doc">
+        <header className="legal-doc-head">
+          <div className="legal-doc-brand">
+            <img src="/logo.png" alt="" width={28} height={28} />
+            <span>BOPINAN</span>
+          </div>
+          <h1>{title}</h1>
+        </header>
+        <article
+          className="legal-prose"
+          dangerouslySetInnerHTML={{ __html: body }}
+        />
       </div>
-      <article
-        className="legal-prose"
-        dangerouslySetInnerHTML={{ __html: body }}
-      />
     </div>
   );
 }
