@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, ChevronRight, Loader2, Phone, Truck, Plus, Pencil, Trash2, Files, ShieldCheck, ShieldOff } from 'lucide-react';
+import { FileText, ChevronRight, Loader2, Phone, Truck, Trash2, Files, ShieldCheck, ShieldOff } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
-import PolicyFormModal, { type PolicyPayload } from '@/components/PolicyFormModal';
 import AddToCalendar from '@/components/AddToCalendar';
 import { AppTile, TileSection } from '@/components/AppTile';
 
@@ -42,7 +41,6 @@ interface Policy {
   compulsory_end_time?: string | null;
 }
 
-interface VehicleLite { id: string; plate_number: string; brand?: string | null; model?: string | null }
 
 const STATUS_COLOR: Record<string, string> = {
   active: 'bg-green-100 text-green-700',
@@ -115,42 +113,7 @@ export default function PoliciesPage() {
       return res.data.data as Policy[];
     },
   });
-  const { data: vehicles } = useQuery({
-    queryKey: ['vehicles-for-policy'],
-    queryFn: async () => {
-      const res = await api.get('/api/v1/customers/vehicles');
-      return res.data.data as VehicleLite[];
-    },
-  });
-
   const queryClient = useQueryClient();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<PolicyPayload | null>(null);
-
-  const handleAdd = () => { setEditing(null); setModalOpen(true); };
-  const handleEdit = (p: Policy) => {
-    setEditing({
-      id: p.id, vehicle_id: p.vehicle_id ?? null,
-      insurer_name: p.insurer_name, policy_number: p.policy_number,
-      status: p.status,
-      start_date: p.start_date, end_date: p.end_date,
-      start_time: p.start_time ?? null, end_time: p.end_time ?? null,
-      total_premium: p.total_premium,
-      compulsory_insurer_name: p.compulsory_insurer_name ?? null,
-      compulsory_policy_number: p.compulsory_policy_number ?? null,
-      compulsory_premium: p.compulsory_premium ?? null,
-      compulsory_start_date: p.compulsory_start_date ?? null,
-      compulsory_end_date: p.compulsory_end_date ?? null,
-      compulsory_start_time: p.compulsory_start_time ?? null,
-      compulsory_end_time: p.compulsory_end_time ?? null,
-      items: p.items ?? [],
-    });
-    setModalOpen(true);
-  };
-  const handleSaved = () => {
-    queryClient.invalidateQueries({ queryKey: ['policies'] });
-    queryClient.invalidateQueries({ queryKey: ['eligibility'] });
-  };
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => { await api.delete(`/api/v1/policies/${id}`); },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['policies'] }),
@@ -181,7 +144,6 @@ export default function PoliciesPage() {
               color={tab.color}
             />
           ))}
-          <AppTile onClick={handleAdd} icon={Plus} label="新增保單" color="#2e7d32" />
         </TileSection>
       </div>
 
@@ -270,9 +232,6 @@ export default function PoliciesPage() {
                 </Link>
                 {isSelf && (
                   <div className="flex gap-2 pt-3 border-t border-gray-100 mt-3">
-                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleEdit(policy); }} className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-gray-100 hover:bg-gray-200 px-3 py-2 text-xs font-semibold text-gray-700">
-                      <Pencil className="h-3.5 w-3.5" /> 編輯
-                    </button>
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (confirm(`確定刪除保單「${policy.policy_number}」？`)) deleteMutation.mutate(policy.id); }} className="flex items-center justify-center gap-1 rounded-lg bg-red-50 hover:bg-red-100 px-3 py-2 text-xs font-semibold text-red-600">
                       <Trash2 className="h-3.5 w-3.5" /> 刪除
                     </button>
@@ -283,14 +242,6 @@ export default function PoliciesPage() {
           })}
         </div>
       )}
-
-      <PolicyFormModal
-        open={modalOpen}
-        initial={editing}
-        vehicles={vehicles ?? []}
-        onClose={() => setModalOpen(false)}
-        onSaved={handleSaved}
-      />
     </div>
   );
 }

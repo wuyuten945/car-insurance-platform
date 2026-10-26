@@ -203,6 +203,9 @@ body {
   min-height: 2.5em;
   white-space: pre-line;
 }
+@media (max-width: 640px) {
+  .app-label { font-size: 22px; } /* 手機 25px 太擠（用戶回饋），電腦維持 25px */
+}
 
 /* 車輛狀態方塊：車牌大字 + 兩行狀態，底色依急迫程度 */
 .cargrid {
