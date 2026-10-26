@@ -36,7 +36,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-primary-500 text-white shadow-md">
+    <header className="bg-primary-500 text-white shadow-md">
       <div className="flex items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
           <Image src="/logo.png" alt="BOPINAN" width={32} height={32} className="h-8 w-8 object-contain" priority />
