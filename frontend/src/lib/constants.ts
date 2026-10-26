@@ -38,7 +38,7 @@ export const ACCIDENT_TYPES = [
   { value: 'side', label: '側撞' },
   { value: 'head_on', label: '對撞' },
   { value: 'scrape', label: '刮撞' },
-  { value: 'parking', label: '停車場事故' },
+  { value: 'parking', label: '停車場\n事故' },
   { value: 'single', label: '單車事故' },
   { value: 'other', label: '其他' },
 ];
@@ -48,7 +48,7 @@ export const MY_SITUATIONS = [
   { value: 'turning_left', label: '左轉中' },
   { value: 'turning_right', label: '右轉中' },
   { value: 'reversing', label: '倒車中' },
-  { value: 'parked', label: '靜止停車中' },
+  { value: 'parked', label: '靜止\n停車中' },
   { value: 'accelerating', label: '加速中' },
   { value: 'other', label: '其他' },
 ];

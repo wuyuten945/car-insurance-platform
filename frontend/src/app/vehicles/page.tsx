@@ -342,7 +342,7 @@ function VehicleCard({
       <TileSection>
         <AppTile onClick={() => toggleSec('status')} active={openSec === 'status'} icon={Shield} label="驗車狀態" color="#1565c0" />
         <AppTile onClick={() => toggleSec('reg')} active={openSec === 'reg'} icon={Camera} label="行照照片" color="#6d4c41" />
-        <AppTile href="/inspection" icon={MapPin} label="查詢驗車廠" color="#00897b" />
+        <AppTile href="/inspection" icon={MapPin} label={'查詢\n驗車廠'} color="#00897b" />
         {isSelf && <AppTile onClick={onEdit} icon={Pencil} label="編輯" color="#455a64" />}
         {isSelf && <AppTile onClick={handleDelete} icon={Trash2} label="刪除" color="#c62828" />}
       </TileSection>

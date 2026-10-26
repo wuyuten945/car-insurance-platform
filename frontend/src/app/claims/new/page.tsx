@@ -67,7 +67,7 @@ export default function NewClaimPage() {
   const CLAIM_TYPES = [
     { value: 'collision', label: t('claims.type.collision'), icon: CarFront, color: '#ef6c00' },
     { value: 'theft', label: t('claims.type.theft'), icon: KeyRound, color: '#6a1b9a' },
-    { value: 'liability', label: t('claims.type.liability'), icon: Users, color: '#1565c0' },
+    { value: 'liability', label: t('claims.type.liability').replace('責任險理賠', '責任險\n理賠'), icon: Users, color: '#1565c0' },
     { value: 'comprehensive', label: t('claims.type.comprehensive'), icon: ShieldCheck, color: '#00897b' },
     { value: 'other', label: t('claims.type.other'), icon: Ellipsis, color: '#455a64' },
   ];

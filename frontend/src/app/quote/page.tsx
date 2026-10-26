@@ -254,9 +254,9 @@ export default function QuotePage() {
           <TileSection title="下一步">
             <AppTile onClick={() => setRequestOpen(true)} icon={FileText} label={'請業務員\n報價'} color="#e65100" />
             {!eligibility.has_agent_policy && eligibility.line_oa_url && (
-              <AppTile href={eligibility.line_oa_url} icon={MessageCircle} label="LINE 聯繫" color="#06a74b" />
+              <AppTile href={eligibility.line_oa_url} icon={MessageCircle} label={'LINE\n聯繫'} color="#06a74b" />
             )}
-            <AppTile onClick={() => alert('請撥打您熟悉的業務員電話辦理。')} icon={Phone} label="致電業務員" color="#455a64" />
+            <AppTile onClick={() => alert('請撥打您熟悉的業務員電話辦理。')} icon={Phone} label={'致電\n業務員'} color="#455a64" />
             <AppTile href="/quote-requests" icon={ClipboardList} label="詢價進度" color="#00838f" />
           </TileSection>
         </div>

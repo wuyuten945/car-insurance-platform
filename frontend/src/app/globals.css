@@ -190,14 +190,16 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,.4);
 }
 .app-label {
-  font-size: 20px; /* 用戶要求放大（原 16px） */
+  font-size: 25px; /* 用戶要求放大（16 → 20 → 25px） */
   color: #fff;
   text-align: center;
   line-height: 1.25;
   font-weight: 800;
   text-shadow: 0 1px 3px rgba(0,0,0,.3);
   overflow-wrap: break-word;
-  max-width: 100%;
+  /* 25px 時一欄只放得下 3 個中文字；文字區往左右各借 7px（= 半個欄距），放得下 4 個字 */
+  width: calc(100% + 14px);
+  margin: 0 -7px;
   min-height: 2.5em;
   white-space: pre-line;
 }
@@ -226,8 +228,8 @@ body {
   box-shadow: 0 8px 18px rgba(0,0,0,.4), inset 0 2px 2px rgba(255,255,255,.7), inset 0 -5px 10px rgba(0,0,0,.25);
 }
 .cartile:active { transform: scale(.97); }
-.cartile-plate { font-size: 24px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
-.cartile-sub { font-size: 14px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+.cartile-plate { font-size: 30px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.cartile-sub { font-size: 18px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
 .home-empty { color: #dbe3f5; font-size: 15px; text-align: center; padding: 10px 0 4px; }
 /* 方塊被選中（點開下方面板/篩選中）：白框標示 */
 button.apptile { background: none; border: none; padding: 0; cursor: pointer; font: inherit; }
@@ -260,8 +262,8 @@ button.apptile { background: none; border: none; padding: 0; cursor: pointer; fo
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0,0,0,.08);
 }
-.picktile b { font-size: 15px; font-weight: 800; overflow-wrap: anywhere; }
-.picktile span { font-size: 11px; color: #4b5563; margin-top: 2px; overflow-wrap: anywhere; }
+.picktile b { font-size: 19px; font-weight: 800; overflow-wrap: anywhere; }
+.picktile span { font-size: 14px; color: #4b5563; margin-top: 2px; overflow-wrap: anywhere; }
 .picktile:active { transform: scale(.96); }
 .picktile.is-active { background: #1565c0; border-color: #1565c0; color: #fff; }
 .picktile.is-active span { color: #e3f2fd; }

@@ -153,7 +153,7 @@ export default function ProfilePage() {
       <TileSection title={t('tile.section.settings')}>
         <AppTile onClick={() => toggleSec('profile')} active={openSec === 'profile'} icon={User} label={t('tile.profile')} color="#5c6bc0" />
         <AppTile onClick={() => toggleSec('notify')} active={openSec === 'notify'} icon={BellRing} label={t('tile.notifyPref')} color="#ef6c00" />
-        <AppTile onClick={() => toggleSec('line')} active={openSec === 'line'} icon={MessageSquare} label={t('tile.lineBind')} color="#06a74b" />
+        <AppTile onClick={() => toggleSec('line')} active={openSec === 'line'} icon={MessageSquare} label={t('tile.lineBind').replace('LINE ', 'LINE\n')} color="#06a74b" />
         <AppTile onClick={() => toggleSec('password')} active={openSec === 'password'} icon={ShieldCheck} label={t('tile.password')} color="#37474f" />
         <AppTile onClick={handleLogout} icon={LogOut} label={t('profile.logout')} color="#c62828" />
       </TileSection>
