@@ -5,6 +5,7 @@ import { X, Loader2 } from 'lucide-react';
 import api from '@/lib/api-client';
 import { VEHICLE_TYPE_GROUPS, FUEL_TYPES, rocLabel } from '@/lib/vehicleTypes';
 import { nextInspectionDue } from '@/lib/inspectionRules';
+import BrandModelPicker from '@/components/BrandModelPicker';
 
 export interface VehiclePayload {
   id?: string;
@@ -39,6 +40,8 @@ export default function VehicleFormModal({ open, initial, onClose, onSaved }: Pr
   const [yearMonth, setYearMonth] = useState('');  // 'YYYY-MM'
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  // 每次打開彈窗、載入資料後換 key，讓廠牌/車型方塊依新資料重新初始化
+  const [pickerKey, setPickerKey] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -53,6 +56,7 @@ export default function VehicleFormModal({ open, initial, onClose, onSaved }: Pr
       setForm({ plate_number: '' });
       setYearMonth('');
     }
+    setPickerKey((k) => k + 1);
   }, [open, initial]);
 
   if (!open) return null;
@@ -152,16 +156,13 @@ export default function VehicleFormModal({ open, initial, onClose, onSaved }: Pr
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelClass}>廠牌</label>
-                <input className={inputClass} value={form.brand ?? ''} onChange={(e) => update('brand', e.target.value)} placeholder="例：Toyota" />
-              </div>
-              <div>
-                <label className={labelClass}>車型</label>
-                <input className={inputClass} value={form.model ?? ''} onChange={(e) => update('model', e.target.value)} placeholder="例：Altis" />
-              </div>
-            </div>
+            <BrandModelPicker
+              key={`${pickerKey}-${form.vehicle_type?.includes('機車') ? 'moto' : 'car'}`}
+              vehicleType={form.vehicle_type}
+              brand={form.brand}
+              model={form.model}
+              onChange={(b, m) => setForm((f) => ({ ...f, brand: b, model: m }))}
+            />
 
             <div>
               <label className={labelClass}>出廠年月</label>
