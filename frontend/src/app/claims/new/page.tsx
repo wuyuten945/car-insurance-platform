@@ -9,7 +9,7 @@ import { z } from 'zod';
 import {
   Loader2, Send, CheckCircle, CarFront, KeyRound, Users, ShieldCheck, Ellipsis,
   ChevronsRight, ArrowRightLeft, ArrowDownUp, Scissors, SquareParking, Car,
-  ArrowUp, CornerUpLeft, CornerUpRight, ArrowDown, CirclePause, Gauge,
+  ArrowUp, CornerUpLeft, CornerUpRight, ArrowDown, CirclePause, Gauge, FileText,
   type LucideIcon,
 } from 'lucide-react';
 import api from '@/lib/api-client';
@@ -92,6 +92,7 @@ export default function NewClaimPage() {
   } = useForm<ClaimForm>({
     resolver: zodResolver(claimSchema),
   });
+  const policyId = watch('policy_id');
   const claimType = watch('claim_type');
   const accidentType = watch('accident_type');
   const mySituation = watch('my_situation');
@@ -178,15 +179,24 @@ export default function NewClaimPage() {
 
       <form onSubmit={handleSubmit((data) => mutation.mutate(data), onInvalid)} className="space-y-5">
         <div>
-          <label className={labelClass}>{t('claimForm.lbl.policy')}</label>
-          <select {...register('policy_id')} className={inputClass}>
-            <option value="">{t('claimForm.opt.policyChoose')}</option>
-            {policies?.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.vehicle_plate ? `[${p.vehicle_plate}] ` : ''}{p.insurer_name} ({p.policy_number})
-              </option>
-            ))}
-          </select>
+          <div data-field="policy_id">
+            <input type="hidden" {...register('policy_id')} />
+            <TileSection title={t('claimForm.lbl.policy')}>
+              {policies?.map((p) => (
+                <AppTile
+                  key={p.id}
+                  onClick={() => setValue('policy_id', p.id, { shouldValidate: true })}
+                  active={policyId === p.id}
+                  icon={FileText}
+                  label={`${p.vehicle_plate ?? p.policy_number}\n${p.insurer_name}`}
+                  color="#1565c0"
+                />
+              ))}
+            </TileSection>
+            {policies && policies.length === 0 && (
+              <p className="mt-2 text-sm text-gray-700">{t('dash.noPolicy')}</p>
+            )}
+          </div>
           {errors.policy_id && <p className={errorClass}>{errors.policy_id.message}</p>}
         </div>
 
