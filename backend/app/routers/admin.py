@@ -246,8 +246,34 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <button type="button" class="pw-toggle" onclick="togglePw('login-pass',this)">👁</button>
     </div>
     <button class="btn" onclick="doAdminLogin()" style="width:100%;margin-top:14px" data-i18n="btn_login">登入</button>
-    <p style="font-size:11px;color:#999;margin-top:14px;text-align:center" data-i18n="forgot_pw_hint">忘記密碼？請聯繫管理員（super_admin）為您重設。本系統不支援自助式 Email 重設以保護帳號安全。</p>
     <div id="login-msg" class="msg"></div>
+    <p style="text-align:center;margin-top:14px"><a href="#" onclick="showForgot();return false" style="font-size:13px;color:#1565C0;font-weight:600" data-i18n="forgot_link">忘記密碼？</a></p>
+    <div id="forgot-box" style="display:none;margin-top:12px;border-top:1px solid #e5e7eb;padding-top:12px">
+      <label data-i18n="forgot_label">帳號或 Email</label>
+      <input type="text" id="forgot-account" autocomplete="username" onkeydown="if(event.key==='Enter')doForgotPw()">
+      <button class="btn" id="forgot-btn" onclick="doForgotPw()" style="width:100%;margin-top:10px" data-i18n="btn_send_reset">寄送重設連結</button>
+      <div id="forgot-msg" class="msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 重設密碼（從 Email 連結 /admin?reset=... 進來） -->
+<div id="reset-section" class="container" style="display:none">
+  <div class="card">
+    <h2 data-i18n="reset_title">重設密碼</h2>
+    <label data-i18n="lbl_new_pw">新密碼（至少 8 字元）</label>
+    <div class="pw-wrap">
+      <input type="password" id="reset-pass" autocomplete="new-password">
+      <button type="button" class="pw-toggle" onclick="togglePw('reset-pass',this)">👁</button>
+    </div>
+    <label data-i18n="lbl_new_pw2">再輸入一次新密碼</label>
+    <div class="pw-wrap">
+      <input type="password" id="reset-pass2" autocomplete="new-password" onkeydown="if(event.key==='Enter')doResetPw()">
+      <button type="button" class="pw-toggle" onclick="togglePw('reset-pass2',this)">👁</button>
+    </div>
+    <button class="btn" id="reset-btn" onclick="doResetPw()" style="width:100%;margin-top:14px" data-i18n="btn_reset_pw">設定新密碼</button>
+    <div id="reset-msg" class="msg"></div>
+    <p style="text-align:center;margin-top:14px"><a href="#" onclick="backToLogin();return false" style="font-size:13px;color:#1565C0" data-i18n="back_login">回到登入</a></p>
   </div>
 </div>
 
@@ -2907,6 +2933,17 @@ var I18N = {
     cp_err_mismatch: '兩次輸入的新密碼不相同',
     cp_err_same: '新密碼不可與當前密碼相同',
     forgot_pw_hint: '忘記密碼？請聯繫 super_admin 重設。本系統不支援自助式 Email 重設以保護帳號安全。',
+    forgot_link: '忘記密碼？',
+    forgot_label: '帳號或 Email',
+    btn_send_reset: '寄送重設連結',
+    msg_forgot_empty: '請輸入帳號或 Email',
+    reset_title: '重設密碼',
+    lbl_new_pw: '新密碼（至少 8 字元）',
+    lbl_new_pw2: '再輸入一次新密碼',
+    btn_reset_pw: '設定新密碼',
+    back_login: '回到登入',
+    msg_pw_short: '新密碼至少 8 字元',
+    msg_pw_mismatch: '兩次輸入的新密碼不一致',
   },
   en: {
     header_title: 'BOPINAN — Admin Console',
@@ -3119,6 +3156,17 @@ var I18N = {
     cp_err_mismatch: 'New passwords do not match',
     cp_err_same: 'New password must differ from current',
     forgot_pw_hint: 'Forgot password? Please contact a super_admin to reset. Self-service email reset is intentionally disabled for security.',
+    forgot_link: 'Forgot password?',
+    forgot_label: 'Username or Email',
+    btn_send_reset: 'Send reset link',
+    msg_forgot_empty: 'Please enter your username or email',
+    reset_title: 'Reset password',
+    lbl_new_pw: 'New password (min. 8 characters)',
+    lbl_new_pw2: 'Confirm new password',
+    btn_reset_pw: 'Set new password',
+    back_login: 'Back to login',
+    msg_pw_short: 'New password must be at least 8 characters',
+    msg_pw_mismatch: 'The two passwords do not match',
   }
 };
 // 給 JS 動態訊息的 inline bilingual helper（避免每個都加 i18n key）
@@ -3258,6 +3306,7 @@ async function doAdminLogin() {
 
 // 頁面載入時嘗試自動 restore login 狀態
 async function tryRestoreLogin() {
+  if (_RESET_TOKEN) return false;
   var token = localStorage.getItem(LS_TOKEN_KEY);
   if (!token) return false;
   // 用 token 拉一個輕量 endpoint 驗證仍有效（用 /customers，admin 跟 agent 都可呼叫）
@@ -3275,6 +3324,57 @@ async function tryRestoreLogin() {
   localStorage.removeItem(LS_ROLE_KEY);
   localStorage.removeItem(LS_NAME_KEY);
   return false;
+}
+
+// ── 忘記密碼 / 以 Email 連結重設 ──
+var _RESET_TOKEN = new URLSearchParams(location.search).get('reset');
+function showForgot() {
+  var b = document.getElementById('forgot-box');
+  b.style.display = b.style.display === 'block' ? 'none' : 'block';
+  if (b.style.display === 'block') {
+    var u = document.getElementById('login-user').value.trim();
+    if (u) document.getElementById('forgot-account').value = u;
+    document.getElementById('forgot-account').focus();
+  }
+}
+async function doForgotPw() {
+  var acc = document.getElementById('forgot-account').value.trim();
+  if (!acc) { showMsg('forgot-msg', 'err', t('msg_forgot_empty')); return; }
+  var btn = document.getElementById('forgot-btn');
+  btn.disabled = true;
+  try {
+    var r = await fetch(CONSOLE_API + '/forgot-password', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({account: acc})});
+    var d = await r.json();
+    showMsg('forgot-msg', d.success === false ? 'err' : 'ok', d.message || '');
+  } catch (e) { showMsg('forgot-msg', 'err', t('msg_conn_failed') + ': ' + e.message); }
+  btn.disabled = false;
+}
+function backToLogin() {
+  history.replaceState(null, '', location.pathname);
+  _RESET_TOKEN = null;
+  document.getElementById('reset-section').style.display = 'none';
+  document.getElementById('login-section').style.display = 'block';
+}
+async function doResetPw() {
+  var p1 = document.getElementById('reset-pass').value;
+  var p2 = document.getElementById('reset-pass2').value;
+  if (p1.length < 8) { showMsg('reset-msg', 'err', t('msg_pw_short')); return; }
+  if (p1 !== p2) { showMsg('reset-msg', 'err', t('msg_pw_mismatch')); return; }
+  var btn = document.getElementById('reset-btn');
+  btn.disabled = true;
+  try {
+    var r = await fetch(CONSOLE_API + '/reset-password', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token: _RESET_TOKEN, new_password: p1})});
+    var d = await r.json();
+    if (d.success === false || !r.ok) { showMsg('reset-msg', 'err', d.message || ''); btn.disabled = false; return; }
+    showMsg('reset-msg', 'ok', d.message || '');
+    // 舊登入已全部失效：清掉本機 token，回登入頁
+    localStorage.removeItem(LS_TOKEN_KEY);
+    setTimeout(backToLogin, 2000);
+  } catch (e) { showMsg('reset-msg', 'err', t('msg_conn_failed') + ': ' + e.message); btn.disabled = false; }
+}
+if (_RESET_TOKEN) {
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('reset-section').style.display = 'block';
 }
 
 // ★ 頁面載入立刻嘗試 restore（多重觸發確保各種情境都覆蓋）

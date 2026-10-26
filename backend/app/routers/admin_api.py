@@ -190,6 +190,117 @@ async def change_password(
 
 
 # ═══════════════════════════════════════════════════
+# 忘記密碼 → Email 重設連結（業務員 / 管理員）
+#
+# 重設 token 是「無狀態」簽章 JWT，不存快取/DB：
+#   - Render Free 閒置會休眠、記憶體快取會清空，存快取的 token 會莫名失效
+#   - fp = 目前密碼雜湊的指紋：密碼一改 fp 就對不上 → 連結只能用一次
+#   - tv = token_version：重設成功會 +1，所有舊登入一併失效
+# 回應一律相同（帳號存不存在、有沒有 email 都一樣），避免被拿來探測帳號
+# ═══════════════════════════════════════════════════
+
+PW_RESET_TTL = 1800  # 30 分鐘
+
+
+def _pw_fingerprint(password_hash: str) -> str:
+    import hashlib
+    return hashlib.sha256((password_hash or "").encode()).hexdigest()[:16]
+
+
+class ForgotPasswordRequest(BaseModel):
+    account: str  # 帳號或 Email
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+@router.post("/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    from app.core.cache import cache
+    from app.core.email import email_service
+    from app.config import settings
+    from jose import jwt
+    import time
+    import html as _html
+
+    generic = APIResponse(message="若此帳號存在且已登記 Email，重設連結已寄出，請於 30 分鐘內完成重設。")
+    account = (req.account or "").strip()
+    if not account:
+        return generic
+
+    client_ip = request.client.host if request.client else "unknown"
+    # 同 IP 每小時最多 5 次、同帳號每小時最多 3 封，超過一樣回通用訊息（不透露被限流）
+    if await cache.increment(f"adm_pwreset:ip:{client_ip}", ttl=3600) > 5:
+        return generic
+
+    result = await db.execute(select(AdminUser).where(AdminUser.username == account))
+    targets = [a for a in [result.scalar_one_or_none()] if a]
+    if not targets and "@" in account:
+        result = await db.execute(select(AdminUser).where(func.lower(AdminUser.email) == account.lower()))
+        targets = list(result.scalars().all())
+
+    for admin in targets:
+        if not admin.is_active or not admin.email:
+            continue
+        if await cache.increment(f"adm_pwreset:user:{admin.id}", ttl=3600) > 3:
+            continue
+        token = jwt.encode({
+            "sub": admin.id,
+            "type": "admin_pwreset",
+            "fp": _pw_fingerprint(admin.password_hash),
+            "tv": int(admin.token_version or 0),
+            "exp": int(time.time()) + PW_RESET_TTL,
+        }, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+        link = f"{settings.BACKEND_URL.rstrip('/')}/admin?reset={token}"
+        name = _html.escape(admin.display_name or admin.username)
+        body = (
+            f"<p>{name} 您好：</p>"
+            f"<p>我們收到您 BOPINAN 後台帳號（<b>{_html.escape(admin.username)}</b>）的密碼重設申請。</p>"
+            f'<p><a href="{link}" style="display:inline-block;background:#1565C0;color:#fff;'
+            f'padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold">重設密碼</a></p>'
+            f"<p>此連結 30 分鐘內有效，且只能使用一次。</p>"
+            f"<p>如果這不是您本人的申請，請忽略此信，您的密碼不會變更。</p>"
+        )
+        await email_service.send(admin.email, "BOPINAN 後台密碼重設", body)
+        await log_action(db, admin, "pw_reset_request", "self_password", admin.id, "申請 Email 重設密碼", ip=client_ip)
+
+    return generic
+
+
+@router.post("/reset-password")
+async def reset_password(req: ResetPasswordRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    from app.core.cache import cache
+    from app.config import settings
+    from jose import jwt, JWTError
+
+    invalid = BadRequestError("重設連結無效或已過期，請重新申請")
+    try:
+        payload = jwt.decode(req.token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    except JWTError:
+        raise invalid
+    if payload.get("type") != "admin_pwreset":
+        raise invalid
+
+    admin = await db.get(AdminUser, payload.get("sub"))
+    if (not admin or not admin.is_active
+            or payload.get("fp") != _pw_fingerprint(admin.password_hash)
+            or int(payload.get("tv", -1)) != int(admin.token_version or 0)):
+        raise invalid
+    if not req.new_password or len(req.new_password) < 8:
+        raise BadRequestError(i18n_t("pw_too_short"))
+
+    admin.password_hash = hash_password(req.new_password)
+    admin.token_version = (admin.token_version or 0) + 1   # 所有舊登入失效
+    admin.login_fail_count = "0"
+    await cache.delete(f"adm_login_lock:user:{admin.id}")   # 解除登入鎖定
+    client_ip = request.client.host if request.client else "unknown"
+    await log_action(db, admin, "update", "self_password", admin.id, "以 Email 連結重設密碼", ip=client_ip)
+    return APIResponse(message="密碼已重設，請用新密碼登入")
+
+
+# ═══════════════════════════════════════════════════
 # 管理員 CRUD（僅 super_admin）
 # ═══════════════════════════════════════════════════
 

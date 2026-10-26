@@ -18,6 +18,17 @@ from app.services.policy_service import PolicyService
 router = APIRouter()
 
 
+# 保單一律由業務員從後台建立/修改（用戶 2026-10-26 決定）。
+# 前台客戶的新增、修改、上傳辨識、保障項目增刪改全部關閉；
+# 只保留「刪除自己以前自填的保單」（restrict_to_source="self"，碰不到後台建檔的保單）。
+POLICY_LOCKED_MSG = "保單需由業務員從後台建立或修改，如需新增或更正請聯繫您的業務員"
+
+
+def _policy_write_locked():
+    from app.exceptions import ForbiddenError
+    raise ForbiddenError(POLICY_LOCKED_MSG)
+
+
 # ===== Static paths FIRST (before /{policy_id} wildcard) =====
 
 # ===== Policy Image Upload + OCR =====
@@ -31,6 +42,7 @@ async def upload_policy_scan(
     db: AsyncSession = Depends(get_db),
 ):
     """上傳保單（JPG/PNG/PDF）— 立即回應，不等 OCR"""
+    _policy_write_locked()
     from app.core.pdf_utils import is_pdf, pdf_to_images
     from app.core.upload_validation import validate_upload
 
@@ -65,6 +77,7 @@ async def ocr_policy_scan(
     db: AsyncSession = Depends(get_db),
 ):
     """對已上傳的保單圖片執行 AI OCR 辨識並自動建立保單"""
+    _policy_write_locked()
     upload_dir = Path(settings.UPLOAD_DIR) / "policies"
     image_path = str(upload_dir / filename)
     if not Path(image_path).exists():
@@ -211,6 +224,7 @@ async def create_policy(
     db: AsyncSession = Depends(get_db),
 ):
     """建立新保單（前台客戶自填，會標記 data_source='self'）"""
+    _policy_write_locked()
     svc = PolicyService(db)
     policy = await svc.create_policy(current_user.id, data, data_source="self")
     today = date.today()
@@ -257,6 +271,7 @@ async def update_policy(
     db: AsyncSession = Depends(get_db),
 ):
     """更新保單（前台只能改自填的紀錄）"""
+    _policy_write_locked()
     svc = PolicyService(db)
     policy = await svc.update_policy(current_user.id, policy_id, data, restrict_to_source="self")
     today = date.today()
@@ -312,6 +327,7 @@ async def add_policy_item(
     db: AsyncSession = Depends(get_db),
 ):
     """新增保障項目"""
+    _policy_write_locked()
     svc = PolicyService(db)
     item = await svc.add_policy_item(current_user.id, policy_id, data)
     return APIResponse(data=PolicyItemOut.model_validate(item), message="保障項目已新增")
@@ -326,6 +342,7 @@ async def update_policy_item(
     db: AsyncSession = Depends(get_db),
 ):
     """更新保障項目"""
+    _policy_write_locked()
     svc = PolicyService(db)
     item = await svc.update_policy_item(current_user.id, policy_id, item_id, data)
     return APIResponse(data=PolicyItemOut.model_validate(item), message="保障項目已更新")
@@ -339,6 +356,7 @@ async def delete_policy_item(
     db: AsyncSession = Depends(get_db),
 ):
     """刪除保障項目"""
+    _policy_write_locked()
     svc = PolicyService(db)
     await svc.delete_policy_item(current_user.id, policy_id, item_id)
     return APIResponse(message="保障項目已刪除")
