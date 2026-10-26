@@ -137,6 +137,7 @@ export default function InspectionPage() {
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
       <div className="bg-primary-500 text-white px-4 pt-3 pb-5">
+        <div className="mx-auto w-full max-w-[520px]">
         <div className="flex items-center gap-3 mb-4">
           <h1 className="text-lg font-bold flex-1">監理站 / 驗車廠查詢</h1>
         </div>
@@ -181,6 +182,7 @@ export default function InspectionPage() {
             <X className="h-3 w-3" /> 清除所有篩選
           </button>
         )}
+        </div>
       </div>
 
       <div className="mx-auto max-w-lg px-4 pt-4 space-y-3">

@@ -115,8 +115,8 @@ export default function ChatbotPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
       {/* Chat Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white">
-        <div className="flex items-center gap-2">
+      <div className="px-4 py-3 border-b border-gray-100 bg-white">
+        <div className="flex items-center gap-2 mx-auto w-full max-w-[520px]">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100">
             <BookOpen className="h-4 w-4 text-primary-500" />
           </div>
@@ -128,7 +128,8 @@ export default function ChatbotPage() {
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scroll px-4 py-4 space-y-3 bg-gray-50">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scroll px-4 py-4 bg-gray-50">
+        <div className="mx-auto w-full max-w-[520px] space-y-3">
         {messages.map((msg, i) => {
           const isUser = msg.sender === 'user';
           return (
@@ -181,12 +182,13 @@ export default function ChatbotPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Quick Replies（對話開始後才出現；開始前改用上方方塊）*/}
       {messages.length > 1 && (
       <div className="px-4 py-2 bg-white border-t border-gray-100 overflow-x-auto">
-        <div className="flex gap-2">
+        <div className="flex gap-2 mx-auto w-full max-w-[520px]">
           {QUICK_REPLIES.map((qr) => (
             <button
               key={qr}
@@ -203,7 +205,7 @@ export default function ChatbotPage() {
 
       {/* Input */}
       <div className="px-4 py-3 bg-white border-t border-gray-100">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mx-auto w-full max-w-[520px]">
           <input
             ref={inputRef}
             type="text"
