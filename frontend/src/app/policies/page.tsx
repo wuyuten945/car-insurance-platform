@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, ChevronRight, Loader2, Phone, Truck, Trash2, Files, ShieldCheck, ShieldOff } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { FileText, ChevronRight, Loader2, Phone, Truck, Files, ShieldCheck, ShieldOff } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useT } from '@/lib/i18n/LanguageProvider';
@@ -112,11 +112,6 @@ export default function PoliciesPage() {
       const res = await api.get('/api/v1/policies');
       return res.data.data as Policy[];
     },
-  });
-  const queryClient = useQueryClient();
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => { await api.delete(`/api/v1/policies/${id}`); },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['policies'] }),
   });
 
   const countOf = (key: string) =>
@@ -230,13 +225,6 @@ export default function PoliciesPage() {
                   </div>
                 </div>
                 </Link>
-                {isSelf && (
-                  <div className="flex gap-2 pt-3 border-t border-gray-100 mt-3">
-                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (confirm(`確定刪除保單「${policy.policy_number}」？`)) deleteMutation.mutate(policy.id); }} className="flex items-center justify-center gap-1 rounded-lg bg-red-50 hover:bg-red-100 px-3 py-2 text-xs font-semibold text-red-600">
-                      <Trash2 className="h-3.5 w-3.5" /> 刪除
-                    </button>
-                  </div>
-                )}
               </div>
             );
           })}
