@@ -1,18 +1,17 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Car, ChevronLeft, Upload, Camera, AlertTriangle, CheckCircle,
-  Clock, XCircle, Shield, Loader2, FileText, Plus, Pencil, Trash2,
+  Clock, XCircle, Shield, Loader2, Plus, Pencil, Trash2, MapPin,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
-import { useAuthStore } from '@/stores/auth-store';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
+import { AppTile, TileSection, TilePanel } from '@/components/AppTile';
 import VehicleFormModal, { type VehiclePayload } from '@/components/VehicleFormModal';
 import AddToCalendar from '@/components/AddToCalendar';
 import InspectionInsuranceGuide from '@/components/InspectionInsuranceGuide';
@@ -66,18 +65,14 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 export default function VehiclesPage() {
   const { ready: __authReady } = useAuthGuard();
   useIdleLogout();
-  const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
   const { t } = useT();
-
-  useEffect(() => {
-    if (!isAuthenticated) router.replace('/login');
-  }, [isAuthenticated, router]);
 
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<VehiclePayload | null>(null);
   const { eligibility } = useEligibility();
+  // 點車輛方塊後，在下方顯示該車；再點一次收起
+  const [selectedId, setSelectedId] = useState('');
 
   const { data: vehicles, isLoading } = useQuery({
     queryKey: ['vehicles'],
@@ -85,7 +80,7 @@ export default function VehiclesPage() {
       const res = await api.get('/api/v1/customers/vehicles');
       return res.data.data as Vehicle[];
     },
-    enabled: isAuthenticated,
+    enabled: __authReady,
   });
 
   // 抓自己所有保單，給驗車卡片用來檢查強制險夠不夠
@@ -99,7 +94,7 @@ export default function VehiclesPage() {
         data_source?: string;
       }>;
     },
-    enabled: isAuthenticated,
+    enabled: __authReady,
   });
 
   const handleAdd = () => { setEditing(null); setModalOpen(true); };
@@ -121,46 +116,52 @@ export default function VehiclesPage() {
     queryClient.invalidateQueries({ queryKey: ['eligibility'] });
   };
 
-  if (!isAuthenticated) return null;
-
   if (!__authReady) return null;
 
   return (
-    <div className="px-4 py-5 space-y-4">
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
       <div className="flex items-center gap-3">
         <Link href="/profile" className="p-1">
           <ChevronLeft className="h-5 w-5 text-gray-600" />
         </Link>
         <h1 className="text-lg font-bold text-gray-900 flex-1">{t('vehicles.title')}</h1>
-        <button onClick={handleAdd} className="flex items-center gap-1 rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700">
-          <Plus className="h-4 w-4" /> 新增車輛
-        </button>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
         </div>
-      ) : !vehicles?.length ? (
-        <div className="text-center py-12">
-          <Car className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-400">{t('vehicles.empty')}</p>
-          <button onClick={handleAdd} className="mt-4 inline-flex items-center gap-1 rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white">
-            <Plus className="h-4 w-4" /> 新增第一輛車
-          </button>
-        </div>
       ) : (
-        vehicles.map((v) => (
+        <TileSection>
+          {(vehicles ?? []).map((v) => (
+            <AppTile
+              key={v.id}
+              onClick={() => setSelectedId((cur) => (cur === v.id ? '' : v.id))}
+              active={selectedId === v.id}
+              icon={Car}
+              label={v.plate_number}
+              color={v.is_primary ? '#1565c0' : '#455a64'}
+            />
+          ))}
+          <AppTile onClick={handleAdd} icon={Plus} label="新增車輛" color="#2e7d32" />
+        </TileSection>
+      )}
+
+      {!isLoading && !vehicles?.length && (
+        <p className="text-center text-gray-500 py-4">{t('vehicles.empty')}</p>
+      )}
+
+      {vehicles?.filter((v) => v.id === selectedId).map((v) => (
+        <TilePanel bare key={v.id} title={v.id}>
           <VehicleCard
-            key={v.id}
             vehicle={v}
             onEdit={() => handleEdit(v)}
             policies={(allPolicies ?? []).filter((p) => p.vehicle_id === v.id)}
             hasAgentPolicy={eligibility.has_agent_policy}
             lineOaUrl={eligibility.line_oa_url}
           />
-        ))
-      )}
+        </TilePanel>
+      ))}
 
       <VehicleFormModal
         open={modalOpen}
@@ -185,7 +186,9 @@ function VehicleCard({
 }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showStatus, setShowStatus] = useState(false);
+  // 方塊點開的區塊（一次一個，再點收起）
+  const [openSec, setOpenSec] = useState<'' | 'status' | 'reg'>('');
+  const toggleSec = (k: typeof openSec) => setOpenSec((cur) => (cur === k ? '' : k));
   const { t } = useT();
   const isSelf = (vehicle.data_source || 'agent') === 'self';
 
@@ -217,7 +220,7 @@ function VehicleCard({
       const res = await api.get(`/api/v1/customers/vehicles/${vehicle.id}/inspection-status`);
       return res.data.data as InspectionStatus;
     },
-    enabled: showStatus,
+    enabled: openSec === 'status',
   });
 
   const uploadMutation = useMutation({
@@ -247,6 +250,7 @@ function VehicleCard({
     vehicle.brand === 'BMW' && vehicle.model === 'i3' ? '/bmw-i3.jpg' : null;
 
   return (
+    <div className="space-y-4">
     <div className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
       {/* Vehicle hero image (有對應品牌圖時顯示) */}
       {brandImage && (
@@ -330,6 +334,25 @@ function VehicleCard({
           lineOaUrl={lineOaUrl}
         />
 
+        {/* 自填紀錄 → 編輯 / 刪除按鈕；業務員建檔的紀錄唯讀 */}
+        {!isSelf && (
+          <p className="text-[11px] text-gray-500 mt-2 pt-2 border-t border-gray-100">
+            此車輛由業務員 / 平台建檔，如需修改請聯繫您的業務員。
+          </p>
+        )}
+      </div>
+    </div>
+
+      <TileSection>
+        <AppTile onClick={() => toggleSec('status')} active={openSec === 'status'} icon={Shield} label="驗車狀態" color="#1565c0" />
+        <AppTile onClick={() => toggleSec('reg')} active={openSec === 'reg'} icon={Camera} label="行照照片" color="#6d4c41" />
+        <AppTile href="/inspection" icon={MapPin} label="查詢驗車廠" color="#00897b" />
+        {isSelf && <AppTile onClick={onEdit} icon={Pencil} label="編輯" color="#455a64" />}
+        {isSelf && <AppTile onClick={handleDelete} icon={Trash2} label="刪除" color="#c62828" />}
+      </TileSection>
+
+      {openSec === 'reg' && (
+        <TilePanel title="行照照片">
         {/* Registration image — 只有自填紀錄能上傳/更換；業務員建檔的只讀 */}
         {vehicle.registration_image_url ? (
           <div className="mb-3">
@@ -383,39 +406,12 @@ function VehicleCard({
           onChange={handleFileChange}
         />
 
-        {/* 自填紀錄 → 編輯 / 刪除按鈕；業務員建檔的紀錄唯讀 */}
-        {isSelf ? (
-          <div className="flex gap-2 pt-2 border-t border-gray-100 mt-2">
-            <button onClick={onEdit} className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-gray-100 hover:bg-gray-200 px-3 py-2 text-xs font-semibold text-gray-700">
-              <Pencil className="h-3.5 w-3.5" /> 編輯
-            </button>
-            <button onClick={handleDelete} disabled={deleteMutation.isPending} className="flex items-center justify-center gap-1 rounded-lg bg-red-50 hover:bg-red-100 px-3 py-2 text-xs font-semibold text-red-600 disabled:opacity-50">
-              {deleteMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-              刪除
-            </button>
-          </div>
-        ) : (
-          <p className="text-[11px] text-gray-400 mt-2 pt-2 border-t border-gray-100">
-            此車輛由業務員 / 平台建檔，如需修改請聯繫您的業務員。
-          </p>
-        )}
-      </div>
+        </TilePanel>
+      )}
 
-      {/* Inspection status toggle */}
-      <div className="border-t border-gray-100">
-        <button
-          onClick={() => setShowStatus(!showStatus)}
-          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-primary-500 hover:bg-gray-50 transition"
-        >
-          <span className="flex items-center gap-1.5">
-            <Shield className="h-4 w-4" />
-            {t('vehicles.statusCheck')}
-          </span>
-          <span className="text-xs text-gray-400">{showStatus ? t('vehicles.collapse') : t('vehicles.expand')}</span>
-        </button>
-
-        {showStatus && (
-          <div className="px-4 pb-4 space-y-3">
+      {openSec === 'status' && (
+        <TilePanel title="驗車狀態">
+          <div className="space-y-3">
             {statusLoading ? (
               <div className="flex justify-center py-4">
                 <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
@@ -489,19 +485,11 @@ function VehicleCard({
                   </div>
                 )}
 
-                {/* Link to inspection stations */}
-                <Link
-                  href="/inspection"
-                  className="flex items-center justify-center gap-2 rounded-xl bg-primary-500 py-3 text-sm font-semibold text-white hover:bg-primary-700 transition"
-                >
-                  <FileText className="h-4 w-4" />
-                  查詢附近驗車廠
-                </Link>
               </>
             ) : null}
           </div>
-        )}
-      </div>
+        </TilePanel>
+      )}
     </div>
   );
 }

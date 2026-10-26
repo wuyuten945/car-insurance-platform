@@ -4,12 +4,13 @@ import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   MapPin, Search, Navigation, Phone, ExternalLink,
-  ChevronLeft, Building2, CarFront, Loader2, Filter, X,
+  ChevronLeft, Building2, CarFront, Loader2, X, LayoutGrid, Wrench,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 interface Station {
   id: string;
@@ -49,7 +50,6 @@ export default function InspectionPage() {
   const [userLon, setUserLon] = useState<number | null>(null);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
 
   const requestLocation = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -135,7 +135,7 @@ export default function InspectionPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
       <div className="bg-primary-500 text-white px-4 pt-3 pb-5">
         <div className="flex items-center gap-3 mb-4">
@@ -143,12 +143,6 @@ export default function InspectionPage() {
             <ChevronLeft className="h-6 w-6" />
           </Link>
           <h1 className="text-lg font-bold flex-1">監理站 / 驗車廠查詢</h1>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-lg transition ${showFilters ? 'bg-white/30' : 'bg-white/10'}`}
-          >
-            <Filter className="h-5 w-5" />
-          </button>
         </div>
 
         {/* Search bar */}
@@ -172,116 +166,53 @@ export default function InspectionPage() {
           </button>
         </div>
 
-        {/* Filters panel */}
-        {showFilters && (
-          <div className="mt-3 space-y-3 bg-white/10 rounded-xl p-3">
-            {/* Type filter */}
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                onClick={() => setSelectedType('')}
-                className={`rounded-lg py-2 text-xs font-medium transition ${
-                  selectedType === '' ? 'bg-white text-primary-500' : 'bg-white/10 text-white'
-                }`}
-              >
-                全部
-              </button>
-              <button
-                onClick={() => setSelectedType('supervision')}
-                className={`rounded-lg py-2 text-xs font-medium transition ${
-                  selectedType === 'supervision' ? 'bg-white text-blue-600' : 'bg-white/10 text-white'
-                }`}
-              >
-                監理站
-              </button>
-              <button
-                onClick={() => setSelectedType('inspection')}
-                className={`rounded-lg py-2 text-xs font-medium transition ${
-                  selectedType === 'inspection' ? 'bg-white text-green-600' : 'bg-white/10 text-white'
-                }`}
-              >
-                公立驗車
-              </button>
-              <button
-                onClick={() => setSelectedType('private')}
-                className={`rounded-lg py-2 text-xs font-medium transition ${
-                  selectedType === 'private' ? 'bg-white text-orange-600' : 'bg-white/10 text-white'
-                }`}
-              >
-                民間驗車
-              </button>
-            </div>
+        <select
+          value={selectedCity}
+          onChange={(e) => setSelectedCity(e.target.value)}
+          className="mt-3 w-full rounded-xl bg-white py-2.5 px-3 text-sm text-gray-900 outline-none"
+        >
+          <option value="">全部縣市</option>
+          {cities?.map((city) => (
+            <option key={city} value={city}>{city}</option>
+          ))}
+        </select>
 
-            {/* City filter */}
-            <select
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-              className="w-full rounded-lg bg-white py-2.5 px-3 text-sm text-gray-900 outline-none"
-            >
-              <option value="">全部縣市</option>
-              {cities?.map((city) => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-            </select>
-
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-xs text-white/70 hover:text-white transition"
-              >
-                <X className="h-3 w-3" /> 清除所有篩選
-              </button>
-            )}
-          </div>
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="mt-2 flex items-center gap-1 text-xs text-white/90 hover:text-white transition"
+          >
+            <X className="h-3 w-3" /> 清除所有篩選
+          </button>
         )}
       </div>
 
-      {/* Location bar — 必須使用者主動按按鈕觸發（瀏覽器會擋自動 geolocation） */}
-      <div className="px-4 py-3 bg-white border-b border-gray-100">
-        {userLat ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-green-700">
-              <Navigation className="h-4 w-4" />
-              <span>已定位（{userLat.toFixed(4)}, {userLon?.toFixed(4)}）— 依距離排序</span>
-            </div>
-            <button
-              onClick={requestLocation}
-              disabled={locating}
-              className="text-xs text-primary-500 font-medium hover:underline disabled:opacity-50"
-            >
-              {locating ? '定位中…' : '重新定位'}
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <button
-              onClick={requestLocation}
-              disabled={locating}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
-            >
-              {locating ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> 定位中⋯</>
-              ) : (
-                <><Navigation className="h-4 w-4" /> 📍 開啟定位顯示附近站點</>
-              )}
-            </button>
-            {locError && (
-              <div className="rounded-lg bg-red-50 p-2.5 text-xs text-red-600 leading-relaxed">
-                {locError}
-              </div>
-            )}
-            {!locError && (
-              <p className="text-[11px] text-gray-400 text-center">
-                定位後會自動依距離由近到遠排序站點
-              </p>
-            )}
+      <div className="mx-auto max-w-lg px-4 pt-4 space-y-3">
+        <TileSection>
+          <AppTile onClick={() => setSelectedType('')} active={selectedType === ''} icon={LayoutGrid} label="全部" color="#455a64" />
+          <AppTile onClick={() => setSelectedType('supervision')} active={selectedType === 'supervision'} icon={Building2} label="監理站" color="#1565c0" />
+          <AppTile onClick={() => setSelectedType('inspection')} active={selectedType === 'inspection'} icon={CarFront} label="公立驗車" color="#2e7d32" />
+          <AppTile onClick={() => setSelectedType('private')} active={selectedType === 'private'} icon={Wrench} label="民間驗車" color="#ef6c00" />
+          {/* 定位必須由使用者點擊觸發（瀏覽器會擋無手勢的 geolocation） */}
+          <AppTile
+            onClick={requestLocation}
+            active={!!userLat}
+            icon={locating ? Loader2 : Navigation}
+            label={locating ? '定位中…' : userLat ? '重新定位' : '附近站點'}
+            color="#00897b"
+          />
+        </TileSection>
+        {locError && (
+          <div className="rounded-lg bg-red-50 p-2.5 text-xs text-red-700 leading-relaxed">
+            {locError}
           </div>
         )}
       </div>
 
       {/* Results count */}
-      <div className="px-4 py-2">
-        <p className="text-xs text-gray-500">
-          {isLoading ? '搜尋中...' : `共找到 ${stations?.length ?? 0} 個站點`}
+      <div className="mx-auto max-w-lg px-4 py-2">
+        <p className="text-xs text-gray-600">
+          {isLoading ? '搜尋中...' : `共找到 ${stations?.length ?? 0} 個站點${userLat ? '，依距離排序' : ''}`}
           {hasActiveFilters && (
             <span className="text-primary-500 ml-1">
               (已篩選{selectedCity ? ` ${selectedCity}` : ''}{selectedType ? ` ${TYPE_LABELS[selectedType]?.label}` : ''}{keyword ? ` "${keyword}"` : ''})
@@ -291,7 +222,7 @@ export default function InspectionPage() {
       </div>
 
       {/* Station list */}
-      <div className="px-4 space-y-3">
+      <div className="mx-auto max-w-lg px-4 space-y-3">
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
