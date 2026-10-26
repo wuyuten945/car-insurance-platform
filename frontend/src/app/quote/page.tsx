@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, Calculator, Loader2, Star, Check, MessageCircle, Phone, AlertTriangle, FileText, ArrowRight } from 'lucide-react';
+import { ChevronLeft, Calculator, Loader2, Star, Check, MessageCircle, Phone, AlertTriangle, FileText, Car, PencilLine, ShieldCheck, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
@@ -10,6 +10,7 @@ import { useIdleLogout } from '@/lib/useIdleLogout';
 import { useEligibility } from '@/lib/useEligibility';
 import { VEHICLE_TYPE_GROUPS } from '@/lib/vehicleTypes';
 import QuoteRequestModal from '@/components/QuoteRequestModal';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 interface VehicleLite {
   id: string;
@@ -112,54 +113,41 @@ export default function QuotePage() {
   const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:border-primary-500';
 
   return (
-    <div className="px-4 py-5 space-y-4 pb-24">
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-4 pb-8">
       <div className="flex items-center gap-3">
         <Link href="/profile" className="p-1"><ChevronLeft className="h-5 w-5 text-gray-600" /></Link>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold text-gray-900">保費簡易試算（參考）</h1>
-          <p className="text-xs text-gray-500">填寫車輛資訊，立即試算各家保險公司預估保費</p>
-        </div>
-        <Calculator className="h-6 w-6 text-primary-500" />
+        <h1 className="text-lg font-bold text-gray-900 flex-1">保費簡易試算（參考）</h1>
       </div>
+
+      {/* 車輛：我的車輛（每台一個方塊）或手動輸入 */}
+      <TileSection title="車輛">
+        {(vehicles ?? []).map((v) => (
+          <AppTile
+            key={v.id}
+            onClick={() => { setVehicleMode('pick'); setVehicleId(v.id); }}
+            active={vehicleMode === 'pick' && vehicleId === v.id}
+            icon={Car}
+            label={v.plate_number}
+            color="#1565c0"
+          />
+        ))}
+        <AppTile onClick={() => { setVehicleMode('manual'); setVehicleId(''); }} active={vehicleMode === 'manual'} icon={PencilLine} label="手動輸入" color="#455a64" />
+      </TileSection>
+
+      <TileSection title="保障等級">
+        {TIERS.map((opt) => (
+          <AppTile key={opt.value} onClick={() => setTier(opt.value)} active={tier === opt.value} icon={ShieldCheck} label={opt.label} color={opt.badge} />
+        ))}
+      </TileSection>
 
       {/* 表單 */}
       <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100 space-y-4">
-        <div>
-          <label className={labelClass}>車輛資料來源</label>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setVehicleMode('pick')}
-              className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${vehicleMode === 'pick' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-500'}`}
-            >
-              從我的車輛挑選
-            </button>
-            <button
-              type="button"
-              onClick={() => setVehicleMode('manual')}
-              className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${vehicleMode === 'manual' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-500'}`}
-            >
-              手動輸入車輛
-            </button>
-          </div>
-        </div>
+        <p className="text-sm text-gray-800">
+          <span className="font-bold">{TIERS.find((o) => o.value === tier)?.label}：</span>
+          {TIERS.find((o) => o.value === tier)?.desc}
+        </p>
 
-        {vehicleMode === 'pick' ? (
-          <div>
-            <label className={labelClass}>選擇車輛</label>
-            <select className={inputClass} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-              <option value="">— 請選擇 —</option>
-              {(vehicles ?? []).map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.plate_number}{v.brand || v.model ? ` — ${v.brand || ''} ${v.model || ''}`.trim() : ''}{v.year ? ` (${v.year})` : ''}
-                </option>
-              ))}
-            </select>
-            {(vehicles ?? []).length === 0 && (
-              <p className="text-[11px] text-gray-400 mt-1">名下尚無車輛 — 可先去「車輛 / 行照」新增，或切換到手動輸入</p>
-            )}
-          </div>
-        ) : (
+        {vehicleMode === 'manual' && (
           <div className="space-y-3">
             <div>
               <label className={labelClass}>車輛型式</label>
@@ -206,28 +194,6 @@ export default function QuotePage() {
           <label className={labelClass}>已知加費費率（選填，例：+20）</label>
           <input type="number" step="0.01" className={inputClass} value={surchargePct} onChange={(e) => setSurchargePct(e.target.value)} placeholder="0" />
           <p className="text-[10px] text-gray-400 mt-1">如保險公司已告知您的個人加費比率（從人因素），請填入百分比</p>
-        </div>
-
-        <div>
-          <label className={labelClass}>保障等級</label>
-          <div className="grid grid-cols-1 gap-2">
-            {TIERS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setTier(opt.value)}
-                className={`w-full text-left rounded-lg border px-3 py-2.5 transition ${
-                  tier === opt.value ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: opt.badge }}>{opt.label}</span>
-                  {tier === opt.value && <Check className="h-4 w-4 text-primary-500" />}
-                </div>
-                <p className="text-[11px] text-gray-500 mt-1">{opt.desc}</p>
-              </button>
-            ))}
-          </div>
         </div>
 
         <label className="flex items-center gap-2 cursor-pointer">
@@ -287,41 +253,14 @@ export default function QuotePage() {
             </div>
           ))}
 
-          {/* 主要 CTA：請業務員精確報價（送出詢價工單）*/}
-          <button
-            onClick={() => setRequestOpen(true)}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 px-4 py-4 text-base font-bold text-white shadow-lg"
-          >
-            <FileText className="h-5 w-5" />
-            請業務員精確報價（6–12 小時內回覆）
-            <ArrowRight className="h-5 w-5" />
-          </button>
-
-          {/* 次要 CTA */}
-          <div className="rounded-2xl bg-gradient-to-br from-green-50 to-blue-50 p-4 border border-green-200">
-            <p className="text-xs text-gray-600 mb-3 leading-relaxed">
-              {eligibility.has_agent_policy
-                ? '👤 您是 BOPINAN 已服務客戶，請業務員報價會自動指派給您專屬的業務員。'
-                : '🆕 您目前沒有業務員，送出詢價工單會由本平台管理員為您處理。'}
-              另可直接聯繫：
-            </p>
-            <div className="flex gap-2">
-              {!eligibility.has_agent_policy && eligibility.line_oa_url && (
-                <a href={eligibility.line_oa_url} target="_blank" rel="noopener noreferrer"
-                   className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-green-500 hover:bg-green-600 px-3 py-2.5 text-xs font-semibold text-white">
-                  <MessageCircle className="h-4 w-4" /> LINE 聯繫
-                </a>
-              )}
-              <a href="tel:" onClick={(e) => { e.preventDefault(); alert('請撥打您熟悉的業務員電話辦理。'); }}
-                 className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 px-3 py-2.5 text-xs font-semibold text-gray-700">
-                <Phone className="h-4 w-4" /> 致電業務員
-              </a>
-            </div>
-          </div>
-
-          <Link href="/quote-requests" className="block text-center text-xs text-primary-600 hover:underline pt-2">
-            → 我的車險續期保費詢價（追蹤進度）
-          </Link>
+          <TileSection title="下一步">
+            <AppTile onClick={() => setRequestOpen(true)} icon={FileText} label="請業務員報價" color="#e65100" />
+            {!eligibility.has_agent_policy && eligibility.line_oa_url && (
+              <AppTile href={eligibility.line_oa_url} icon={MessageCircle} label="LINE 聯繫" color="#06a74b" />
+            )}
+            <AppTile onClick={() => alert('請撥打您熟悉的業務員電話辦理。')} icon={Phone} label="致電業務員" color="#455a64" />
+            <AppTile href="/quote-requests" icon={ClipboardList} label="詢價進度" color="#00838f" />
+          </TileSection>
         </div>
       )}
 

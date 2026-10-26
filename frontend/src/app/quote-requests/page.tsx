@@ -9,6 +9,7 @@ import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
 import { useEligibility } from '@/lib/useEligibility';
 import QuoteRequestModal from '@/components/QuoteRequestModal';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 interface QuoteResponseRow {
   id: string;
@@ -90,24 +91,16 @@ export default function QuoteRequestsPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="px-4 py-5 space-y-4 pb-24">
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-4 pb-8">
       <div className="flex items-center gap-3">
         <Link href="/profile" className="p-1"><ChevronLeft className="h-5 w-5 text-gray-600" /></Link>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold text-gray-900">我的車險續期保費詢價</h1>
-          <p className="text-xs text-gray-500">追蹤每張詢價單的處理狀態與服務人員回報的報價</p>
-        </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-1 rounded-lg bg-primary-500 hover:bg-primary-700 px-3 py-2 text-xs font-semibold text-white"
-        >
-          <Plus className="h-4 w-4" /> 新增詢價
-        </button>
+        <h1 className="text-lg font-bold text-gray-900 flex-1">我的車險續期保費詢價</h1>
       </div>
 
-      <Link href="/quote" className="flex items-center justify-center gap-1 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-2 text-xs text-gray-600">
-        <Calculator className="h-4 w-4" /> 想先自助試算保費？前往「保費簡易試算（參考）」
-      </Link>
+      <TileSection>
+        <AppTile onClick={() => setModalOpen(true)} icon={Plus} label="新增詢價" color="#2e7d32" />
+        <AppTile href="/quote" icon={Calculator} label="保費試算" color="#6d4c41" />
+      </TileSection>
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary-500" /></div>
@@ -115,12 +108,6 @@ export default function QuoteRequestsPage() {
         <div className="rounded-2xl bg-gray-50 p-8 text-center">
           <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
           <p className="text-sm text-gray-500">尚無詢價工單</p>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="mt-3 inline-flex items-center gap-1 rounded-lg bg-primary-500 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white"
-          >
-            <Plus className="h-4 w-4" /> 送出第一張詢價
-          </button>
         </div>
       ) : (
         requests.map((qr) => {

@@ -1,13 +1,14 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Check, Star, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, Star, Loader2, Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
+import { AppTile, TileSection, TilePanel } from '@/components/AppTile';
 
 interface RenewalQuote {
   id: string;
@@ -40,6 +41,7 @@ function RenewalContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const policyId = searchParams.get('policy_id') ?? '';
+  const [openId, setOpenId] = useState('');
 
   const { data: quotes, isLoading } = useQuery({
     queryKey: ['renewal-quotes', policyId],
@@ -51,15 +53,12 @@ function RenewalContent() {
   });
 
   return (
-    <div className="px-4 py-5 space-y-5">
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-5">
       <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500">
         <ArrowLeft className="h-4 w-4" /> 返回
       </button>
 
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">續保比價</h1>
-        <p className="text-sm text-gray-500 mt-1">為您推薦最佳續保方案</p>
-      </div>
+      <h1 className="text-xl font-bold text-gray-900">續保比價</h1>
 
       {!policyId && (
         <div className="rounded-xl bg-yellow-50 p-4 text-sm text-yellow-700">
@@ -73,7 +72,20 @@ function RenewalContent() {
         </div>
       ) : quotes && quotes.length > 0 ? (
         <div className="space-y-4">
-          {quotes.map((quote) => (
+          <TileSection>
+            {quotes.map((quote) => (
+              <AppTile
+                key={quote.id}
+                onClick={() => setOpenId((cur) => (cur === quote.id ? '' : quote.id))}
+                active={openId === quote.id}
+                icon={quote.is_recommended ? Star : Building2}
+                label={`${quote.insurer_name}\n$${quote.annual_premium?.toLocaleString()}`}
+                color={quote.is_recommended ? '#e65100' : '#1565c0'}
+              />
+            ))}
+          </TileSection>
+          {quotes.filter((q) => q.id === openId).map((quote) => (
+            <TilePanel bare key={quote.id} title={quote.id}>
             <div
               key={quote.id}
               className={`relative rounded-2xl bg-white p-5 shadow-sm border-2 ${
@@ -138,6 +150,7 @@ function RenewalContent() {
                 選擇此方案
               </button>
             </div>
+            </TilePanel>
           ))}
         </div>
       ) : policyId ? (

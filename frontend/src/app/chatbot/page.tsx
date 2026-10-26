@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Send, BookOpen, Loader2, ArrowLeft } from 'lucide-react';
+import { Send, BookOpen, Loader2, ArrowLeft, FileText, ClipboardList, RefreshCw, AlertTriangle, UserRound, Scale, Headset } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 // 後端回傳格式：sender = 'user' | 'bot' | 'agent'
 // 前端顯示：'user' 靠右藍底；'bot' / 'agent' 靠左白底（一律當客服訊息）
@@ -30,6 +31,10 @@ const QUICK_REPLIES = [
   '法規查詢',
   '轉人工客服',
 ];
+// 與 QUICK_REPLIES 一一對應
+const QUICK_ICONS = [FileText, ClipboardList, RefreshCw, AlertTriangle, UserRound, Scale, Headset];
+const QUICK_COLORS = ['#1565c0', '#ef6c00', '#2e7d32', '#d32f2f', '#5c6bc0', '#6d4c41', '#00897b'];
+
 
 export default function ChatbotPage() {
   const { ready: __authReady } = useAuthGuard();
@@ -164,6 +169,13 @@ export default function ChatbotPage() {
             </div>
           );
         })}
+        {messages.length <= 1 && (
+          <TileSection>
+            {QUICK_REPLIES.map((qr, i) => (
+              <AppTile key={qr} onClick={() => handleSend(qr)} icon={QUICK_ICONS[i]} label={qr} color={QUICK_COLORS[i]} />
+            ))}
+          </TileSection>
+        )}
         {sendMessage.isPending && (
           <div className="flex justify-start">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 mr-2">
@@ -176,7 +188,8 @@ export default function ChatbotPage() {
         )}
       </div>
 
-      {/* Quick Replies */}
+      {/* Quick Replies（對話開始後才出現；開始前改用上方方塊）*/}
+      {messages.length > 1 && (
       <div className="px-4 py-2 bg-white border-t border-gray-100 overflow-x-auto">
         <div className="flex gap-2">
           {QUICK_REPLIES.map((qr) => (
@@ -191,6 +204,7 @@ export default function ChatbotPage() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Input */}
       <div className="px-4 py-3 bg-white border-t border-gray-100">

@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, Loader2, CheckCheck, Car, Shield, Calendar, CircleCheck, CircleX, Clock, AlertTriangle } from 'lucide-react';
+import { Bell, Mail, Loader2, CheckCheck, Car, Shield, Calendar, CircleCheck, CircleX, Clock, AlertTriangle } from 'lucide-react';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 interface PinnedItem {
   id: string;
@@ -44,6 +46,7 @@ interface Notification {
 
 export default function NotificationsPage() {
   const { ready: __authReady } = useAuthGuard();
+  const [filter, setFilter] = useState<'all' | 'unread' | 'vehicles'>('all');
   useIdleLogout();
   const queryClient = useQueryClient();
 
@@ -60,8 +63,12 @@ export default function NotificationsPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['notifications'] }); },
   });
 
-  const pinned = data?.pinned ?? [];
-  const notifications = data?.items ?? [];
+  const allPinned = data?.pinned ?? [];
+  const allItems = data?.items ?? [];
+  const unreadCount = allItems.filter((n) => !n.is_read).length;
+  // 篩選方塊：全部 / 未讀（一般通知）/ 車輛提醒（置頂車輛卡）
+  const pinned = filter === 'unread' ? [] : allPinned;
+  const notifications = filter === 'vehicles' ? [] : filter === 'unread' ? allItems.filter((n) => !n.is_read) : allItems;
 
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -79,10 +86,14 @@ export default function NotificationsPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="px-4 py-5">
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-xl font-bold text-gray-900">通知中心</h1>
-      </div>
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
+      <h1 className="text-xl font-bold text-gray-900">通知中心</h1>
+
+      <TileSection>
+        <AppTile onClick={() => setFilter('all')} active={filter === 'all'} icon={Bell} label={`全部（${allPinned.length + allItems.length}）`} color="#1565c0" />
+        <AppTile onClick={() => setFilter('unread')} active={filter === 'unread'} icon={Mail} label={`未讀（${unreadCount}）`} color="#f9a825" badge={unreadCount} />
+        <AppTile onClick={() => setFilter('vehicles')} active={filter === 'vehicles'} icon={Car} label={`車輛提醒（${allPinned.length}）`} color="#455a64" />
+      </TileSection>
 
       {isLoading ? (
         <div className="flex justify-center py-20">

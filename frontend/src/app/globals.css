@@ -194,6 +194,7 @@ body {
   overflow-wrap: break-word;
   max-width: 100%;
   min-height: 2.5em;
+  white-space: pre-line;
 }
 
 /* 車輛狀態方塊：車牌大字 + 兩行狀態，底色依急迫程度 */

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, Sparkles, Loader2 } from 'lucide-react';
+import { ChevronLeft, Sparkles, Loader2, UserRound, SlidersHorizontal, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 type TabKey = 'auto' | 'manual' | 'recommend';
 
@@ -132,7 +133,7 @@ export default function NumerologyPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="px-4 py-5 space-y-4 pb-24">
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-4 pb-8">
       <div className="flex items-center gap-3">
         <Link href="/profile" className="p-1"><ChevronLeft className="h-5 w-5 text-gray-600" /></Link>
         <div className="flex-1">
@@ -143,21 +144,11 @@ export default function NumerologyPage() {
         </div>
       </div>
 
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 text-xs font-semibold">
-        {[
-          { k: 'auto',      l: '個人分析' },
-          { k: 'manual',    l: '進階分析' },
-          { k: 'recommend', l: '智能建議' },
-        ].map((t) => (
-          <button
-            key={t.k}
-            onClick={() => setTab(t.k as TabKey)}
-            className={`flex-1 py-2 rounded-lg transition ${tab === t.k ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'}`}
-          >
-            {t.l}
-          </button>
-        ))}
-      </div>
+      <TileSection>
+        <AppTile onClick={() => setTab('auto')} active={tab === 'auto'} icon={UserRound} label="個人分析" color="#8e24aa" />
+        <AppTile onClick={() => setTab('manual')} active={tab === 'manual'} icon={SlidersHorizontal} label="進階分析" color="#5e35b1" />
+        <AppTile onClick={() => setTab('recommend')} active={tab === 'recommend'} icon={Lightbulb} label="智能建議" color="#ef6c00" />
+      </TileSection>
 
       {tab === 'auto'      && <AutoTab onAnalyzed={setSnapshot} />}
       {tab === 'manual'    && <ManualTab />}
