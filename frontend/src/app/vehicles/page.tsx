@@ -3,10 +3,9 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Car, ChevronLeft, Upload, Camera, AlertTriangle, CheckCircle,
+  Car, Upload, Camera, AlertTriangle, CheckCircle,
   Clock, XCircle, Shield, Loader2, Plus, Pencil, Trash2, MapPin,
 } from 'lucide-react';
-import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useT } from '@/lib/i18n/LanguageProvider';
 import { useAuthGuard } from '@/lib/useAuthGuard';
@@ -121,9 +120,6 @@ export default function VehiclesPage() {
   return (
     <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
       <div className="flex items-center gap-3">
-        <Link href="/profile" className="p-1">
-          <ChevronLeft className="h-5 w-5 text-gray-600" />
-        </Link>
         <h1 className="text-lg font-bold text-gray-900 flex-1">{t('vehicles.title')}</h1>
       </div>
 

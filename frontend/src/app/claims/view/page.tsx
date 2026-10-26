@@ -2,9 +2,9 @@
 
 import { Suspense, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, User, FileText, Phone, ListChecks, Info } from 'lucide-react';
+import { Loader2, User, FileText, Phone, ListChecks, Info } from 'lucide-react';
 import { AppTile, TileSection, TilePanel } from '@/components/AppTile';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api-client';
 import { CLAIM_STAGES } from '@/lib/constants';
 
@@ -49,7 +49,6 @@ const CLAIM_TYPE_MAP: Record<string, string> = {
 
 function ClaimDetailContent() {
   const id = useSearchParams().get('id') ?? '';
-  const router = useRouter();
 
   // 方塊點開的區塊（一次一個，再點收起）；必須在下面的 early return 之前宣告
   const [openSec, setOpenSec] = useState<'' | 'progress' | 'info' | 'adjuster' | 'docs'>('');
@@ -84,9 +83,6 @@ function ClaimDetailContent() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
-      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500">
-        <ArrowLeft className="h-4 w-4" /> 返回
-      </button>
 
       {/* Header */}
       <div className="rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 p-5 text-white">

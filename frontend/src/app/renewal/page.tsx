@@ -3,8 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Check, Star, Loader2, Building2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Check, Star, Loader2, Building2 } from 'lucide-react';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
@@ -38,7 +37,6 @@ export default function RenewalPage() {
 }
 
 function RenewalContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const policyId = searchParams.get('policy_id') ?? '';
   const [openId, setOpenId] = useState('');
@@ -54,9 +52,6 @@ function RenewalContent() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-5 space-y-5">
-      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500">
-        <ArrowLeft className="h-4 w-4" /> 返回
-      </button>
 
       <h1 className="text-xl font-bold text-gray-900">續保比價</h1>
 

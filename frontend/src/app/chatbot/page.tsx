@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Send, BookOpen, Loader2, ArrowLeft, FileText, ClipboardList, RefreshCw, AlertTriangle, UserRound, Scale, Headset } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Send, BookOpen, Loader2, FileText, ClipboardList, RefreshCw, AlertTriangle, UserRound, Scale, Headset } from 'lucide-react';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
@@ -39,7 +38,6 @@ const QUICK_COLORS = ['#1565c0', '#ef6c00', '#2e7d32', '#d32f2f', '#5c6bc0', '#6
 export default function ChatbotPage() {
   const { ready: __authReady } = useAuthGuard();
   useIdleLogout();
-  const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -118,9 +116,6 @@ export default function ChatbotPage() {
     <div className="flex flex-col h-[calc(100vh-120px)]">
       {/* Chat Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white">
-        <button onClick={() => router.back()} className="text-primary-500">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100">
             <BookOpen className="h-4 w-4 text-primary-500" />

@@ -2,9 +2,9 @@
 
 import { Suspense, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Shield, DollarSign, AlertCircle, Loader2, Printer, Car, RefreshCw } from 'lucide-react';
+import { Shield, DollarSign, AlertCircle, Loader2, Printer, Car, RefreshCw } from 'lucide-react';
 import { AppTile, TileSection, TilePanel } from '@/components/AppTile';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api-client';
 
 interface PolicyItem {
@@ -113,7 +113,6 @@ function exportPolicyPdf(policy: PolicyDetail, exclusions?: Exclusion[]) {
 
 function PolicyDetailContent() {
   const id = useSearchParams().get('id') ?? '';
-  const router = useRouter();
 
   const { data: policy, isLoading } = useQuery({
     queryKey: ['policy', id],
@@ -160,9 +159,6 @@ function PolicyDetailContent() {
   return (
     <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
       {/* Back */}
-      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500">
-        <ArrowLeft className="h-4 w-4" /> 返回
-      </button>
 
       {/* Header Card */}
       <div className="rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 p-5 text-white">

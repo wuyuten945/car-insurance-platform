@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, Calculator, Loader2, Star, Check, MessageCircle, Phone, AlertTriangle, FileText, Car, PencilLine, ShieldCheck, ClipboardList } from 'lucide-react';
-import Link from 'next/link';
+import { Calculator, Loader2, Star, Check, MessageCircle, Phone, AlertTriangle, FileText, Car, PencilLine, ShieldCheck, ClipboardList } from 'lucide-react';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
@@ -115,7 +114,6 @@ export default function QuotePage() {
   return (
     <div className="mx-auto max-w-lg px-4 py-5 space-y-4 pb-8">
       <div className="flex items-center gap-3">
-        <Link href="/profile" className="p-1"><ChevronLeft className="h-5 w-5 text-gray-600" /></Link>
         <h1 className="text-lg font-bold text-gray-900 flex-1">保費簡易試算（參考）</h1>
       </div>
 

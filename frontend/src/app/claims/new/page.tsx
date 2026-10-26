@@ -7,7 +7,7 @@ import { useForm, type SubmitErrorHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  ArrowLeft, Loader2, Send, CheckCircle, CarFront, KeyRound, Users, ShieldCheck, Ellipsis,
+  Loader2, Send, CheckCircle, CarFront, KeyRound, Users, ShieldCheck, Ellipsis,
   ChevronsRight, ArrowRightLeft, ArrowDownUp, Scissors, SquareParking, Car,
   ArrowUp, CornerUpLeft, CornerUpRight, ArrowDown, CirclePause, Gauge,
   type LucideIcon,
@@ -136,9 +136,6 @@ export default function NewClaimPage() {
   if (!eligLoading && !eligibility.can_file_claim) {
     return (
       <div className="px-4 py-5">
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500 mb-4">
-          <ArrowLeft className="h-4 w-4" /> {t('claimForm.back')}
-        </button>
         <h1 className="text-xl font-bold text-gray-900 mb-1">{t('claimForm.title')}</h1>
         <LockedFeatureNotice fullPage lineOaUrl={eligibility.line_oa_url} />
       </div>
@@ -169,9 +166,6 @@ export default function NewClaimPage() {
 
   return (
     <div className="px-4 py-5">
-      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500 mb-4">
-        <ArrowLeft className="h-4 w-4" /> {t('claimForm.back')}
-      </button>
 
       <h1 className="text-xl font-bold text-gray-900 mb-1">{t('claimForm.title')}</h1>
       <p className="text-sm text-gray-500 mb-6">{t('claimForm.subtitle')}</p>

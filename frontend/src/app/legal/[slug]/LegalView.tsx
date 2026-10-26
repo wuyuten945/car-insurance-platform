@@ -26,9 +26,6 @@ export default function LegalView({ slug }: { slug: string }) {
   return (
     <div className="px-4 py-5 max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
-        <Link href="/" className="p-1">
-          <ChevronLeft className="h-5 w-5 text-gray-600" />
-        </Link>
         <h1 className="text-xl font-bold text-gray-900">{title}</h1>
       </div>
       <article

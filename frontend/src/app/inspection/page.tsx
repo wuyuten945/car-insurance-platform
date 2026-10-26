@@ -4,9 +4,8 @@ import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   MapPin, Search, Navigation, Phone, ExternalLink,
-  ChevronLeft, Building2, CarFront, Loader2, X, LayoutGrid, Wrench,
+  Building2, CarFront, Loader2, X, LayoutGrid, Wrench,
 } from 'lucide-react';
-import Link from 'next/link';
 import api from '@/lib/api-client';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
@@ -139,9 +138,6 @@ export default function InspectionPage() {
       {/* Header */}
       <div className="bg-primary-500 text-white px-4 pt-3 pb-5">
         <div className="flex items-center gap-3 mb-4">
-          <Link href="/" className="p-1">
-            <ChevronLeft className="h-6 w-6" />
-          </Link>
           <h1 className="text-lg font-bold flex-1">監理站 / 驗車廠查詢</h1>
         </div>
 
