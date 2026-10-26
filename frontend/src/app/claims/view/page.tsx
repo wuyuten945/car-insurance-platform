@@ -82,7 +82,7 @@ function ClaimDetailContent() {
   const currentStageIndex = CLAIM_STAGES.findIndex((s) => s.key === claim.status);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-4">
 
       {/* Header */}
       <div className="rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 p-5 text-white">

@@ -132,7 +132,7 @@ export default function NumerologyPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-4 pb-8">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-4 pb-8">
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <h1 className="text-lg font-bold text-gray-900 flex items-center gap-1">

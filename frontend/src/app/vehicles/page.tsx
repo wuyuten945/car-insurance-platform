@@ -118,7 +118,7 @@ export default function VehiclesPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-4">
       <div className="flex items-center gap-3">
         <h1 className="text-lg font-bold text-gray-900 flex-1">{t('vehicles.title')}</h1>
       </div>

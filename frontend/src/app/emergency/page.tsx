@@ -166,7 +166,7 @@ export default function EmergencyPage() {
   if (!authReady) return null;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-4">
       {/* SOS Section */}
       <div className="flex flex-col items-center py-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">緊急救援</h1>

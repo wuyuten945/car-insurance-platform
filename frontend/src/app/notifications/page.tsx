@@ -86,7 +86,7 @@ export default function NotificationsPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-4">
       <h1 className="text-xl font-bold text-gray-900">通知中心</h1>
 
       <TileSection>

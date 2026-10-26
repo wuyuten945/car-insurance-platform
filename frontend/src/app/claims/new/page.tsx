@@ -136,7 +136,7 @@ export default function NewClaimPage() {
   // 自填客戶 → 鎖定整頁，顯示「請聯繫 LINE」CTA
   if (!eligLoading && !eligibility.can_file_claim) {
     return (
-      <div className="px-4 py-5">
+      <div className="mx-auto max-w-[552px] px-4 py-5">
         <h1 className="text-xl font-bold text-gray-900 mb-1">{t('claimForm.title')}</h1>
         <LockedFeatureNotice fullPage lineOaUrl={eligibility.line_oa_url} />
       </div>
@@ -166,7 +166,7 @@ export default function NewClaimPage() {
   const errorClass = 'text-xs text-red-500 mt-1';
 
   return (
-    <div className="px-4 py-5">
+    <div className="mx-auto max-w-[552px] px-4 py-5">
 
       <h1 className="text-xl font-bold text-gray-900 mb-1">{t('claimForm.title')}</h1>
       <p className="text-sm text-gray-500 mb-6">{t('claimForm.subtitle')}</p>

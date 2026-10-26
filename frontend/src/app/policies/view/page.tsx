@@ -157,7 +157,7 @@ function PolicyDetailContent() {
   );
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-4">
       {/* Back */}
 
       {/* Header Card */}

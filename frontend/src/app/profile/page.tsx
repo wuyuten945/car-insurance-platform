@@ -138,7 +138,7 @@ export default function ProfilePage() {
   if (!__authReady) return null;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-4">
       {/* User Avatar + Name */}
       <div className="flex items-center gap-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">

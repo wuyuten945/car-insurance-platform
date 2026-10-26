@@ -112,7 +112,7 @@ export default function QuotePage() {
   const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:border-primary-500';
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-4 pb-8">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-4 pb-8">
       <div className="flex items-center gap-3">
         <h1 className="text-lg font-bold text-gray-900 flex-1">保費簡易試算（參考）</h1>
       </div>

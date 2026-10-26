@@ -185,7 +185,7 @@ export default function InspectionPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-lg px-4 pt-4 space-y-3">
+      <div className="mx-auto max-w-[552px] px-4 pt-4 space-y-3">
         <TileSection>
           <AppTile onClick={() => setSelectedType('')} active={selectedType === ''} icon={LayoutGrid} label="全部" color="#455a64" />
           <AppTile onClick={() => setSelectedType('supervision')} active={selectedType === 'supervision'} icon={Building2} label="監理站" color="#1565c0" />
@@ -208,7 +208,7 @@ export default function InspectionPage() {
       </div>
 
       {/* Results count */}
-      <div className="mx-auto max-w-lg px-4 py-2">
+      <div className="mx-auto max-w-[552px] px-4 py-2">
         <p className="text-xs text-gray-600">
           {isLoading ? '搜尋中...' : `共找到 ${stations?.length ?? 0} 個站點${userLat ? '，依距離排序' : ''}`}
           {hasActiveFilters && (
@@ -220,7 +220,7 @@ export default function InspectionPage() {
       </div>
 
       {/* Station list */}
-      <div className="mx-auto max-w-lg px-4 space-y-3">
+      <div className="mx-auto max-w-[552px] px-4 space-y-3">
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary-500" />

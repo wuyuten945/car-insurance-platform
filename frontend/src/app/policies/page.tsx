@@ -166,7 +166,7 @@ export default function PoliciesPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5">
+    <div className="mx-auto max-w-[552px] px-4 py-5">
       <h1 className="text-xl font-bold text-gray-900 mb-4">{t('policies.title')}</h1>
 
       <div className="mb-5">

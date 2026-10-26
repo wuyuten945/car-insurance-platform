@@ -89,7 +89,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-4">
       <h1 className="text-xl font-bold text-gray-900">
         {user?.name ? t('dash.greetingNamed', { name: user.name }) : t('dash.greetingAnon')}
       </h1>

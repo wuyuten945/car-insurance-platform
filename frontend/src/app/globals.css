@@ -113,7 +113,7 @@ body {
 /* 寬度上限寫在這裡（不靠各頁容器）：方塊是 74% 欄寬，容器沒限寬的頁面（如服務導引）方塊會被撐到近 3 倍大 */
 .home-section {
   width: 100%;
-  max-width: 30rem; /* = 其他頁 max-w-lg(32rem) 扣掉左右 px-4 的內容寬，方塊大小才會一致 */
+  max-width: 520px; /* = 內容欄寬（用戶指定 520 置中），方塊區填滿內容欄 */
   margin-left: auto;
   margin-right: auto;
   background: #222a45;

@@ -74,7 +74,7 @@ export default function ClaimsPage() {
   if (!__authReady) return null;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-5">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-5">
       <h1 className="text-xl font-bold text-gray-900">{t('claims.title')}</h1>
 
       <TileSection>

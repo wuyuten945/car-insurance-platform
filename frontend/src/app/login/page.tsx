@@ -282,7 +282,7 @@ export default function LoginPage() {
       </div>
 
       {/* Form card */}
-      <div className="rounded-t-3xl bg-white px-6 pt-8 pb-10 shadow-2xl">
+      <div className="rounded-t-3xl bg-white px-6 pt-8 pb-10 shadow-2xl [&>*]:mx-auto [&>*]:max-w-[520px]">
         <h2 className="text-lg font-bold text-gray-900 mb-1">
           {step === 'input' ? t('login.signIn') : step === 'otp' ? t('login.enterCode') : t('login.enterPassword')}
         </h2>

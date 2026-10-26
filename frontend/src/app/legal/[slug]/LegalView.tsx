@@ -24,7 +24,7 @@ export default function LegalView({ slug }: { slug: string }) {
   const body = doc.body[lang];
 
   return (
-    <div className="px-4 py-5 max-w-3xl mx-auto">
+    <div className="px-4 py-5 max-w-[552px] mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <h1 className="text-xl font-bold text-gray-900">{title}</h1>
       </div>

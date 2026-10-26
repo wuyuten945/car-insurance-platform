@@ -51,7 +51,7 @@ function RenewalContent() {
   });
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-5 space-y-5">
+    <div className="mx-auto max-w-[552px] px-4 py-5 space-y-5">
 
       <h1 className="text-xl font-bold text-gray-900">續保比價</h1>
 
