@@ -3345,7 +3345,7 @@ async function doForgotPw() {
   try {
     var r = await fetch(CONSOLE_API + '/forgot-password', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({account: acc})});
     var d = await r.json();
-    showMsg('forgot-msg', d.success === false ? 'err' : 'ok', d.message || '');
+    showMsg('forgot-msg', (d.success === false || !r.ok) ? 'err' : 'ok', d.message || d.detail || '');
   } catch (e) { showMsg('forgot-msg', 'err', t('msg_conn_failed') + ': ' + e.message); }
   btn.disabled = false;
 }
@@ -3365,7 +3365,7 @@ async function doResetPw() {
   try {
     var r = await fetch(CONSOLE_API + '/reset-password', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token: _RESET_TOKEN, new_password: p1})});
     var d = await r.json();
-    if (d.success === false || !r.ok) { showMsg('reset-msg', 'err', d.message || ''); btn.disabled = false; return; }
+    if (d.success === false || !r.ok) { showMsg('reset-msg', 'err', d.message || d.detail || t('msg_conn_failed')); btn.disabled = false; return; }
     showMsg('reset-msg', 'ok', d.message || '');
     // 舊登入已全部失效：清掉本機 token，回登入頁
     localStorage.removeItem(LS_TOKEN_KEY);
