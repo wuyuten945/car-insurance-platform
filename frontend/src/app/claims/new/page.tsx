@@ -6,7 +6,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm, type SubmitErrorHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Loader2, Send, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Send, CheckCircle, CarFront, KeyRound, Users, ShieldCheck, Ellipsis } from 'lucide-react';
 import api from '@/lib/api-client';
 import { ACCIDENT_TYPES, MY_SITUATIONS } from '@/lib/constants';
 import { useT } from '@/lib/i18n/LanguageProvider';
@@ -14,6 +14,7 @@ import { useEligibility } from '@/lib/useEligibility';
 import LockedFeatureNotice from '@/components/LockedFeatureNotice';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
+import { AppTile, TileSection } from '@/components/AppTile';
 
 const makeClaimSchema = (t: (k: string) => string) => z.object({
   policy_id: z.string().min(1, t('claimForm.err.policyRequired')),
@@ -41,11 +42,11 @@ export default function NewClaimPage() {
   const { t } = useT();
   const claimSchema = makeClaimSchema(t);
   const CLAIM_TYPES = [
-    { value: 'collision', label: t('claims.type.collision') },
-    { value: 'theft', label: t('claims.type.theft') },
-    { value: 'liability', label: t('claims.type.liability') },
-    { value: 'comprehensive', label: t('claims.type.comprehensive') },
-    { value: 'other', label: t('claims.type.other') },
+    { value: 'collision', label: t('claims.type.collision'), icon: CarFront, color: '#ef6c00' },
+    { value: 'theft', label: t('claims.type.theft'), icon: KeyRound, color: '#6a1b9a' },
+    { value: 'liability', label: t('claims.type.liability'), icon: Users, color: '#1565c0' },
+    { value: 'comprehensive', label: t('claims.type.comprehensive'), icon: ShieldCheck, color: '#00897b' },
+    { value: 'other', label: t('claims.type.other'), icon: Ellipsis, color: '#455a64' },
   ];
   const [submitted, setSubmitted] = useState(false);
   const { ready: authReady } = useAuthGuard();
@@ -62,10 +63,13 @@ export default function NewClaimPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ClaimForm>({
     resolver: zodResolver(claimSchema),
   });
+  const claimType = watch('claim_type');
 
   const mutation = useMutation({
     mutationFn: async (data: ClaimForm) => {
@@ -93,7 +97,7 @@ export default function NewClaimPage() {
   const onInvalid: SubmitErrorHandler<ClaimForm> = (errs) => {
     const first = Object.keys(errs)[0];
     if (!first) return;
-    const el = document.querySelector(`[name="${first}"]`) as HTMLElement | null;
+    const el = (document.querySelector(`[data-field="${first}"]`) || document.querySelector(`[name="${first}"]`)) as HTMLElement | null;
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       try { el.focus(); } catch {}
@@ -168,13 +172,22 @@ export default function NewClaimPage() {
         </div>
 
         <div>
-          <label className={labelClass}>{t('claimForm.lbl.claimType')}</label>
-          <select {...register('claim_type')} className={inputClass}>
-            <option value="">{t('claimForm.opt.typeChoose')}</option>
-            {CLAIM_TYPES.map((ct) => (
-              <option key={ct.value} value={ct.value}>{ct.label}</option>
-            ))}
-          </select>
+          {/* 理賠類型改方塊；值仍走 react-hook-form（隱藏欄位），驗證失敗時捲到這塊 */}
+          <div data-field="claim_type">
+            <input type="hidden" {...register('claim_type')} />
+            <TileSection title={t('claimForm.lbl.claimType')}>
+              {CLAIM_TYPES.map((ct) => (
+                <AppTile
+                  key={ct.value}
+                  onClick={() => setValue('claim_type', ct.value, { shouldValidate: true })}
+                  active={claimType === ct.value}
+                  icon={ct.icon}
+                  label={ct.label}
+                  color={ct.color}
+                />
+              ))}
+            </TileSection>
+          </div>
           {errors.claim_type && <p className={errorClass}>{errors.claim_type.message}</p>}
         </div>
 
