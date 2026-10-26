@@ -90,9 +90,9 @@ export default function NotificationsPage() {
       <h1 className="text-xl font-bold text-gray-900">通知中心</h1>
 
       <TileSection>
-        <AppTile onClick={() => setFilter('all')} active={filter === 'all'} icon={Bell} label={`全部（${allPinned.length + allItems.length}）`} color="#1565c0" />
-        <AppTile onClick={() => setFilter('unread')} active={filter === 'unread'} icon={Mail} label={`未讀（${unreadCount}）`} color="#f9a825" badge={unreadCount} />
-        <AppTile onClick={() => setFilter('vehicles')} active={filter === 'vehicles'} icon={Car} label={`車輛提醒（${allPinned.length}）`} color="#455a64" />
+        <AppTile onClick={() => setFilter('all')} active={filter === 'all'} icon={Bell} label={`全部\n（${allPinned.length + allItems.length}）`} color="#1565c0" />
+        <AppTile onClick={() => setFilter('unread')} active={filter === 'unread'} icon={Mail} label={`未讀\n（${unreadCount}）`} color="#f9a825" badge={unreadCount} />
+        <AppTile onClick={() => setFilter('vehicles')} active={filter === 'vehicles'} icon={Car} label={`車輛提醒\n（${allPinned.length}）`} color="#455a64" />
       </TileSection>
 
       {isLoading ? (

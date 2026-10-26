@@ -190,8 +190,8 @@ function PolicyDetailContent() {
       </div>
 
       <TileSection>
-        <AppTile onClick={() => toggleSec('items')} active={openSec === 'items'} icon={DollarSign} label={`保障項目（${policy.items?.length ?? 0}）`} color="#1565c0" />
-        <AppTile onClick={() => toggleSec('exclusions')} active={openSec === 'exclusions'} icon={AlertCircle} label={`不保事項（${exclusions?.length ?? 0}）`} color="#ef6c00" />
+        <AppTile onClick={() => toggleSec('items')} active={openSec === 'items'} icon={DollarSign} label={`保障項目\n（${policy.items?.length ?? 0}）`} color="#1565c0" />
+        <AppTile onClick={() => toggleSec('exclusions')} active={openSec === 'exclusions'} icon={AlertCircle} label={`不保事項\n（${exclusions?.length ?? 0}）`} color="#ef6c00" />
         {policy.vehicle_plate && (
           <AppTile onClick={() => toggleSec('vehicle')} active={openSec === 'vehicle'} icon={Car} label="承保車輛" color="#455a64" />
         )}

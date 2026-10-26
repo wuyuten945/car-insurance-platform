@@ -177,7 +177,7 @@ export default function PoliciesPage() {
               onClick={() => setActiveTab(tab.key)}
               active={activeTab === tab.key}
               icon={tab.icon}
-              label={`${tab.label}（${countOf(tab.key)}）`}
+              label={`${tab.label}\n（${countOf(tab.key)}）`}
               color={tab.color}
             />
           ))}

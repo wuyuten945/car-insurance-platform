@@ -111,7 +111,7 @@ function ClaimDetailContent() {
           <AppTile onClick={() => toggleSec('adjuster')} active={openSec === 'adjuster'} icon={User} label="理賠專員" color="#00897b" />
         )}
         {claim.documents && claim.documents.length > 0 && (
-          <AppTile onClick={() => toggleSec('docs')} active={openSec === 'docs'} icon={FileText} label={`相關文件（${claim.documents.length}）`} color="#6d4c41" />
+          <AppTile onClick={() => toggleSec('docs')} active={openSec === 'docs'} icon={FileText} label={`相關文件\n（${claim.documents.length}）`} color="#6d4c41" />
         )}
       </TileSection>
 

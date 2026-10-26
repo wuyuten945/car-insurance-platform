@@ -252,7 +252,7 @@ export default function QuotePage() {
           ))}
 
           <TileSection title="下一步">
-            <AppTile onClick={() => setRequestOpen(true)} icon={FileText} label="請業務員報價" color="#e65100" />
+            <AppTile onClick={() => setRequestOpen(true)} icon={FileText} label={'請業務員\n報價'} color="#e65100" />
             {!eligibility.has_agent_policy && eligibility.line_oa_url && (
               <AppTile href={eligibility.line_oa_url} icon={MessageCircle} label="LINE 聯繫" color="#06a74b" />
             )}

@@ -206,8 +206,8 @@ export default function EmergencyPage() {
         <AppTile href="tel:110" icon={Phone} label="報警 110" color="#c62828" />
         <AppTile href="tel:119" icon={Ambulance} label="消防救護 119" color="#b71c1c" />
         <AppTile onClick={() => toggleSec('rescue')} active={openSec === 'rescue'} icon={Truck} label="道路救援" color="#ef6c00" />
-        <AppTile onClick={() => toggleSec('insurer')} active={openSec === 'insurer'} icon={Building2} label="保險公司客服" color="#1565c0" />
-        <AppTile onClick={() => toggleSec('guide')} active={openSec === 'guide'} icon={Shield} label="事故處理指南" color="#00897b" />
+        <AppTile onClick={() => toggleSec('insurer')} active={openSec === 'insurer'} icon={Building2} label={'保險公司\n客服'} color="#1565c0" />
+        <AppTile onClick={() => toggleSec('guide')} active={openSec === 'guide'} icon={Shield} label={'事故處理\n指南'} color="#00897b" />
         {nearby && nearby.length > 0 && (
           <AppTile onClick={() => toggleSec('nearby')} active={openSec === 'nearby'} icon={MapPin} label="附近資源" color="#6a1b9a" badge={nearby.length} />
         )}

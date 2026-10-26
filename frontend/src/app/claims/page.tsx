@@ -85,7 +85,7 @@ export default function ClaimsPage() {
             onClick={() => setFilter(f.key)}
             active={filter === f.key}
             icon={f.icon}
-            label={`${f.label}（${(claims ?? []).filter(f.match).length}）`}
+            label={`${f.label}\n（${(claims ?? []).filter(f.match).length}）`}
             color={f.color}
           />
         ))}

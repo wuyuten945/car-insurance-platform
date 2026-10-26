@@ -30,7 +30,8 @@ const QUICK_REPLIES = [
   '法規查詢',
   '轉人工客服',
 ];
-// 與 QUICK_REPLIES 一一對應
+// 與 QUICK_REPLIES 一一對應（QUICK_LABELS 是方塊上的短名稱，點了仍送出完整問句）
+const QUICK_LABELS = ['保單查詢', '理賠申請', '續保比價', '車禍 SOS', '資料修改', '法規查詢', '轉人工'];
 const QUICK_ICONS = [FileText, ClipboardList, RefreshCw, AlertTriangle, UserRound, Scale, Headset];
 const QUICK_COLORS = ['#1565c0', '#ef6c00', '#2e7d32', '#d32f2f', '#5c6bc0', '#6d4c41', '#00897b'];
 
@@ -168,7 +169,7 @@ export default function ChatbotPage() {
         {messages.length <= 1 && (
           <TileSection>
             {QUICK_REPLIES.map((qr, i) => (
-              <AppTile key={qr} onClick={() => handleSend(qr)} icon={QUICK_ICONS[i]} label={qr} color={QUICK_COLORS[i]} />
+              <AppTile key={qr} onClick={() => handleSend(qr)} icon={QUICK_ICONS[i]} label={QUICK_LABELS[i]} color={QUICK_COLORS[i]} />
             ))}
           </TileSection>
         )}
