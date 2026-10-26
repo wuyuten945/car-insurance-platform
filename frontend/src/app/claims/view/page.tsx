@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, User, FileText, Phone } from 'lucide-react';
+import { ArrowLeft, Loader2, User, FileText, Phone, ListChecks, Info } from 'lucide-react';
+import { AppTile, TileSection, TilePanel } from '@/components/AppTile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api-client';
 import { CLAIM_STAGES } from '@/lib/constants';
@@ -50,6 +51,10 @@ function ClaimDetailContent() {
   const id = useSearchParams().get('id') ?? '';
   const router = useRouter();
 
+  // 方塊點開的區塊（一次一個，再點收起）；必須在下面的 early return 之前宣告
+  const [openSec, setOpenSec] = useState<'' | 'progress' | 'info' | 'adjuster' | 'docs'>('');
+  const toggleSec = (k: typeof openSec) => setOpenSec((cur) => (cur === k ? '' : k));
+
   const { data: claim, isLoading } = useQuery({
     queryKey: ['claim', id],
     queryFn: async () => {
@@ -78,7 +83,7 @@ function ClaimDetailContent() {
   const currentStageIndex = CLAIM_STAGES.findIndex((s) => s.key === claim.status);
 
   return (
-    <div className="px-4 py-5 space-y-5">
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
       <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500">
         <ArrowLeft className="h-4 w-4" /> 返回
       </button>
@@ -103,9 +108,20 @@ function ClaimDetailContent() {
         </div>
       </div>
 
+      <TileSection>
+        <AppTile onClick={() => toggleSec('progress')} active={openSec === 'progress'} icon={ListChecks} label="理賠進度" color="#1565c0" />
+        <AppTile onClick={() => toggleSec('info')} active={openSec === 'info'} icon={Info} label="事故資訊" color="#ef6c00" />
+        {claim.adjuster && (
+          <AppTile onClick={() => toggleSec('adjuster')} active={openSec === 'adjuster'} icon={User} label="理賠專員" color="#00897b" />
+        )}
+        {claim.documents && claim.documents.length > 0 && (
+          <AppTile onClick={() => toggleSec('docs')} active={openSec === 'docs'} icon={FileText} label={`相關文件（${claim.documents.length}）`} color="#6d4c41" />
+        )}
+      </TileSection>
+
       {/* 7-Stage Progress Timeline */}
-      <section className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-        <h2 className="text-sm font-bold text-gray-900 mb-4">理賠進度</h2>
+      {openSec === 'progress' && (
+      <TilePanel title="理賠進度">
         <div className="space-y-0">
           {CLAIM_STAGES.map((stage, i) => {
             const isCompleted = i < currentStageIndex;
@@ -164,14 +180,12 @@ function ClaimDetailContent() {
             );
           })}
         </div>
-      </section>
+      </TilePanel>
+      )}
 
       {/* Adjuster Info */}
-      {claim.adjuster && (
-        <section className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5">
-            <User className="h-4 w-4 text-primary-500" /> 理賠專員
-          </h2>
+      {openSec === 'adjuster' && claim.adjuster && (
+        <TilePanel title="理賠專員">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900">{claim.adjuster.name}</p>
@@ -184,15 +198,12 @@ function ClaimDetailContent() {
               <Phone className="h-3.5 w-3.5" /> 聯繫
             </a>
           </div>
-        </section>
+        </TilePanel>
       )}
 
       {/* Documents */}
-      {claim.documents && claim.documents.length > 0 && (
-        <section className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5">
-            <FileText className="h-4 w-4 text-primary-500" /> 相關文件
-          </h2>
+      {openSec === 'docs' && claim.documents && claim.documents.length > 0 && (
+        <TilePanel title="相關文件">
           <div className="space-y-2">
             {claim.documents.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
@@ -208,12 +219,12 @@ function ClaimDetailContent() {
               </div>
             ))}
           </div>
-        </section>
+        </TilePanel>
       )}
 
       {/* Claim Details */}
-      <section className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-        <h2 className="text-sm font-bold text-gray-900 mb-3">事故資訊</h2>
+      {openSec === 'info' && (
+      <TilePanel title="事故資訊">
         <div className="space-y-3 text-sm">
           <div>
             <p className="text-gray-400 text-xs">事故時間</p>
@@ -228,7 +239,8 @@ function ClaimDetailContent() {
             <p className="text-gray-700 leading-relaxed">{claim.description}</p>
           </div>
         </div>
-      </section>
+      </TilePanel>
+      )}
     </div>
   );
 }

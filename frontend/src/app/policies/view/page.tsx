@@ -1,9 +1,9 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Shield, DollarSign, AlertCircle, Loader2, ChevronRight, Printer } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowLeft, Shield, DollarSign, AlertCircle, Loader2, Printer, Car, RefreshCw } from 'lucide-react';
+import { AppTile, TileSection, TilePanel } from '@/components/AppTile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api-client';
 
@@ -124,6 +124,10 @@ function PolicyDetailContent() {
     enabled: !!id,
   });
 
+  // 方塊點開的區塊（一次一個，再點收起）；必須在下面的 early return 之前宣告
+  const [openSec, setOpenSec] = useState<'' | 'items' | 'exclusions' | 'vehicle'>('');
+  const toggleSec = (k: typeof openSec) => setOpenSec((cur) => (cur === k ? '' : k));
+
   const { data: exclusions } = useQuery({
     queryKey: ['policy-exclusions', id],
     queryFn: async () => {
@@ -154,7 +158,7 @@ function PolicyDetailContent() {
   );
 
   return (
-    <div className="px-4 py-5 space-y-5">
+    <div className="mx-auto max-w-lg px-4 py-5 space-y-4">
       {/* Back */}
       <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-primary-500">
         <ArrowLeft className="h-4 w-4" /> 返回
@@ -189,21 +193,23 @@ function PolicyDetailContent() {
         </div>
       </div>
 
-      {/* Renewal CTA */}
-      {daysLeft > 0 && daysLeft <= 60 && (
-        <Link
-          href={`/renewal?policy_id=${id}`}
-          className="flex items-center justify-between rounded-xl bg-accent-500 px-4 py-3 text-white shadow-sm"
-        >
-          <span className="font-semibold">續保比價方案</span>
-          <ChevronRight className="h-5 w-5" />
-        </Link>
-      )}
+      <TileSection>
+        <AppTile onClick={() => toggleSec('items')} active={openSec === 'items'} icon={DollarSign} label={`保障項目（${policy.items?.length ?? 0}）`} color="#1565c0" />
+        <AppTile onClick={() => toggleSec('exclusions')} active={openSec === 'exclusions'} icon={AlertCircle} label={`不保事項（${exclusions?.length ?? 0}）`} color="#ef6c00" />
+        {policy.vehicle_plate && (
+          <AppTile onClick={() => toggleSec('vehicle')} active={openSec === 'vehicle'} icon={Car} label="承保車輛" color="#455a64" />
+        )}
+        {policy.items?.length > 0 && (
+          <AppTile onClick={() => exportPolicyPdf(policy, exclusions)} icon={Printer} label="匯出 PDF" color="#6d4c41" />
+        )}
+        {daysLeft > 0 && daysLeft <= 60 && (
+          <AppTile href={`/renewal?policy_id=${id}`} icon={RefreshCw} label="續保比價" color="#2e7d32" />
+        )}
+      </TileSection>
 
       {/* Vehicle Info */}
-      {policy.vehicle_plate && (
-        <section className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-900 mb-3">承保車輛</h2>
+      {openSec === 'vehicle' && policy.vehicle_plate && (
+        <TilePanel title="承保車輛">
           <div className="grid grid-cols-3 gap-3 text-sm">
             <div>
               <p className="text-gray-400 text-xs">車牌號碼</p>
@@ -218,36 +224,24 @@ function PolicyDetailContent() {
               <p className="font-medium">{policy.vehicle_model || '--'}</p>
             </div>
           </div>
-        </section>
+        </TilePanel>
       )}
 
       {/* Coverage Items */}
-      <section className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-            <DollarSign className="h-4 w-4 text-primary-500" /> 保障項目
-          </h2>
-          {policy.items?.length > 0 && (
-            <button
-              onClick={() => exportPolicyPdf(policy, exclusions)}
-              className="flex items-center gap-1 rounded-lg bg-primary-50 border border-primary-200 px-2.5 py-1 text-[11px] font-medium text-primary-600 hover:bg-primary-100 transition"
-            >
-              <Printer className="h-3 w-3" /> 匯出 PDF
-            </button>
-          )}
-        </div>
+      {openSec === 'items' && (
+      <TilePanel title="保障項目">
         {policy.items?.length > 0 ? (
           <div className="space-y-3">
             {policy.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between border-b border-gray-50 pb-2 last:border-0">
                 <p className="text-sm text-gray-700">{item.item_name}</p>
                 <div className="text-right">
-                  {item.coverage_limit && (
+                  {!!item.coverage_limit && (
                     <p className="text-sm font-semibold text-gray-900">
                       ${Number(item.coverage_limit).toLocaleString()}
                     </p>
                   )}
-                  {item.deductible && Number(item.deductible) > 0 && (
+                  {Number(item.deductible) > 0 && (
                     <p className="text-[11px] text-gray-400">
                       自負額 ${Number(item.deductible).toLocaleString()}
                     </p>
@@ -259,13 +253,12 @@ function PolicyDetailContent() {
         ) : (
           <p className="text-sm text-gray-400">無保障項目資料</p>
         )}
-      </section>
+      </TilePanel>
+      )}
 
       {/* Exclusions */}
-      <section className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-        <h2 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5">
-          <AlertCircle className="h-4 w-4 text-accent-500" /> 不保事項
-        </h2>
+      {openSec === 'exclusions' && (
+      <TilePanel title="不保事項">
         {exclusions && exclusions.length > 0 ? (
           <ul className="space-y-2">
             {exclusions.map((ex, i) => (
@@ -281,7 +274,8 @@ function PolicyDetailContent() {
         ) : (
           <p className="text-sm text-gray-400">無不保事項資料</p>
         )}
-      </section>
+      </TilePanel>
+      )}
     </div>
   );
 }
