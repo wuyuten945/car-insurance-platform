@@ -1,14 +1,31 @@
 'use client';
 
-import { Home, FileText, AlertTriangle, ClipboardList, Menu } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Home, FileText, AlertTriangle, ClipboardList, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useT } from '@/lib/i18n/LanguageProvider';
 
 // 主導覽列：放在 Header 下方、一起固定在頂端（原本是底部導覽列）
 export default function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { t } = useT();
+
+  // 上一頁 / 下一頁：能不能走用 Navigation API 判斷（Chrome/Edge 有）；
+  // 不支援的瀏覽器（Safari、舊 iPad）一律可按，走不了瀏覽器自己不會動
+  const [canBack, setCanBack] = useState(true);
+  const [canFwd, setCanFwd] = useState(true);
+  useEffect(() => {
+    const nav = (window as unknown as { navigation?: { canGoBack: boolean; canGoForward: boolean } }).navigation;
+    if (nav) {
+      setCanBack(nav.canGoBack);
+      setCanFwd(nav.canGoForward);
+    } else {
+      setCanBack(window.history.length > 1);
+    }
+  }, [pathname]);
+  const stepBtn = 'flex w-10 shrink-0 items-center justify-center text-gray-700 disabled:text-gray-300';
 
   const NAV_ITEMS = [
     { href: '/', icon: Home, label: t('nav.home') },
@@ -21,6 +38,9 @@ export default function TopNav() {
   return (
     <nav className="border-b border-gray-200 bg-white shadow-sm">
       <div className="mx-auto flex max-w-2xl items-stretch justify-around px-1">
+        <button type="button" onClick={() => router.back()} disabled={!canBack} aria-label="上一頁" className={stepBtn}>
+          <ChevronLeft className="h-6 w-6" />
+        </button>
         {NAV_ITEMS.map((item) => {
           const isActive = item.href === '/'
             ? pathname === '/'
@@ -45,6 +65,9 @@ export default function TopNav() {
             </Link>
           );
         })}
+        <button type="button" onClick={() => router.forward()} disabled={!canFwd} aria-label="下一頁" className={stepBtn}>
+          <ChevronRight className="h-6 w-6" />
+        </button>
       </div>
     </nav>
   );

@@ -6,7 +6,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm, type SubmitErrorHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Loader2, Send, CheckCircle, CarFront, KeyRound, Users, ShieldCheck, Ellipsis } from 'lucide-react';
+import {
+  ArrowLeft, Loader2, Send, CheckCircle, CarFront, KeyRound, Users, ShieldCheck, Ellipsis,
+  ChevronsRight, ArrowRightLeft, ArrowDownUp, Scissors, SquareParking, Car,
+  ArrowUp, CornerUpLeft, CornerUpRight, ArrowDown, CirclePause, Gauge,
+  type LucideIcon,
+} from 'lucide-react';
 import api from '@/lib/api-client';
 import { ACCIDENT_TYPES, MY_SITUATIONS } from '@/lib/constants';
 import { useT } from '@/lib/i18n/LanguageProvider';
@@ -15,6 +20,24 @@ import LockedFeatureNotice from '@/components/LockedFeatureNotice';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { useIdleLogout } from '@/lib/useIdleLogout';
 import { AppTile, TileSection } from '@/components/AppTile';
+
+// 事故類型 / 行車狀態方塊的圖示與底色（選項本身定義在 lib/constants）
+const ACCIDENT_ICONS: Record<string, LucideIcon> = {
+  rear_end: ChevronsRight, side: ArrowRightLeft, head_on: ArrowDownUp,
+  scrape: Scissors, parking: SquareParking, single: Car, other: Ellipsis,
+};
+const ACCIDENT_COLORS: Record<string, string> = {
+  rear_end: '#d32f2f', side: '#ef6c00', head_on: '#b71c1c',
+  scrape: '#f9a825', parking: '#1565c0', single: '#455a64', other: '#6d4c41',
+};
+const SITUATION_ICONS: Record<string, LucideIcon> = {
+  straight: ArrowUp, turning_left: CornerUpLeft, turning_right: CornerUpRight,
+  reversing: ArrowDown, parked: CirclePause, accelerating: Gauge, other: Ellipsis,
+};
+const SITUATION_COLORS: Record<string, string> = {
+  straight: '#1565c0', turning_left: '#00897b', turning_right: '#2e7d32',
+  reversing: '#6a1b9a', parked: '#455a64', accelerating: '#ef6c00', other: '#6d4c41',
+};
 
 const makeClaimSchema = (t: (k: string) => string) => z.object({
   policy_id: z.string().min(1, t('claimForm.err.policyRequired')),
@@ -70,6 +93,8 @@ export default function NewClaimPage() {
     resolver: zodResolver(claimSchema),
   });
   const claimType = watch('claim_type');
+  const accidentType = watch('accident_type');
+  const mySituation = watch('my_situation');
 
   const mutation = useMutation({
     mutationFn: async (data: ClaimForm) => {
@@ -192,24 +217,40 @@ export default function NewClaimPage() {
         </div>
 
         <div>
-          <label className={labelClass}>{t('claimForm.lbl.accidentType')}</label>
-          <select {...register('accident_type')} className={inputClass}>
-            <option value="">{t('claimForm.opt.accidentChoose')}</option>
-            {ACCIDENT_TYPES.map((ac) => (
-              <option key={ac.value} value={ac.value}>{ac.label}</option>
-            ))}
-          </select>
+          <div data-field="accident_type">
+            <input type="hidden" {...register('accident_type')} />
+            <TileSection title={t('claimForm.lbl.accidentType')}>
+              {ACCIDENT_TYPES.map((ac) => (
+                <AppTile
+                  key={ac.value}
+                  onClick={() => setValue('accident_type', ac.value, { shouldValidate: true })}
+                  active={accidentType === ac.value}
+                  icon={ACCIDENT_ICONS[ac.value] ?? Ellipsis}
+                  label={ac.label}
+                  color={ACCIDENT_COLORS[ac.value] ?? '#455a64'}
+                />
+              ))}
+            </TileSection>
+          </div>
           {errors.accident_type && <p className={errorClass}>{errors.accident_type.message}</p>}
         </div>
 
         <div>
-          <label className={labelClass}>{t('claimForm.lbl.situation')}</label>
-          <select {...register('my_situation')} className={inputClass}>
-            <option value="">{t('claimForm.opt.situationChoose')}</option>
-            {MY_SITUATIONS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
+          <div data-field="my_situation">
+            <input type="hidden" {...register('my_situation')} />
+            <TileSection title={t('claimForm.lbl.situation')}>
+              {MY_SITUATIONS.map((st) => (
+                <AppTile
+                  key={st.value}
+                  onClick={() => setValue('my_situation', st.value, { shouldValidate: true })}
+                  active={mySituation === st.value}
+                  icon={SITUATION_ICONS[st.value] ?? Ellipsis}
+                  label={st.label}
+                  color={SITUATION_COLORS[st.value] ?? '#455a64'}
+                />
+              ))}
+            </TileSection>
+          </div>
           {errors.my_situation && <p className={errorClass}>{errors.my_situation.message}</p>}
         </div>
 
