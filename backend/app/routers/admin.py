@@ -119,6 +119,9 @@ select.tp-hidden { display: none !important; }
 .ag-role-row .tpick .pickgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); height: 100%; }
 .ag-role-row .picktile { height: 100%; }
 .tilescope .ag-role-row button.btn { margin: 0 !important; min-width: 0; }
+/* 管理員選項：Tiffany 淺綠底深字；選中時加深＋粗框 */
+.ag-role-row .picktile[data-v="super_admin"] { background: #81D8D0; border-color: #5cc4bb; color: #0b3d3a; }
+.ag-role-row .picktile[data-v="super_admin"].is-active { background: #0ABAB5; border: 3px solid #04706c; color: #062b28; }
 
 /* 客戶分配：業務員、客戶上下直列（一列一個方塊），「分配」在最下方 */
 .assign-col .pickgrid { grid-template-columns: 1fr; max-height: none; }
