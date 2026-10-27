@@ -54,14 +54,18 @@ export default function TopNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-1 flex-col items-center gap-0.5 border-b-2 pt-2 pb-1.5 ${color} ${
+              aria-label={item.label}
+              className={`flex flex-1 flex-col items-center gap-0.5 border-b-2 pt-2 pb-1.5 ${item.href === '/' ? 'justify-center' : ''} ${color} ${
                 isActive ? (item.isEmergency ? 'border-emergency-red' : 'border-primary-500') : 'border-transparent'
               }`}
             >
-              <Icon className="h-5 w-5" />
-              <span className={`text-[11px] ${item.isEmergency || isActive ? 'font-bold' : 'font-medium'}`}>
-                {item.label}
-              </span>
+              {/* 首頁只留圖示，不顯示文字 */}
+              <Icon className={item.href === '/' ? 'h-6 w-6' : 'h-5 w-5'} />
+              {item.href !== '/' && (
+                <span className={`text-[11px] ${item.isEmergency || isActive ? 'font-bold' : 'font-medium'}`}>
+                  {item.label}
+                </span>
+              )}
             </Link>
           );
         })}
