@@ -136,7 +136,11 @@ select.tp-hidden { display: none !important; }
 #customer-bar .tpick .picktile { min-height: 52px; }
 .cb-tags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 4px; }
 #customer-bar .cb-tags button.cb-tag { margin: 0 !important; min-width: 0; min-height: 56px; font-size: 18px !important; padding: 8px 6px !important; background: #fff; color: #0d2a4d; border: 2px solid #90CAF9; }
-#customer-bar .cb-tags button.cb-tag.is-on { background: #FFE082; color: #4a3300; border: 3px solid #FF8F00; }
+/* 兩個標籤不同色：筆畫排列＝淺紫、車牌搜尋＝淺綠；開啟時加深＋粗框 */
+#customer-bar .cb-tags button#cb-sort-btn { background: #E1BEE7; color: #3d0f4a; border: 2px solid #CE93D8; }
+#customer-bar .cb-tags button#cb-sort-btn.is-on { background: #BA68C8; color: #26052f; border: 3px solid #4A148C; }
+#customer-bar .cb-tags button#cb-plate-btn { background: #C8E6C9; color: #133d17; border: 2px solid #A5D6A7; }
+#customer-bar .cb-tags button#cb-plate-btn.is-on { background: #81C784; color: #0b2e0e; border: 3px solid #1B5E20; }
 .cb-plate { margin: 4px 0; font-size: 18px; text-transform: uppercase; }
 #customer-bar-msg { display: block; margin: 6px 0 0 !important; font-size: 14px !important; }
 .cb-empty { color: #FFE082; font-weight: 700; font-size: 15px; padding: 6px 2px; }
