@@ -63,6 +63,42 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 .pw-toggle:hover{color:#333}
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ═════════ 方塊式首頁（樣式同前台 .apptile） ═════════ */
+.home-section { width: 100%; max-width: 520px; margin: 0 auto 16px; background: #222a45; border: 1px solid #38426b; border-radius: 16px; padding: 14px 14px 18px; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+.section-title { font-size: 15px; color: #dbe3f5; font-weight: 700; margin: 2px 4px 14px; letter-spacing: .5px; border: 0; padding: 0; }
+.appgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 22px 14px; }
+.apptile { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; background: none; border: none; padding: 0; cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent; }
+.app-icon { width: 74%; aspect-ratio: 1; border-radius: 27%; display: flex; align-items: center; justify-content: center; position: relative;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.62) 0%, rgba(255,255,255,.06) 22%, rgba(255,255,255,0) 50%, rgba(0,0,0,.12) 78%, rgba(255,255,255,.34) 100%),
+    linear-gradient(160deg, rgba(255,255,255,.54) 0%, rgba(255,255,255,0) 40%, rgba(0,0,0,.40) 72%, rgba(255,255,255,.18) 100%),
+    var(--c);
+  box-shadow: 0 10px 22px rgba(0,0,0,.45), inset 0 2px 2px rgba(255,255,255,.75), inset 0 -6px 12px rgba(0,0,0,.30), inset 0 0 0 1px rgba(255,255,255,.18);
+  transition: transform .1s, box-shadow .1s; }
+@supports not (aspect-ratio: 1) { .app-icon { width: 66px; height: 66px; } }
+.app-icon > svg { width: 48%; height: 48%; color: #fff; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+.apptile:active .app-icon { transform: scale(.93); }
+.app-badge { position: absolute; top: -6px; right: -6px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: #ff3b30; color: #fff; font-size: 12px; font-weight: 800; line-height: 22px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.app-label { font-size: 25px; color: #fff; text-align: center; line-height: 1.25; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.3); overflow-wrap: break-word; width: calc(100% + 14px); margin: 0 -7px; min-height: 2.5em; }
+@media (max-width: 640px) { .app-label { font-size: 22px; } }
+
+.vnav { display: flex; align-items: center; gap: 8px; max-width: 520px; margin: 0 auto 14px; }
+.vnav button { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid #c5cfe0; background: #fff; color: #1a2b4c; cursor: pointer; padding: 0; }
+.vnav button svg { width: 22px; height: 22px; }
+.vnav button:disabled { opacity: .35; cursor: default; }
+.vnav-title { font-size: 18px; font-weight: 800; color: #1a2b4c; margin-left: 4px; }
+
+/* 待辦區段：點選方塊（淺底深字） */
+.pickgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 480px) { .pickgrid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.picktile { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px; padding: 6px 4px; border-radius: 12px; border: 1.5px solid #cfd6e4; background: #fff; color: #1a1a1a; text-align: center; cursor: pointer; font: inherit; }
+.picktile b { font-size: 17px; font-weight: 800; }
+.picktile span { font-size: 15px; color: #4b5563; margin-top: 2px; font-weight: 700; }
+.picktile.is-danger { background: #FFEBEE; border-color: #EF9A9A; color: #C62828; }
+.picktile.is-warn { background: #FFF3E0; border-color: #FFB74D; color: #E65100; }
+.picktile.is-active { background: #1565c0; border-color: #1565c0; color: #fff; }
+.picktile.is-active span { color: #e3f2fd; }
+
 /* ═════════ 手機 / 平板響應式（≤ 768px） ═════════ */
 @media (max-width: 768px) {
   body { font-size: 14px; }
@@ -149,7 +185,7 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
   <h1 data-i18n="header_title">BOPINAN — 管理控制台</h1>
   <small id="user-info"></small>
   <button type="button" onclick="openNumerologyModal()" title="幫自己和客戶拿副好牌"
-     style="display:inline-block;background:linear-gradient(90deg,#9C27B0,#E91E63,#FF9800);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">
+     style="display:none;background:linear-gradient(90deg,#9C27B0,#E91E63,#FF9800);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">
     <span data-i18n="btn_iching">✨ 幫自己和客戶拿副好牌</span>
   </button>
   <button id="lang-toggle-btn" type="button" onclick="toggleAdminLang()" title="Toggle Language" style="background:rgba(255,255,255,0.2);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">EN</button>
@@ -281,6 +317,14 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 <div id="admin-panel" class="container" style="display:none">
 
   <!-- ★ 全域快速搜尋 -->
+  <div id="vnav" class="vnav">
+    <button type="button" id="vnav-back" onclick="history.back()" aria-label="上一頁"></button>
+    <button type="button" id="vnav-fwd" onclick="history.forward()" aria-label="下一頁"></button>
+    <button type="button" id="vnav-home" onclick="switchTab('home')" aria-label="首頁"></button>
+    <span class="vnav-title" id="vnav-title"></span>
+  </div>
+  <div id="tab-home" class="tab-content"></div>
+  <div id="tab-search" class="tab-content">
   <div id="quick-search-bar" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
     <div style="display:flex;gap:8px;align-items:center">
       <span style="font-size:18px">🔍</span>
@@ -294,6 +338,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     <div id="qs-results" style="margin-top:10px"></div>
   </div>
 
+  </div>
+  <div id="tab-csv" class="tab-content">
   <!-- 整合 CSV 匯入 / 匯出 -->
   <div id="csv-bar" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -308,6 +354,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     <div id="csv-result" style="margin-top:8px;font-size:12px"></div>
   </div>
 
+  </div>
+  <div id="tab-todo" class="tab-content">
   <!-- 業務員待辦提醒中心 -->
   <div id="todo-bar" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -316,14 +364,15 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
       <span id="todo-summary" style="font-size:11px;color:#666;margin-left:8px"></span>
       <button onclick="loadAgentTasks()" style="margin-left:auto;background:#0288D1;color:#fff;border:0;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer" data-i18n="btn_todo_refresh">🔄 重新整理</button>
     </div>
-    <div id="todo-tabs" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;font-size:12px">
-      <button class="todo-tab" data-bucket="overdue"  onclick="switchTodoBucket('overdue')"  style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">🚨 已逾期 <span class="todo-cnt"></span></button>
-      <button class="todo-tab" data-bucket="today"    onclick="switchTodoBucket('today')"    style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">📍 當天 <span class="todo-cnt"></span></button>
-      <button class="todo-tab" data-bucket="next_3d"  onclick="switchTodoBucket('next_3d')"  style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">⚡ 近 3 日 <span class="todo-cnt"></span></button>
-      <button class="todo-tab" data-bucket="next_7d"  onclick="switchTodoBucket('next_7d')"  style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">📅 近 7 日 <span class="todo-cnt"></span></button>
-      <button class="todo-tab" data-bucket="next_30d" onclick="switchTodoBucket('next_30d')" style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">📆 近 30 日 <span class="todo-cnt"></span></button>
+    <div id="todo-tabs" class="pickgrid" style="margin-top:10px">
+      <button type="button" class="todo-tab picktile" data-bucket="overdue" onclick="switchTodoBucket('overdue')"><b>已逾期</b><span class="todo-cnt">0</span></button>
+      <button type="button" class="todo-tab picktile" data-bucket="today" onclick="switchTodoBucket('today')"><b>當天</b><span class="todo-cnt">0</span></button>
+      <button type="button" class="todo-tab picktile" data-bucket="next_3d" onclick="switchTodoBucket('next_3d')"><b>近 3 日</b><span class="todo-cnt">0</span></button>
+      <button type="button" class="todo-tab picktile" data-bucket="next_7d" onclick="switchTodoBucket('next_7d')"><b>近 7 日</b><span class="todo-cnt">0</span></button>
+      <button type="button" class="todo-tab picktile" data-bucket="next_30d" onclick="switchTodoBucket('next_30d')"><b>近 30 日</b><span class="todo-cnt">0</span></button>
     </div>
     <div id="todo-list" style="margin-top:10px"></div>
+  </div>
   </div>
 
   <!-- 上傳大量匯入 — 說明 modal -->
@@ -367,20 +416,9 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
     </div>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" id="tab-btn-vehicles" onclick="switchTab('vehicles')" data-i18n="tab_vehicles">車輛 / 行照</button>
-    <button class="tab" id="tab-btn-policies" onclick="switchTab('policies')" data-i18n="tab_policies">保單管理</button>
-    <button class="tab" id="tab-btn-claims" onclick="switchTab('claims')" data-i18n="tab_claims">理賠申請</button>
-    <button class="tab" id="tab-btn-accidents" onclick="switchTab('accidents')" data-i18n="tab_accidents">事故照片</button>
-    <button class="tab" id="tab-btn-overview" onclick="switchTab('overview')" data-i18n="tab_overview">資料總覽</button>
-    <button class="tab" id="tab-btn-quotes" onclick="switchTab('quotes')" data-i18n="tab_quotes">詢價工單</button>
-    <button class="tab" id="tab-btn-agents" onclick="switchTab('agents')" style="display:none" data-i18n="tab_agents">業務員管理</button>
-    <button class="tab" id="tab-btn-assign" onclick="switchTab('assign')" style="display:none" data-i18n="tab_assign">客戶分配</button>
-    <button class="tab" id="tab-btn-logs" onclick="switchTab('logs')" style="display:none" data-i18n="tab_logs">操作日誌</button>
-  </div>
 
   <!-- Tab: Vehicles -->
-  <div id="tab-vehicles" class="tab-content active">
+  <div id="tab-vehicles" class="tab-content">
 
   <!-- ★★ 上傳行照 modal（按下「+新增車輛(上傳行照)」開啟） ★★ -->
   <div id="v-upload-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9997;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
@@ -1085,6 +1123,149 @@ function esc(s) {
 
 var API = '';
 var TOKEN = '';
+var ICONS = {
+  car: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+  shieldCheck: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  fileText: '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  camera: '<path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/>',
+  layoutDashboard: '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  calculator: '<rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
+  userCheck: '<path d="m16 11 2 2 4-4"/><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',
+  history: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  search: '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>',
+  bell: '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+  fileSpreadsheet: '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/>',
+  sparkles: '<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>',
+  keyRound: '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>',
+  creditCard: '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+  languages: '<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>',
+  logOut: '<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
+  chevronLeft: '<path d="m15 18-6-6 6-6"/>',
+  chevronRight: '<path d="m9 18 6-6-6-6"/>',
+  house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'
+};
+
+// 方塊定義：view 名稱 → 圖示 / 顏色；super = 僅 super_admin
+var TILE_SECTIONS = [
+  {key: 'customer', tiles: [
+    {v: 'vehicles',  icon: 'car',             c: '#1e88e5', sup: true},
+    {v: 'policies',  icon: 'shieldCheck',     c: '#2e7d32', sup: true},
+    {v: 'claims',    icon: 'fileText',        c: '#e65100', sup: true},
+    {v: 'accidents', icon: 'camera',          c: '#c62828', sup: true},
+    {v: 'overview',  icon: 'layoutDashboard', c: '#5e35b1'},
+    {v: 'quotes',    icon: 'calculator',      c: '#00897b'}
+  ]},
+  {key: 'tools', tiles: [
+    {v: 'todo',   icon: 'bell',            c: '#f4511e'},
+    {v: 'search', icon: 'search',          c: '#3949ab'},
+    {v: 'csv',    icon: 'fileSpreadsheet', c: '#43a047'}
+  ]},
+  {key: 'manage', sup: true, tiles: [
+    {v: 'agents', icon: 'users',     c: '#6d4c41', sup: true},
+    {v: 'assign', icon: 'userCheck', c: '#00838f', sup: true},
+    {v: 'logs',   icon: 'history',   c: '#546e7a', sup: true}
+  ]},
+  {key: 'account', tiles: [
+    {act: 'openNumerologyModal', k: 'iching', icon: 'sparkles',   c: '#ad1457'},
+    {act: 'openChangePwModal',   k: 'pw',     icon: 'keyRound',   c: '#8e24aa'},
+    {act: 'openSubscriptionModal', k: 'sub',  icon: 'creditCard', c: '#0277bd'},
+    {act: 'toggleAdminLang',     k: 'lang',   icon: 'languages',  c: '#00796b'},
+    {act: 'doLogout',            k: 'logout', icon: 'logOut',     c: '#d32f2f'}
+  ]}
+];
+var TILE_TEXT = {
+  zh: {
+    sec_customer: '客戶資料', sec_tools: '工作工具', sec_manage: '系統管理', sec_account: '我的帳號', home: '首頁',
+    vehicles: '車輛<br>行照', policies: '保單<br>管理', claims: '理賠<br>申請', accidents: '事故<br>照片',
+    overview: '資料<br>總覽', quotes: '詢價<br>工單', todo: '待辦<br>提醒', search: '快速<br>搜尋', csv: '匯入<br>匯出',
+    agents: '業務員<br>管理', assign: '客戶<br>分配', logs: '操作<br>日誌',
+    iching: '拿副<br>好牌', pw: '變更<br>密碼', sub: '訂閱<br>狀態', lang: 'English', logout: '登出'
+  },
+  en: {
+    sec_customer: 'Customers', sec_tools: 'Tools', sec_manage: 'Administration', sec_account: 'My Account', home: 'Home',
+    vehicles: 'Vehicles', policies: 'Policies', claims: 'Claims', accidents: 'Accident<br>Photos',
+    overview: 'Overview', quotes: 'Quotes', todo: 'To-dos', search: 'Search', csv: 'Import<br>Export',
+    agents: 'Agents', assign: 'Assign<br>Clients', logs: 'Audit<br>Log',
+    iching: 'Lucky<br>Numbers', pw: 'Password', sub: 'Plan', lang: '中文', logout: 'Log out'
+  }
+};
+function _tt(k) { return (TILE_TEXT[LANG] && TILE_TEXT[LANG][k]) || TILE_TEXT.zh[k] || k; }
+function _svg(name) {
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[name] || '') + '</svg>';
+}
+var _TODO_BADGE = 0;
+function _isSuper() { return ADMIN_ROLE === 'super_admin'; }
+function _viewAllowed(v) {
+  if (v === 'home') return true;
+  for (var i = 0; i < TILE_SECTIONS.length; i++) {
+    var ts = TILE_SECTIONS[i].tiles;
+    for (var j = 0; j < ts.length; j++) {
+      if (ts[j].v === v) return !ts[j].sup || _isSuper();
+    }
+  }
+  return false;
+}
+function renderHomeTiles() {
+  var html = '';
+  TILE_SECTIONS.forEach(function(sec) {
+    if (sec.sup && !_isSuper()) return;
+    var tiles = sec.tiles.filter(function(tl) { return !tl.sup || _isSuper(); });
+    html += '<section class="home-section"><h2 class="section-title">' + _tt('sec_' + sec.key) + '</h2><div class="appgrid">';
+    tiles.forEach(function(tl) {
+      var onclick = tl.v ? "switchTab('" + tl.v + "')" : tl.act + '()';
+      var badge = (tl.v === 'todo' && _TODO_BADGE > 0) ? '<span class="app-badge">' + (_TODO_BADGE > 99 ? '99+' : _TODO_BADGE) + '</span>' : '';
+      html += '<button type="button" class="apptile" data-tile="' + (tl.v || tl.k) + '" onclick="' + onclick + '">'
+        + '<span class="app-icon" style="--c:' + tl.c + '">' + _svg(tl.icon) + badge + '</span>'
+        + '<span class="app-label">' + _tt(tl.v || tl.k) + '</span></button>';
+    });
+    html += '</div></section>';
+  });
+  document.getElementById('tab-home').innerHTML = html;
+}
+function _setTileBadge(v, n) {
+  var icon = document.querySelector('[data-tile="' + v + '"] .app-icon');
+  if (!icon) return;
+  var b = icon.querySelector('.app-badge');
+  if (!n) { if (b) b.remove(); return; }
+  if (!b) { b = document.createElement('span'); b.className = 'app-badge'; icon.appendChild(b); }
+  b.textContent = n > 99 ? '99+' : String(n);
+}
+
+function switchTab(name) {
+  name = name || 'home';
+  if (!_viewAllowed(name)) { showMsg('login-msg', 'err', t('msg_no_permission')); return; }
+  if (location.hash.slice(1) !== name) location.hash = name;  // 觸發 hashchange → _showView
+  else _showView(name);
+}
+function _showView(name) {
+  if (!_viewAllowed(name)) name = 'home';
+  document.querySelectorAll('.tab-content').forEach(function(e) { e.classList.remove('active'); });
+  document.getElementById('tab-' + name).classList.add('active');
+  // 操作客戶列只在需要選客戶的畫面出現
+  var needCustomer = ['vehicles','policies','claims','accidents'].indexOf(name) >= 0;
+  document.getElementById('customer-bar').style.display = needCustomer ? 'block' : 'none';
+  document.getElementById('vnav-title').innerHTML = _tt(name).split('<br>').join('');
+  _updateNavButtons();
+  window.scrollTo(0, 0);
+  if (name === 'agents') loadAgents();
+  if (name === 'assign') loadAssignSelects();
+  if (name === 'logs') loadLogs();
+  if (name === 'quotes') loadQuoteRequests('');
+  if (name === 'search') { var qi = document.getElementById('qs-input'); if (qi) qi.focus(); }
+}
+function _updateNavButtons() {
+  var nav = window.navigation;
+  var back = document.getElementById('vnav-back'), fwd = document.getElementById('vnav-fwd');
+  if (nav && 'canGoBack' in nav) { back.disabled = !nav.canGoBack; fwd.disabled = !nav.canGoForward; }
+}
+window.addEventListener('hashchange', function() {
+  if (ADMIN_TOKEN) _showView(location.hash.slice(1) || 'home');
+});
+document.getElementById('vnav-back').innerHTML = _svg('chevronLeft');
+document.getElementById('vnav-fwd').innerHTML = _svg('chevronRight');
+document.getElementById('vnav-home').innerHTML = _svg('house');
+
 var ADMIN_TOKEN = '';
 var ADMIN_ROLE = '';
 var CONSOLE_API = '/api/v1/admin-console';
@@ -2321,16 +2502,13 @@ async function loadAgentTasks() {
       var b = btn.dataset.bucket;
       var cnt = c[b] || 0;
       var span = btn.querySelector('.todo-cnt');
-      if (span) span.textContent = cnt > 0 ? '(' + cnt + ')' : '';
+      if (span) span.textContent = String(cnt);
       // 高亮逾期 / 當天
-      if (b === 'overdue' && cnt > 0) {
-        btn.style.background = '#FFEBEE'; btn.style.borderColor = '#EF9A9A'; btn.style.color = '#C62828';
-      } else if (b === 'today' && cnt > 0) {
-        btn.style.background = '#FFF3E0'; btn.style.borderColor = '#FFB74D'; btn.style.color = '#E65100';
-      } else {
-        btn.style.background = '#fff'; btn.style.borderColor = '#ddd'; btn.style.color = '#333';
-      }
+      btn.classList.toggle('is-danger', b === 'overdue' && cnt > 0);
+      btn.classList.toggle('is-warn', b === 'today' && cnt > 0);
     });
+    _TODO_BADGE = (c.overdue || 0) + (c.today || 0);
+    _setTileBadge('todo', _TODO_BADGE);
     // 預設展開：有逾期就先看逾期，否則看當天
     var firstBucket = (c.overdue > 0) ? 'overdue' : (c.today > 0 ? 'today' : 'next_30d');
     switchTodoBucket(window._todoActiveBucket || firstBucket);
@@ -2343,13 +2521,7 @@ function switchTodoBucket(bucket) {
   window._todoActiveBucket = bucket;
   // active tab 視覺
   document.querySelectorAll('.todo-tab').forEach(function(btn){
-    if (btn.dataset.bucket === bucket) {
-      btn.style.fontWeight = '700';
-      btn.style.borderWidth = '2px';
-    } else {
-      btn.style.fontWeight = '400';
-      btn.style.borderWidth = '1px';
-    }
+    btn.classList.toggle('is-active', btn.dataset.bucket === bucket);
   });
   var data = window._todoData;
   if (!data) return;
@@ -3203,6 +3375,7 @@ function toggleAdminLang() {
   LANG = (LANG === 'zh') ? 'en' : 'zh';
   localStorage.setItem('admin_lang', LANG);
   applyAdminLang();
+  if (ADMIN_TOKEN) { renderHomeTiles(); _showView(location.hash.slice(1) || 'home'); }
   // 若搜尋結果還在，重跑一次（讓 JS 渲染的標籤跟著翻）
   var qsBox = document.getElementById('qs-results');
   if (qsBox && qsBox.innerHTML && document.getElementById('qs-input').value.trim()) {
@@ -3261,22 +3434,11 @@ function _enterAdminUI(token, role, displayName) {
   document.getElementById('user-info').textContent = (displayName || '') + ' (' + role + ')';
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('admin-panel').style.display = 'block';
-  document.getElementById('logout-btn').style.display = 'inline-block';
-  document.getElementById('change-pw-btn').style.display = 'inline-block';
-  document.getElementById('sub-status-btn').style.display = 'inline-block';
   // 載入訂閱狀態 + 顯示 banner
   loadSubscriptionBanner();
-  // 依角色顯示/隱藏分頁
-  var allTabs = ['vehicles','policies','claims','accidents','overview','quotes','agents','assign','logs'];
-  var agentTabs = ['overview','quotes'];
-  var superTabs = allTabs;
-  var visibleTabs = (role === 'super_admin') ? superTabs : agentTabs;
-  for (var ti = 0; ti < allTabs.length; ti++) {
-    var btn = document.getElementById('tab-btn-' + allTabs[ti]);
-    if (btn) btn.style.display = visibleTabs.indexOf(allTabs[ti]) >= 0 ? '' : 'none';
-  }
-  if (role !== 'super_admin') switchTab(visibleTabs[0]);
-  document.getElementById('customer-bar').style.display = 'block';
+  // 方塊首頁（依角色顯示可用方塊）＋ 依網址 #hash 開到對應畫面
+  renderHomeTiles();
+  _showView(location.hash.slice(1) || 'home');
   loadCustomerList();
   loadVehicles(); loadPolicies(); loadOverview();
   loadAgentTasks();
@@ -3449,6 +3611,7 @@ function doLogout() {
   var sb = document.getElementById('sub-status-btn'); if (sb) sb.style.display = 'none';
   var sban = document.getElementById('sub-banner'); if (sban) sban.style.display = 'none';
   document.getElementById('customer-bar').style.display = 'none';
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   document.getElementById('login-section').style.display = 'block';
   document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
@@ -3636,23 +3799,6 @@ async function cancelMySubscription() {
 }
 
 // --- Tabs ---
-function switchTab(name) {
-  // 業務員權限檢查
-  var adminOnly = ['vehicles','policies','claims','accidents','agents','assign','logs'];
-  if (ADMIN_ROLE === 'agent' && adminOnly.indexOf(name) >= 0) {
-    showMsg('login-msg', 'err', t('msg_no_permission'));
-    return;
-  }
-  document.querySelectorAll('.tab-content').forEach(function(e) { e.classList.remove('active'); });
-  document.querySelectorAll('.tab').forEach(function(e) { e.classList.remove('active'); });
-  document.getElementById('tab-'+name).classList.add('active');
-  var btn = document.getElementById('tab-btn-'+name);
-  if (btn) btn.classList.add('active');
-  if (name === 'agents') loadAgents();
-  if (name === 'assign') loadAssignSelects();
-  if (name === 'logs') loadLogs();
-  if (name === 'quotes') loadQuoteRequests('');
-}
 
 // --- 全域快速搜尋 ---
 function clearQuickSearch() {
