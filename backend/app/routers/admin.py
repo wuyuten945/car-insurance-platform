@@ -18,10 +18,10 @@ ADMIN_HTML = """<!DOCTYPE html>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Microsoft JhengHei', Arial, sans-serif; background: #f5f7fa; color: #333; }
-.header { background: #1565C0; color: #fff; padding: 16px 24px; }
+.header { background: #1565C0; color: #fff; padding: 16px max(20px, calc((100% - 520px) / 2)); }
 .header h1 { font-size: 20px; }
 .header small { color: rgba(255,255,255,.7); }
-.container { max-width: 960px; margin: 0 auto; padding: 20px; }
+.container { max-width: 560px; margin: 0 auto; padding: 20px; } /* 內容欄 520px 置中（同前台） */
 .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 20px; margin-bottom: 20px; }
 .card h2 { font-size: 16px; color: #1565C0; margin-bottom: 14px; border-bottom: 2px solid #E3F2FD; padding-bottom: 8px; }
 .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
@@ -92,13 +92,13 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 /* ═════════ 頁內按鈕 / 選單 / 列表 一律方塊 ═════════ */
 .tilescope button:not(.apptile):not(.picktile):not(.pw-toggle):not(.vnav-btn):not([style*="position:absolute"]) {
   display: inline-flex !important; flex-direction: column; align-items: center; justify-content: center;
-  min-width: 120px; min-height: 68px; padding: 10px 14px !important; margin: 6px 6px 0 0 !important;
-  border-radius: 14px !important; font-size: 16px !important; font-weight: 800 !important; line-height: 1.3;
+  min-width: 120px; min-height: 72px; padding: 10px 14px !important; margin: 6px 6px 0 0 !important;
+  border-radius: 14px !important; font-size: 20px !important; font-weight: 800 !important; line-height: 1.3;
   text-align: center; white-space: normal !important; vertical-align: top;
   box-shadow: 0 3px 8px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.35);
 }
 .tilescope button:not(.apptile):not(.picktile):not(.pw-toggle):not(.vnav-btn):not([style*="position:absolute"]):active { transform: scale(.96); }
-.tilescope td button:not(.picktile):not(.pw-toggle) { min-width: 64px; min-height: 44px; padding: 6px 10px !important; margin: 4px 4px 0 0 !important; font-size: 14px !important; border-radius: 12px !important; }
+.tilescope td button:not(.picktile):not(.pw-toggle) { min-width: 64px; min-height: 44px; padding: 6px 10px !important; margin: 4px 4px 0 0 !important; font-size: 17px !important; border-radius: 12px !important; }
 .tilescope [style*="display:flex"] { flex-wrap: wrap; }
 .tilescope button[disabled] { opacity: .45; }
 
@@ -109,8 +109,9 @@ select.tp-hidden { display: none !important; }
 .tpick .tp-group { font-size: 13px; font-weight: 800; color: #1a2b4c; margin: 8px 2px 4px; }
 .tpick .tp-search { margin-bottom: 8px; }
 .tpick.is-disabled { opacity: .5; pointer-events: none; }
-.tpick .picktile { min-height: 52px; }
-.tpick .picktile b { font-size: 16px; overflow-wrap: anywhere; }
+.tpick .picktile { min-height: 60px; }
+.tpick .picktile b { font-size: 20px; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .tpick .picktile b { font-size: 18px; } }
 
 /* 列表表格 → 卡片方塊 */
 table.cardify { display: block; overflow: visible; white-space: normal; margin-top: 12px; }
@@ -128,10 +129,9 @@ table.cardify tr.tr-empty td { justify-content: center; }
 
 /* 待辦區段：點選方塊（淺底深字） */
 .pickgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-@media (min-width: 480px) { .pickgrid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 .picktile { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px; padding: 6px 4px; border-radius: 12px; border: 1.5px solid #cfd6e4; background: #fff; color: #1a1a1a; text-align: center; cursor: pointer; font: inherit; }
-.picktile b { font-size: 17px; font-weight: 800; }
-.picktile span { font-size: 15px; color: #4b5563; margin-top: 2px; font-weight: 700; }
+.picktile b { font-size: 20px; font-weight: 800; }
+.picktile span { font-size: 18px; color: #4b5563; margin-top: 2px; font-weight: 700; }
 .picktile.is-danger { background: #FFEBEE; border-color: #EF9A9A; color: #C62828; }
 .picktile.is-warn { background: #FFF3E0; border-color: #FFB74D; color: #E65100; }
 .picktile.is-active { background: #1565c0; border-color: #1565c0; color: #fff; }
