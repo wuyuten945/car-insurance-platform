@@ -1339,7 +1339,7 @@ function _showView(name) {
   // 操作客戶列只在需要選客戶的畫面出現
   var needCustomer = ['vehicles','policies','claims','accidents'].indexOf(name) >= 0;
   document.getElementById('customer-bar').style.display = needCustomer ? 'block' : 'none';
-  document.getElementById('vnav-title').innerHTML = _tt(name).split('<br>').join('');
+  document.getElementById('vnav-title').innerHTML = name === 'home' ? '' : _tt(name).split('<br>').join('');
   _updateNavButtons();
   window.scrollTo(0, 0);
   if (name === 'agents') loadAgents();
