@@ -88,6 +88,44 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 .vnav button:disabled { opacity: .35; cursor: default; }
 .vnav-title { font-size: 18px; font-weight: 800; color: #1a2b4c; margin-left: 4px; }
 
+
+/* ═════════ 頁內按鈕 / 選單 / 列表 一律方塊 ═════════ */
+.tilescope button:not(.apptile):not(.picktile):not(.pw-toggle):not(.vnav-btn):not([style*="position:absolute"]) {
+  display: inline-flex !important; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 120px; min-height: 68px; padding: 10px 14px !important; margin: 6px 6px 0 0 !important;
+  border-radius: 14px !important; font-size: 16px !important; font-weight: 800 !important; line-height: 1.3;
+  text-align: center; white-space: normal !important; vertical-align: top;
+  box-shadow: 0 3px 8px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.35);
+}
+.tilescope button:not(.apptile):not(.picktile):not(.pw-toggle):not(.vnav-btn):not([style*="position:absolute"]):active { transform: scale(.96); }
+.tilescope td button:not(.picktile):not(.pw-toggle) { min-width: 64px; min-height: 44px; padding: 6px 10px !important; margin: 4px 4px 0 0 !important; font-size: 14px !important; border-radius: 12px !important; }
+.tilescope [style*="display:flex"] { flex-wrap: wrap; }
+.tilescope button[disabled] { opacity: .45; }
+
+/* 下拉選單 → 點選方塊（原 select 隱藏但保留，值與事件照舊） */
+select.tp-hidden { display: none !important; }
+.tpick { margin-top: 4px; }
+.tpick .pickgrid { max-height: 340px; overflow-y: auto; padding: 2px; }
+.tpick .tp-group { font-size: 13px; font-weight: 800; color: #1a2b4c; margin: 8px 2px 4px; }
+.tpick .tp-search { margin-bottom: 8px; }
+.tpick.is-disabled { opacity: .5; pointer-events: none; }
+.tpick .picktile { min-height: 52px; }
+.tpick .picktile b { font-size: 16px; overflow-wrap: anywhere; }
+
+/* 列表表格 → 卡片方塊 */
+table.cardify { display: block; overflow: visible; white-space: normal; margin-top: 12px; }
+table.cardify thead { display: none; }
+table.cardify tbody { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+table.cardify tr { display: flex; flex-direction: column; background: #fff; border: 1.5px solid #cfd6e4; border-radius: 14px; padding: 10px 14px; color: #1a1a1a; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+table.cardify tr:hover { background: #fff; border-color: #1565c0; }
+table.cardify td { display: flex; flex-wrap: wrap; gap: 4px 10px; justify-content: space-between; align-items: center; border: 0; padding: 4px 0; font-size: 14px; white-space: normal; text-align: right; overflow-wrap: break-word; }
+table.cardify td::before { content: attr(data-label); color: #4b5563; font-weight: 700; flex-shrink: 0; text-align: left; }
+table.cardify td.td-nolabel::before { display: none; }
+table.cardify td.td-actions { flex-wrap: wrap; justify-content: flex-start; border-top: 1px solid #eef1f6; margin-top: 6px; padding-top: 4px; }
+table.cardify td.td-actions::before { display: none; }
+table.cardify tr.tr-empty { grid-column: 1 / -1; align-items: center; color: #6b7280; }
+table.cardify tr.tr-empty td { justify-content: center; }
+
 /* 待辦區段：點選方塊（淺底深字） */
 .pickgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 @media (min-width: 480px) { .pickgrid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
@@ -318,9 +356,9 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 
   <!-- ★ 全域快速搜尋 -->
   <div id="vnav" class="vnav">
-    <button type="button" id="vnav-back" onclick="history.back()" aria-label="上一頁"></button>
-    <button type="button" id="vnav-fwd" onclick="history.forward()" aria-label="下一頁"></button>
-    <button type="button" id="vnav-home" onclick="switchTab('home')" aria-label="首頁"></button>
+    <button type="button" class="vnav-btn" id="vnav-back" onclick="history.back()" aria-label="上一頁"></button>
+    <button type="button" class="vnav-btn" id="vnav-fwd" onclick="history.forward()" aria-label="下一頁"></button>
+    <button type="button" class="vnav-btn" id="vnav-home" onclick="switchTab('home')" aria-label="首頁"></button>
     <span class="vnav-title" id="vnav-title"></span>
   </div>
   <div id="tab-home" class="tab-content"></div>
@@ -6164,6 +6202,137 @@ async function loadLogs() {
   }
   document.getElementById('logs-table').innerHTML = html || '<tr><td colspan="6" style="color:#999">尚無日誌</td></tr>';
 }
+
+// ═════════ 頁內方塊化：按鈕（CSS .tilescope）、下拉選單 → 點選方塊、列表表格 → 卡片 ═════════
+['admin-panel','customer-bar','create-customer-modal','change-pw-modal','subscription-modal','numerology-modal'].forEach(function(id) {
+  var el = document.getElementById(id); if (el) el.classList.add('tilescope');
+});
+
+// 程式直接設定 select.value / selectedIndex 時，方塊也要跟著亮
+(function() {
+  var proto = HTMLSelectElement.prototype;
+  ['value', 'selectedIndex'].forEach(function(k) {
+    var d = Object.getOwnPropertyDescriptor(proto, k);
+    if (!d || !d.set) return;
+    Object.defineProperty(proto, k, {
+      configurable: true, enumerable: d.enumerable,
+      get: function() { return d.get.call(this); },
+      set: function(v) { d.set.call(this, v); if (this._tp) _tpSync(this); }
+    });
+  });
+})();
+
+function _tpIsPlaceholder(o) {
+  return o.value === '' && /請選擇|select|choose/i.test(o.textContent);
+}
+function _tpRender(sel) {
+  var wrap = sel._tp;
+  var opts = sel.querySelectorAll('option');
+  var q = wrap._q || '';
+  var html = '';
+  if (opts.length > 12) {
+    html += '<input type="text" class="tp-search" placeholder="' + (LANG === 'en' ? 'Search' : '搜尋') + '" value="' + q.replace(/"/g, '&quot;') + '">';
+  }
+  var groups = [];
+  var cur = {label: '', items: []};
+  Array.prototype.forEach.call(sel.children, function(ch) {
+    if (ch.tagName === 'OPTGROUP') {
+      if (cur.items.length) groups.push(cur);
+      cur = {label: ch.label, items: Array.prototype.slice.call(ch.querySelectorAll('option'))};
+      groups.push(cur);
+      cur = {label: '', items: []};
+    } else if (ch.tagName === 'OPTION') {
+      cur.items.push(ch);
+    }
+  });
+  if (cur.items.length) groups.push(cur);
+  groups.forEach(function(g) {
+    var tiles = '';
+    g.items.forEach(function(o) {
+      if (_tpIsPlaceholder(o) || o.hidden) return;
+      var txt = o.textContent.trim();
+      if (q && txt.toLowerCase().indexOf(q.toLowerCase()) < 0) return;
+      tiles += '<button type="button" class="picktile" data-v="' + o.value.replace(/"/g, '&quot;') + '"' + (o.disabled ? ' disabled' : '') + '><b></b></button>';
+    });
+    if (!tiles) return;
+    if (g.label) html += '<div class="tp-group">' + g.label + '</div>';
+    html += '<div class="pickgrid">' + tiles + '</div>';
+  });
+  wrap.innerHTML = html;
+  // 文字用 textContent 填，避免選項內容被當成 HTML
+  var btns = wrap.querySelectorAll('.picktile');
+  var k = 0;
+  groups.forEach(function(g) {
+    g.items.forEach(function(o) {
+      if (_tpIsPlaceholder(o) || o.hidden) return;
+      var txt = o.textContent.trim();
+      if (q && txt.toLowerCase().indexOf(q.toLowerCase()) < 0) return;
+      btns[k].querySelector('b').textContent = txt; k++;
+    });
+  });
+  var si = wrap.querySelector('.tp-search');
+  if (si) {
+    si.addEventListener('input', function() {
+      wrap._q = si.value; _tpRender(sel);
+      var n = wrap.querySelector('.tp-search'); n.focus(); n.setSelectionRange(n.value.length, n.value.length);
+    });
+  }
+  _tpSync(sel);
+}
+function _tpSync(sel) {
+  var wrap = sel._tp; if (!wrap) return;
+  var v = sel.value;
+  wrap.classList.toggle('is-disabled', !!sel.disabled);
+  wrap.querySelectorAll('.picktile').forEach(function(b) { b.classList.toggle('is-active', b.getAttribute('data-v') === v); });
+}
+function _tpEnhance(sel) {
+  if (sel._tp) return;
+  var wrap = document.createElement('div');
+  wrap.className = 'tpick';
+  sel.parentNode.insertBefore(wrap, sel.nextSibling);
+  sel._tp = wrap;
+  sel.classList.add('tp-hidden');
+  wrap.addEventListener('click', function(e) {
+    var b = e.target.closest('.picktile');
+    if (!b || b.disabled) return;
+    sel.value = b.getAttribute('data-v');
+    sel.dispatchEvent(new Event('change', {bubbles: true}));
+  });
+  sel.addEventListener('change', function() { _tpSync(sel); });
+  new MutationObserver(function() { _tpRender(sel); }).observe(sel, {childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['disabled', 'label']});
+  _tpRender(sel);
+}
+document.querySelectorAll('select').forEach(_tpEnhance);
+
+// 列表表格（有表頭的）→ 每筆一張卡片；欄名放在每格前面
+function _cardLabel(table) {
+  var heads = Array.prototype.map.call(table.querySelectorAll('thead th'), function(th) { return th.textContent.trim(); });
+  table.querySelectorAll('tbody tr').forEach(function(tr) {
+    var tds = tr.children;
+    if (tds.length === 1 && tds[0].hasAttribute('colspan')) { tr.classList.add('tr-empty'); tds[0].classList.add('td-nolabel'); return; }
+    tr.classList.remove('tr-empty');
+    var col = 0;
+    Array.prototype.forEach.call(tds, function(td) {
+      var label = heads[col] || '';
+      td.setAttribute('data-label', label);
+      // 整格只有按鈕（沒有其他文字）才當成動作列，否則保留欄名
+      var btnText = 0;
+      td.querySelectorAll('button').forEach(function(b) { btnText += b.textContent.trim().length; });
+      var hasBtn = !!td.querySelector('button');
+      td.classList.toggle('td-actions', hasBtn && td.textContent.trim().length - btnText === 0);
+      td.classList.toggle('td-nolabel', !label);
+      col += parseInt(td.getAttribute('colspan') || '1', 10);
+    });
+  });
+}
+function _cardify(table) {
+  if (table._card || !table.querySelector('thead')) return;
+  table._card = true;
+  table.classList.add('cardify');
+  new MutationObserver(function() { _cardLabel(table); }).observe(table, {childList: true, subtree: true});
+  _cardLabel(table);
+}
+document.querySelectorAll('#admin-panel table').forEach(_cardify);
 </script>
 </body>
 </html>"""
