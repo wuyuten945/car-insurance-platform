@@ -140,6 +140,9 @@ select.tp-hidden { display: none !important; }
 #customer-bar .cb-tags button#cb-sort-btn { background: #E1BEE7; color: #3d0f4a; border: 2px solid #CE93D8; }
 #customer-bar .cb-tags button#cb-sort-btn.is-on { background: #BA68C8; color: #26052f; border: 3px solid #4A148C; }
 #customer-bar .cb-tags button#cb-plate-btn { background: #C8E6C9; color: #133d17; border: 2px solid #A5D6A7; }
+/* 新增客戶＝淺橘、重新整理客戶清單＝淺粉 */
+#customer-bar .cb-tags button#cb-new-btn { background: #FFCC80; color: #4a2600; border: 2px solid #FFB74D; }
+#customer-bar .cb-tags button#cb-refresh-btn { background: #F8BBD0; color: #4a0d26; border: 2px solid #F48FB1; }
 #customer-bar .cb-tags button#cb-plate-btn.is-on { background: #81C784; color: #0b2e0e; border: 3px solid #1B5E20; }
 .cb-plate { margin: 4px 0; font-size: 18px; text-transform: uppercase; }
 #customer-bar-msg { display: block; margin: 6px 0 0 !important; font-size: 14px !important; }
@@ -284,8 +287,10 @@ table.cardify tr.tr-empty td { justify-content: center; }
     </div>
     <input type="text" id="cb-plate-input" class="cb-plate" style="display:none" placeholder="車牌號碼" oninput="applyCustPlateFilter()">
     <select id="cur-customer" style="background:#fff;color:#000;padding:4px 8px;border-radius:4px;border:0;min-width:280px"></select>
-    <button class="btn success" style="padding:4px 12px;font-size:11px;margin-left:8px" onclick="openCreateCustomerModal()" data-i18n="btn_new_customer">+ 新增客戶</button>
-    <button class="btn" style="padding:4px 10px;font-size:11px;margin-left:6px;background:#0288D1" onclick="loadCustomerList()" data-i18n="btn_refresh_customers">重新整理客戶清單</button>
+    <div class="cb-tags">
+      <button class="btn cb-tag" id="cb-new-btn" onclick="openCreateCustomerModal()" data-i18n="btn_new_customer">+ 新增客戶</button>
+      <button class="btn cb-tag" id="cb-refresh-btn" onclick="loadCustomerList()" data-i18n="btn_refresh_customers">重新整理客戶清單</button>
+    </div>
     <span id="customer-bar-msg" style="margin-left:10px;color:#FFD54F;font-size:11px"></span>
   </div>
 </div>
