@@ -118,7 +118,7 @@ select.tp-hidden { display: none !important; }
 .ag-role-row .tpick { margin-top: 0; }
 .ag-role-row .tpick .pickgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); height: 100%; }
 .ag-role-row .picktile { height: 100%; }
-.tilescope .ag-role-row button.btn { margin: 0 !important; min-width: 0; }
+#admin-panel .ag-role-row button.btn { margin: 0 !important; min-width: 0; }
 /* 管理員選項：Tiffany 淺綠底深字；選中時加深＋粗框 */
 .ag-role-row .picktile[data-v="super_admin"] { background: #81D8D0; border-color: #5cc4bb; color: #0b3d3a; }
 .ag-role-row .picktile[data-v="super_admin"].is-active { background: #0ABAB5; border: 3px solid #04706c; color: #062b28; }
@@ -128,7 +128,18 @@ select.tp-hidden { display: none !important; }
 
 /* 客戶分配：業務員、客戶上下直列（一列一個方塊），「分配」在最下方 */
 .assign-col .pickgrid { grid-template-columns: 1fr; max-height: none; }
-.tilescope button.assign-btn { display: flex !important; width: 100%; margin: 16px 0 0 !important; }
+#admin-panel button.assign-btn { display: flex !important; width: 100%; margin: 16px 0 0 !important; }
+
+
+/* 操作客戶區：客戶方塊直列（一列一位）＋ 排序/車牌搜尋 標籤 */
+#customer-bar .tpick .pickgrid { grid-template-columns: 1fr; }
+#customer-bar .tpick .picktile { min-height: 52px; }
+.cb-tags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 4px; }
+#customer-bar .cb-tags button.cb-tag { margin: 0 !important; min-width: 0; min-height: 56px; font-size: 18px !important; padding: 8px 6px !important; background: #fff; color: #0d2a4d; border: 2px solid #90CAF9; }
+#customer-bar .cb-tags button.cb-tag.is-on { background: #FFE082; color: #4a3300; border: 3px solid #FF8F00; }
+.cb-plate { margin: 4px 0; font-size: 18px; text-transform: uppercase; }
+#customer-bar-msg { display: block; margin: 6px 0 0 !important; font-size: 14px !important; }
+.cb-empty { color: #FFE082; font-weight: 700; font-size: 15px; padding: 6px 2px; }
 
 /* 列表表格 → 卡片方塊 */
 table.cardify { display: block; overflow: visible; white-space: normal; margin-top: 12px; }
@@ -263,6 +274,11 @@ table.cardify tr.tr-empty td { justify-content: center; }
   <div id="sub-banner" style="display:none;margin-top:10px;padding:10px 12px;border-radius:6px;font-size:13px;font-weight:600"></div>
   <div id="customer-bar" style="display:none;margin-top:10px;padding:10px;background:rgba(255,255,255,0.15);border-radius:6px;font-size:13px">
     <span style="margin-right:8px" data-i18n="cur_customer_label">操作客戶（新增車輛/保單時套用）：</span>
+    <div class="cb-tags">
+      <button type="button" id="cb-sort-btn" class="cb-tag" onclick="toggleCustStrokeSort()">依姓氏筆畫排列</button>
+      <button type="button" id="cb-plate-btn" class="cb-tag" onclick="toggleCustPlateSearch()">依車牌搜尋</button>
+    </div>
+    <input type="text" id="cb-plate-input" class="cb-plate" style="display:none" placeholder="車牌號碼" oninput="applyCustPlateFilter()">
     <select id="cur-customer" style="background:#fff;color:#000;padding:4px 8px;border-radius:4px;border:0;min-width:280px"></select>
     <button class="btn success" style="padding:4px 12px;font-size:11px;margin-left:8px" onclick="openCreateCustomerModal()" data-i18n="btn_new_customer">+ 新增客戶</button>
     <button class="btn" style="padding:4px 10px;font-size:11px;margin-left:6px;background:#0288D1" onclick="loadCustomerList()" data-i18n="btn_refresh_customers">重新整理客戶清單</button>
@@ -3111,7 +3127,7 @@ var I18N = {
     btn_add_item: '+ 新增項目',
     btn_create_policy: '建立保單',
     h_existing_policies: '現有保單',
-    policy_list_hint: '💡 點擊任一保單列可選取，<b>雙擊</b>查看承保項目明細',
+    policy_list_hint: '💡 點擊任一保單列可選取，雙擊查看承保項目明細',
     th_policy_number: '保單號碼', th_insurer: '保險公司', th_status: '狀態',
     th_start: '起保', th_end: '到期', th_premium: '保費', th_items: '項目',
     h_edit_policy: '編輯保單',
@@ -3340,7 +3356,7 @@ var I18N = {
     btn_add_item: '+ Add Item',
     btn_create_policy: 'Create Policy',
     h_existing_policies: 'Existing Policies',
-    policy_list_hint: '💡 Click row to select, <b>double-click</b> to view items',
+    policy_list_hint: '💡 Click row to select, double-click to view items',
     th_policy_number: 'Policy #', th_insurer: 'Insurer', th_status: 'Status',
     th_start: 'Start', th_end: 'End', th_premium: 'Premium', th_items: 'Items',
     h_edit_policy: 'Edit Policy',
@@ -3748,6 +3764,8 @@ async function loadCustomerList() {
       html += '<option value="'+esc(c.id)+'">'+esc(label)+'</option>';
     }
     sel.innerHTML = html;
+    window._lastCustomers = customers;
+    _applyCustSortAndFilter();
     if (prev) sel.value = prev;   // 還原上次選的(若新清單仍有此客戶)
     if (msg) msg.textContent = (LANG === 'en')
       ? (customers.length + ' customer(s)')
@@ -6330,7 +6348,7 @@ function _tpEnhance(sel) {
     sel.dispatchEvent(new Event('change', {bubbles: true}));
   });
   sel.addEventListener('change', function() { _tpSync(sel); });
-  new MutationObserver(function() { _tpRender(sel); }).observe(sel, {childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['disabled', 'label']});
+  new MutationObserver(function() { _tpRender(sel); }).observe(sel, {childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['disabled', 'label', 'hidden']});
   _tpRender(sel);
 }
 document.querySelectorAll('select').forEach(_tpEnhance);
@@ -6364,6 +6382,74 @@ function _cardify(table) {
   _cardLabel(table);
 }
 document.querySelectorAll('#admin-panel table').forEach(_cardify);
+
+// ── 操作客戶區：依姓氏筆畫排列 / 依車牌搜尋 ──
+// zh-Hant 預設排序就是筆畫序（筆畫少的在前，同筆畫再依字）
+var _CUST_STROKE_SORT = false;
+var _strokeCollator = (window.Intl && Intl.Collator) ? new Intl.Collator('zh-Hant-TW') : null;
+function _custName(id) {
+  var cs = window._lastCustomers || [];
+  for (var i = 0; i < cs.length; i++) if (cs[i].id === id) return cs[i].name || cs[i].phone || cs[i].email || '';
+  return '';
+}
+function _applyCustSortAndFilter() {
+  var sel = document.getElementById('cur-customer');
+  if (!sel) return;
+  var opts = Array.prototype.slice.call(sel.options);
+  var head = opts.filter(function(o) { return o.value === ''; });
+  var rest = opts.filter(function(o) { return o.value !== ''; });
+  if (_CUST_STROKE_SORT && _strokeCollator) {
+    rest.sort(function(a, b) { return _strokeCollator.compare(a.textContent.trim(), b.textContent.trim()); });
+  } else {
+    // 還原原本順序（loadCustomerList 給的順序）
+    var order = (window._lastCustomers || []).map(function(c) { return c.id; });
+    rest.sort(function(a, b) { return order.indexOf(a.value) - order.indexOf(b.value); });
+  }
+  var cur = sel.value;
+  head.concat(rest).forEach(function(o) { sel.appendChild(o); });
+  sel.value = cur;
+  applyCustPlateFilter();
+}
+function toggleCustStrokeSort() {
+  _CUST_STROKE_SORT = !_CUST_STROKE_SORT;
+  document.getElementById('cb-sort-btn').classList.toggle('is-on', _CUST_STROKE_SORT);
+  _applyCustSortAndFilter();
+}
+function toggleCustPlateSearch() {
+  var btn = document.getElementById('cb-plate-btn');
+  var inp = document.getElementById('cb-plate-input');
+  var on = !btn.classList.contains('is-on');
+  btn.classList.toggle('is-on', on);
+  inp.style.display = on ? 'block' : 'none';
+  if (on) inp.focus(); else inp.value = '';
+  applyCustPlateFilter();
+}
+function _normPlate(p) { return String(p || '').toUpperCase().replace(/[^0-9A-Z]/g, ''); }
+function applyCustPlateFilter() {
+  var sel = document.getElementById('cur-customer');
+  var inp = document.getElementById('cb-plate-input');
+  if (!sel || !inp) return;
+  var q = inp.style.display === 'none' ? '' : _normPlate(inp.value);
+  var owners = null;
+  if (q) {
+    owners = {};
+    (window._lastVehicles || []).forEach(function(v) {
+      if (_normPlate(v.plate_number).indexOf(q) >= 0 && v.user_id) owners[v.user_id] = true;
+    });
+  }
+  var shown = 0;
+  Array.prototype.forEach.call(sel.options, function(o) {
+    if (o.value === '') return;
+    var hide = !!owners && !owners[o.value];
+    if (o.hidden !== hide) o.hidden = hide;
+    if (!hide) shown++;
+  });
+  var msg = document.getElementById('cb-plate-empty');
+  if (q && shown === 0) {
+    if (!msg) { msg = document.createElement('div'); msg.id = 'cb-plate-empty'; msg.className = 'cb-empty'; inp.parentNode.insertBefore(msg, inp.nextSibling); }
+    msg.textContent = '查無此車牌的客戶';
+  } else if (msg) { msg.remove(); }
+}
 </script>
 </body>
 </html>"""
