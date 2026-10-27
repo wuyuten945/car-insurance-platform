@@ -120,6 +120,12 @@ select.tp-hidden { display: none !important; }
 .ag-role-row .picktile { height: 100%; }
 .tilescope .ag-role-row button.btn { margin: 0 !important; min-width: 0; }
 
+/* 客戶分配：客戶方塊後面直接接「分配」，同大小同排 */
+.assign-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 4px; }
+.assign-row .tpick, .assign-row .tpick .pickgrid { display: contents; }
+.assign-row .tp-search, .assign-row .tp-group { grid-column: 1 / -1; margin: 0; }
+.tilescope .assign-row button.btn { margin: 0 !important; min-width: 0; min-height: 52px; }
+
 /* 列表表格 → 卡片方塊 */
 table.cardify { display: block; overflow: visible; white-space: normal; margin-top: 12px; }
 table.cardify thead { display: none; }
@@ -1035,8 +1041,7 @@ table.cardify tr.tr-empty td { justify-content: center; }
   <div id="tab-assign" class="tab-content">
     <div class="card">
       <h2 data-i18n="h_assign_customer">分配客戶給業務員</h2>
-      <div class="row"><div><label data-i18n="lbl_choose_agent">選擇業務員</label><select id="assign-agent"></select></div><div><label data-i18n="lbl_choose_customer">選擇客戶</label><select id="assign-customer"></select></div></div>
-      <button class="btn success" onclick="assignCustomer()" data-i18n="btn_assign">分配</button>
+      <div class="row"><div><label data-i18n="lbl_choose_agent">選擇業務員</label><select id="assign-agent"></select></div><div><label data-i18n="lbl_choose_customer">選擇客戶</label><div class="assign-row"><select id="assign-customer"></select><button class="btn success" onclick="assignCustomer()" data-i18n="btn_assign">分配</button></div></div></div>
       <div id="assign-msg" class="msg"></div>
     </div>
   </div>
@@ -6230,7 +6235,7 @@ async function loadLogs() {
 })();
 
 function _tpIsPlaceholder(o) {
-  return o.value === '' && /請選擇|select|choose/i.test(o.textContent);
+  return o.value === '' && /請選擇|^[ —-]*選擇|select|choose/i.test(o.textContent.trim());
 }
 function _tpRender(sel) {
   var wrap = sel._tp;
