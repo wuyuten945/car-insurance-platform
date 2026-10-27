@@ -113,6 +113,13 @@ select.tp-hidden { display: none !important; }
 .tpick .picktile b { font-size: 20px; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .tpick .picktile b { font-size: 18px; } }
 
+/* 業務員管理：角色兩個選項＋新增帳號 同一列三等分 */
+.ag-role-row { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; align-items: stretch; }
+.ag-role-row .tpick { margin-top: 0; }
+.ag-role-row .tpick .pickgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); height: 100%; }
+.ag-role-row .picktile { height: 100%; }
+.tilescope .ag-role-row button.btn { margin: 0 !important; min-width: 0; }
+
 /* 列表表格 → 卡片方塊 */
 table.cardify { display: block; overflow: visible; white-space: normal; margin-top: 12px; }
 table.cardify thead { display: none; }
@@ -148,7 +155,7 @@ table.cardify tr.tr-empty td { justify-content: center; }
   .header button { font-size: 11px !important; padding: 5px 10px !important; margin-left: 0 !important; }
 
   /* Container */
-  .container { padding: 10px; max-width: 100%; }
+  .container { padding: 10px; max-width: 540px; }
 
   /* Card */
   .card { padding: 14px; border-radius: 10px; margin-bottom: 12px; }
@@ -1013,8 +1020,8 @@ table.cardify tr.tr-empty td { justify-content: center; }
       <div class="row"><div><label data-i18n="lbl_username">帳號</label><input id="ag-user" placeholder="agent01"></div><div><label data-i18n="lbl_password">密碼</label><div class="pw-wrap"><input id="ag-pass" type="password"><button type="button" class="pw-toggle" onclick="togglePw('ag-pass',this)">👁</button></div></div></div>
       <div class="row"><div><label data-i18n="lbl_display_name">顯示名稱</label><input id="ag-name"></div><div><label>Email</label><input id="ag-email"></div></div>
       <div class="row"><div><label data-i18n="lbl_phone">電話</label><input id="ag-phone"></div><div><label data-i18n="lbl_ip_whitelist">IP 白名單（逗號分隔，空=不限）</label><input id="ag-ip"></div></div>
-      <div class="row"><div><label data-i18n="lbl_role">角色</label><select id="ag-role"><option value="agent" data-i18n="role_agent">業務員</option><option value="super_admin" data-i18n="role_admin">管理員（super admin）</option></select></div><div></div></div>
-      <button class="btn" onclick="createAgent()" data-i18n="btn_add_agent">新增帳號</button>
+      <label data-i18n="lbl_role">角色</label>
+      <div class="ag-role-row"><select id="ag-role"><option value="agent" data-i18n="role_agent">業務員</option><option value="super_admin" data-i18n="role_admin">管理員（super admin）</option></select><button class="btn" onclick="createAgent()" data-i18n="btn_add_agent">新增帳號</button></div>
       <div id="ag-msg" class="msg"></div>
     </div>
     <div class="card">
