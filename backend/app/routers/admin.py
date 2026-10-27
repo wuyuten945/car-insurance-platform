@@ -86,7 +86,8 @@ img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-to
 .vnav button { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid #c5cfe0; background: #fff; color: #1a2b4c; cursor: pointer; padding: 0; }
 .vnav button svg { width: 22px; height: 22px; }
 .vnav button:disabled { opacity: .35; cursor: default; }
-.vnav-title { font-size: 18px; font-weight: 800; color: #1a2b4c; margin-left: 4px; }
+.vnav-title { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; font-weight: 800; color: #1a2b4c; margin-left: 4px; }
+.vnav-title svg { width: 20px; height: 20px; color: #d32f2f; flex-shrink: 0; }
 
 
 /* ═════════ 頁內按鈕 / 選單 / 列表 一律方塊 ═════════ */
@@ -1237,6 +1238,7 @@ var ICONS = {
   logOut: '<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
   chevronLeft: '<path d="m15 18-6-6 6-6"/>',
   chevronRight: '<path d="m9 18 6-6-6-6"/>',
+  mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
   house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'
 };
 
@@ -1339,7 +1341,7 @@ function _showView(name) {
   // 操作客戶列只在需要選客戶的畫面出現
   var needCustomer = ['vehicles','policies','claims','accidents'].indexOf(name) >= 0;
   document.getElementById('customer-bar').style.display = needCustomer ? 'block' : 'none';
-  document.getElementById('vnav-title').innerHTML = name === 'home' ? '' : _tt(name).split('<br>').join('');
+  document.getElementById('vnav-title').innerHTML = name === 'home' ? '' : _svg('mapPin') + '<span>' + _tt(name).split('<br>').join('') + '</span>';
   _updateNavButtons();
   window.scrollTo(0, 0);
   if (name === 'agents') loadAgents();
