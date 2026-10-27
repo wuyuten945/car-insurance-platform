@@ -153,6 +153,19 @@ table.cardify tr.tr-empty td { justify-content: center; }
 .picktile.is-warn { background: #FFF3E0; border-color: #FFB74D; color: #E65100; }
 .picktile.is-active { background: #1565c0; border-color: #1565c0; color: #fff; }
 .picktile.is-active span { color: #e3f2fd; }
+/* 待辦區段：依緊急程度由重到輕 紅→橘→黃→綠→灰藍（淺底深字；選中時加深＋粗框） */
+.todo-tab[data-bucket="overdue"]  { background: #FFCDD2; border-color: #E57373; color: #7f1d1d; }
+.todo-tab[data-bucket="today"]    { background: #FFE0B2; border-color: #FFB74D; color: #7a3300; }
+.todo-tab[data-bucket="next_3d"]  { background: #FFF59D; border-color: #FDD835; color: #5c4a00; }
+.todo-tab[data-bucket="next_7d"]  { background: #DCEDC8; border-color: #AED581; color: #2e4d12; }
+.todo-tab[data-bucket="next_30d"] { background: #E3E9ED; border-color: #B0BEC5; color: #263238; }
+.todo-tab[data-bucket] span { color: inherit; }
+.todo-tab[data-bucket="overdue"].is-active  { background: #EF9A9A; border: 3px solid #8e0000; }
+.todo-tab[data-bucket="today"].is-active    { background: #FFB74D; border: 3px solid #a33f00; }
+.todo-tab[data-bucket="next_3d"].is-active  { background: #FFEB3B; border: 3px solid #8d6e00; }
+.todo-tab[data-bucket="next_7d"].is-active  { background: #AED581; border: 3px solid #33691e; }
+.todo-tab[data-bucket="next_30d"].is-active { background: #B0BEC5; border: 3px solid #37474f; }
+.todo-tab[data-bucket].is-active span { color: inherit; }
 
 /* ═════════ 手機 / 平板響應式（≤ 768px） ═════════ */
 @media (max-width: 768px) {
