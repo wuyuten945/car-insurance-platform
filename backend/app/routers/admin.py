@@ -151,18 +151,12 @@ select.tp-hidden { display: none !important; }
 
 
 /* ═════════ 經營儀表板 ═════════ */
-.header { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-.header h1 { flex: 1 1 auto; }
-.header #user-info { order: 3; flex-basis: 100%; }
-.header #sub-banner, .header #customer-bar { order: 4; flex-basis: 100%; }
-.header button.dash-btn {
-  display: inline-flex; align-items: center; gap: 8px; order: 2;
-  background: #FFD54F !important; color: #3E2723 !important; border: 0; border-radius: 14px;
-  padding: 10px 16px !important; font-size: 18px !important; font-weight: 800; cursor: pointer;
-  box-shadow: 0 3px 8px rgba(0,0,0,.25); margin: 0 !important;
-}
-.header button.dash-btn svg { width: 22px; height: 22px; }
-.header button.dash-btn.is-on { background: #fff !important; color: #0d47a1 !important; }
+.vnav button.dash-btn { width: auto; padding: 0 12px; gap: 6px; background: #FFD54F; color: #3E2723; border: 0; font-size: 16px; font-weight: 800; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+.vnav button.dash-btn svg { width: 20px; height: 20px; }
+.vnav button.dash-btn.is-on { background: #1565C0; color: #fff; }
+.vnav { flex-wrap: wrap; row-gap: 6px; }
+.vnav button { flex-shrink: 0; }
+.vnav-title span { white-space: nowrap; }
 #dash-body { color: #1a1a1a; }
 .dash-asof { text-align: center; color: #4b5563; font-size: 14px; margin: 4px 0 10px; }
 .dash-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
@@ -203,7 +197,6 @@ select.tp-hidden { display: none !important; }
 .agcard div { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; }
 .agcard div span { color: #4b5563; }
 @media (max-width: 640px) {
-  .header button.dash-btn { font-size: 16px !important; padding: 8px 12px !important; }
   .dash-todo b { font-size: 20px; }
   .dash-todo span { font-size: 12px; }
   .kpi b { font-size: 22px; }
@@ -331,7 +324,6 @@ table.cardify tr.tr-empty td { justify-content: center; }
 <div class="header">
   <h1 data-i18n="header_title">BOPINAN — 管理控制台</h1>
   <small id="user-info"></small>
-  <button type="button" id="dash-btn" class="dash-btn" style="display:none" onclick="switchTab('dashboard')"></button>
   <button type="button" onclick="openNumerologyModal()" title="幫自己和客戶拿副好牌"
      style="display:none;background:linear-gradient(90deg,#9C27B0,#E91E63,#FF9800);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">
     <span data-i18n="btn_iching">✨ 幫自己和客戶拿副好牌</span>
@@ -476,6 +468,7 @@ table.cardify tr.tr-empty td { justify-content: center; }
     <button type="button" class="vnav-btn" id="vnav-back" onclick="history.back()" aria-label="上一頁"></button>
     <button type="button" class="vnav-btn" id="vnav-fwd" onclick="history.forward()" aria-label="下一頁"></button>
     <button type="button" class="vnav-btn" id="vnav-home" onclick="switchTab('home')" aria-label="首頁"></button>
+    <button type="button" class="vnav-btn dash-btn" id="dash-btn" style="display:none" onclick="switchTab('dashboard')"></button>
     <span class="vnav-title" id="vnav-title"></span>
   </div>
   <div id="tab-home" class="tab-content"></div>
@@ -1404,7 +1397,7 @@ function _showView(name) {
   // 操作客戶列只在需要選客戶的畫面出現
   var needCustomer = ['vehicles','policies','claims','accidents'].indexOf(name) >= 0;
   document.getElementById('customer-bar').style.display = needCustomer ? 'block' : 'none';
-  document.getElementById('vnav-title').innerHTML = name === 'home' ? '' : _svg('mapPin') + '<span>' + _tt(name).split('<br>').join('') + '</span>';
+  document.getElementById('vnav-title').innerHTML = (name === 'home' || name === 'dashboard') ? '' : _svg('mapPin') + '<span>' + _tt(name).split('<br>').join('') + '</span>';
   _updateNavButtons();
   window.scrollTo(0, 0);
   document.getElementById('dash-btn').classList.toggle('is-on', name === 'dashboard');
