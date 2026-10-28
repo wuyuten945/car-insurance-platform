@@ -26,9 +26,13 @@ async def _seed():
                        api_key=generate_api_key(), is_active=True, token_version=0,
                        subscription_status="trial", trial_started_at=datetime.now(timezone.utc),
                        subscription_period_end=datetime.now(timezone.utc) + timedelta(days=5))
+        ag2 = AdminUser(username="ag2", display_name="李業務", password_hash=hash_password("x"), role="agent",
+                        api_key=generate_api_key(), is_active=True, token_version=0,
+                        subscription_status="trial", trial_started_at=datetime.now(timezone.utc),
+                        subscription_period_end=datetime.now(timezone.utc) + timedelta(days=5))
         u1 = User(email="a@example.com", name="甲")
         u2 = User(email="b@example.com", name="乙")
-        db.add_all([sup, ag, u1, u2])
+        db.add_all([sup, ag, ag2, u1, u2])
         await db.flush()
         today = date.today()
         db.add_all([
@@ -39,7 +43,7 @@ async def _seed():
             AgentCustomer(agent_id=ag.id, customer_id=u1.id),
         ])
         await db.commit()
-        return sup, ag
+        return sup, ag, ag2
 
 
 def _h(a):
@@ -50,7 +54,7 @@ def _h(a):
 
 @pytest.mark.asyncio
 async def test_dashboard_super_and_agent(client):
-    sup, ag = await _seed()
+    sup, ag, ag2 = await _seed()
 
     r = await client.get(API, headers=_h(sup))
     assert r.status_code == 200, r.text
@@ -66,4 +70,12 @@ async def test_dashboard_super_and_agent(client):
     d = r.json()["data"]
     assert d["customers"]["total"] == 1
     assert d["policies"]["live_premium"] == 10000
+    assert d["agents"] == []
+    assert d["scope"] == "self" and d["owner"] == "張業務"
+
+    # 另一位業務員沒有被分配客戶 → 看不到任何別人的資料
+    r = await client.get(API, headers=_h(ag2))
+    d = r.json()["data"]
+    assert d["customers"]["total"] == 0
+    assert d["policies"]["total"] == 0 and d["policies"]["live_premium"] == 0
     assert d["agents"] == []

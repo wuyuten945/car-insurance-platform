@@ -158,6 +158,7 @@ select.tp-hidden { display: none !important; }
 .vnav button { flex-shrink: 0; }
 .vnav-title span { white-space: nowrap; }
 #dash-body { color: #1a1a1a; }
+.dash-owner { text-align: center; font-size: 20px; font-weight: 800; color: #0d2a4d; margin-top: 4px; }
 .dash-asof { text-align: center; color: #4b5563; font-size: 14px; margin: 4px 0 10px; }
 .dash-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .kpi { background: #fff; border: 1.5px solid #cfd6e4; border-radius: 14px; padding: 12px 8px; text-align: center; }
@@ -6580,7 +6581,8 @@ async function loadDashboard() {
   var P = d.policies, C = d.customers, V = d.vehicles, CL = d.claims, A = d.accidents, Q = d.quotes;
   var qOpen = (Q.status.pending || 0) + (Q.status.in_progress || 0);
   var rate = P.renew_ended ? Math.round(P.renew_done * 100 / P.renew_ended) + '%' : '—';
-  var h = '<div class="dash-asof">' + (en ? 'As of ' : '資料日期 ') + esc(d.as_of) + '</div>';
+  var h = '<div class="dash-owner">' + (d.scope === 'all' ? (en ? 'Company-wide' : '全公司') : esc(d.owner)) + '</div>'
+    + '<div class="dash-asof">' + (en ? 'As of ' : '資料日期 ') + esc(d.as_of) + '</div>';
 
   h += '<div class="dash-kpis">'
     + _kpi(en ? 'In-force premium' : '有效保費', '$' + _money(P.live_premium), (en ? 'Policies ' : '有效保單 ') + _n((P.status.active || 0) + (P.status.expiring || 0)), '', _isSuper() ? 'policies' : '')

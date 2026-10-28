@@ -2367,6 +2367,8 @@ async def business_dashboard(
     open_claim = ("submitted", "reviewing", "investigating", "negotiating", "approved", "paying")
     data = {
         "as_of": str(today),
+        "scope": "all" if admin.role == "super_admin" else "self",
+        "owner": admin.display_name or admin.username,
         "customers": {
             "total": len(customers),
             "new_month": sum(1 for c in customers if _this_month(c.created_at)),
