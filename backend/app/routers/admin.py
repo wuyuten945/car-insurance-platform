@@ -149,6 +149,66 @@ select.tp-hidden { display: none !important; }
 #customer-bar-msg { display: block; margin: 6px 0 0 !important; font-size: 14px !important; }
 .cb-empty { color: #FFE082; font-weight: 700; font-size: 15px; padding: 6px 2px; }
 
+
+/* ═════════ 經營儀表板 ═════════ */
+.header { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.header h1 { flex: 1 1 auto; }
+.header #user-info { order: 3; flex-basis: 100%; }
+.header #sub-banner, .header #customer-bar { order: 4; flex-basis: 100%; }
+.header button.dash-btn {
+  display: inline-flex; align-items: center; gap: 8px; order: 2;
+  background: #FFD54F !important; color: #3E2723 !important; border: 0; border-radius: 14px;
+  padding: 10px 16px !important; font-size: 18px !important; font-weight: 800; cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,.25); margin: 0 !important;
+}
+.header button.dash-btn svg { width: 22px; height: 22px; }
+.header button.dash-btn.is-on { background: #fff !important; color: #0d47a1 !important; }
+#dash-body { color: #1a1a1a; }
+.dash-asof { text-align: center; color: #4b5563; font-size: 14px; margin: 4px 0 10px; }
+.dash-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.kpi { background: #fff; border: 1.5px solid #cfd6e4; border-radius: 14px; padding: 12px 8px; text-align: center; }
+.kpi[onclick] { cursor: pointer; }
+.kpi[onclick]:active { transform: scale(.97); }
+.kpi span { display: block; font-size: 15px; font-weight: 700; color: #4b5563; }
+.kpi b { display: block; font-size: 26px; font-weight: 800; color: #0d2a4d; margin: 4px 0 2px; overflow-wrap: anywhere; }
+.kpi small { display: block; font-size: 13px; color: #6b7280; }
+.kpi.is-warn { background: #FFF8E1; border-color: #FFB300; }
+.kpi.is-danger { background: #FFEBEE; border-color: #E53935; }
+.kpi.is-good { background: #E8F5E9; border-color: #66BB6A; }
+.dash-card { background: #fff; border: 1.5px solid #cfd6e4; border-radius: 14px; padding: 14px; margin-top: 12px; }
+.dash-card h3 { text-align: center; font-size: 18px; color: #0d2a4d; margin: 0 0 12px; }
+.dash-todo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.dash-todo div { border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; color: #1a1a1a; }
+.dash-todo b { display: block; font-size: 24px; font-weight: 800; }
+.dash-todo span { font-size: 13px; font-weight: 700; }
+.dbars { display: flex; align-items: flex-end; gap: 4px; height: 170px; padding-top: 18px; border-bottom: 1px solid #cfd6e4; }
+.dbar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; position: relative; }
+.dbar i { display: block; width: 70%; min-height: 2px; background: #1565C0; border-radius: 4px 4px 0 0; }
+.dbar:hover i { background: #0d47a1; }
+.dbar em { position: absolute; font-style: normal; font-size: 11px; font-weight: 700; color: #0d2a4d; white-space: nowrap; }
+.dbar-x { display: flex; gap: 4px; margin-top: 4px; }
+.dbar-x span { flex: 1; text-align: center; font-size: 11px; color: #4b5563; }
+.hrow { display: grid; grid-template-columns: 88px 1fr auto; gap: 8px; align-items: center; margin: 6px 0; font-size: 14px; }
+.hrow .ht { background: #eef1f6; border-radius: 4px; height: 14px; }
+.hrow .ht i { display: block; height: 100%; background: #2e7d32; border-radius: 0 4px 4px 0; }
+.hrow .hn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.hrow .hv { font-weight: 700; color: #0d2a4d; }
+.dchips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.dchips span { background: #eef1f6; border-radius: 10px; padding: 8px 12px; font-size: 15px; font-weight: 700; color: #1a1a1a; }
+.dchips span b { margin-left: 6px; color: #0d2a4d; }
+.agcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.agcard { border: 1.5px solid #cfd6e4; border-radius: 12px; padding: 10px 12px; }
+.agcard h4 { margin: 0 0 6px; font-size: 17px; color: #0d2a4d; }
+.agcard h4 small { font-size: 12px; color: #c62828; margin-left: 6px; }
+.agcard div { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; }
+.agcard div span { color: #4b5563; }
+@media (max-width: 640px) {
+  .header button.dash-btn { font-size: 16px !important; padding: 8px 12px !important; }
+  .dash-todo b { font-size: 20px; }
+  .dash-todo span { font-size: 12px; }
+  .kpi b { font-size: 22px; }
+}
+
 /* 列表表格 → 卡片方塊 */
 table.cardify { display: block; overflow: visible; white-space: normal; margin-top: 12px; }
 table.cardify thead { display: none; }
@@ -271,6 +331,7 @@ table.cardify tr.tr-empty td { justify-content: center; }
 <div class="header">
   <h1 data-i18n="header_title">BOPINAN — 管理控制台</h1>
   <small id="user-info"></small>
+  <button type="button" id="dash-btn" class="dash-btn" style="display:none" onclick="switchTab('dashboard')"></button>
   <button type="button" onclick="openNumerologyModal()" title="幫自己和客戶拿副好牌"
      style="display:none;background:linear-gradient(90deg,#9C27B0,#E91E63,#FF9800);color:#fff;border:0;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;cursor:pointer">
     <span data-i18n="btn_iching">✨ 幫自己和客戶拿副好牌</span>
@@ -418,6 +479,7 @@ table.cardify tr.tr-empty td { justify-content: center; }
     <span class="vnav-title" id="vnav-title"></span>
   </div>
   <div id="tab-home" class="tab-content"></div>
+  <div id="tab-dashboard" class="tab-content"><div id="dash-body"></div></div>
   <div id="tab-search" class="tab-content">
   <div id="quick-search-bar" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
     <div style="display:flex;gap:8px;align-items:center">
@@ -1239,6 +1301,7 @@ var ICONS = {
   chevronLeft: '<path d="m15 18-6-6 6-6"/>',
   chevronRight: '<path d="m9 18 6-6-6-6"/>',
   mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  chartColumn: '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
   house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'
 };
 
@@ -1272,14 +1335,14 @@ var TILE_SECTIONS = [
 ];
 var TILE_TEXT = {
   zh: {
-    sec_customer: '客戶資料', sec_tools: '工作工具', sec_manage: '系統管理', sec_account: '我的帳號', home: '首頁',
+    sec_customer: '客戶資料', sec_tools: '工作工具', sec_manage: '系統管理', sec_account: '我的帳號', home: '首頁', dashboard: '經營儀表板',
     vehicles: '車輛<br>行照', policies: '保單<br>管理', claims: '理賠<br>申請', accidents: '事故<br>照片',
     overview: '資料<br>總覽', quotes: '詢價<br>工單', todo: '待辦<br>提醒', search: '快速<br>搜尋', csv: '匯入<br>匯出',
     agents: '業務員<br>管理', assign: '客戶<br>分配', logs: '操作<br>日誌',
     iching: '拿副<br>好牌', pw: '變更<br>密碼', sub: '訂閱<br>狀態', lang: 'English', logout: '登出'
   },
   en: {
-    sec_customer: 'Customers', sec_tools: 'Tools', sec_manage: 'Administration', sec_account: 'My Account', home: 'Home',
+    sec_customer: 'Customers', sec_tools: 'Tools', sec_manage: 'Administration', sec_account: 'My Account', home: 'Home', dashboard: 'Dashboard',
     vehicles: 'Vehicles', policies: 'Policies', claims: 'Claims', accidents: 'Accident<br>Photos',
     overview: 'Overview', quotes: 'Quotes', todo: 'To-dos', search: 'Search', csv: 'Import<br>Export',
     agents: 'Agents', assign: 'Assign<br>Clients', logs: 'Audit<br>Log',
@@ -1293,7 +1356,7 @@ function _svg(name) {
 var _TODO_BADGE = 0;
 function _isSuper() { return ADMIN_ROLE === 'super_admin'; }
 function _viewAllowed(v) {
-  if (v === 'home') return true;
+  if (v === 'home' || v === 'dashboard') return true;
   for (var i = 0; i < TILE_SECTIONS.length; i++) {
     var ts = TILE_SECTIONS[i].tiles;
     for (var j = 0; j < ts.length; j++) {
@@ -1344,6 +1407,8 @@ function _showView(name) {
   document.getElementById('vnav-title').innerHTML = name === 'home' ? '' : _svg('mapPin') + '<span>' + _tt(name).split('<br>').join('') + '</span>';
   _updateNavButtons();
   window.scrollTo(0, 0);
+  document.getElementById('dash-btn').classList.toggle('is-on', name === 'dashboard');
+  if (name === 'dashboard') loadDashboard();
   if (name === 'agents') loadAgents();
   if (name === 'assign') loadAssignSelects();
   if (name === 'logs') loadLogs();
@@ -3471,7 +3536,7 @@ function toggleAdminLang() {
   LANG = (LANG === 'zh') ? 'en' : 'zh';
   localStorage.setItem('admin_lang', LANG);
   applyAdminLang();
-  if (ADMIN_TOKEN) { renderHomeTiles(); _showView(location.hash.slice(1) || 'home'); }
+  if (ADMIN_TOKEN) { _renderDashBtn(); renderHomeTiles(); _showView(location.hash.slice(1) || 'home'); }
   // 若搜尋結果還在，重跑一次（讓 JS 渲染的標籤跟著翻）
   var qsBox = document.getElementById('qs-results');
   if (qsBox && qsBox.innerHTML && document.getElementById('qs-input').value.trim()) {
@@ -3534,6 +3599,7 @@ function _enterAdminUI(token, role, displayName) {
   loadSubscriptionBanner();
   // 方塊首頁（依角色顯示可用方塊）＋ 依網址 #hash 開到對應畫面
   renderHomeTiles();
+  _renderDashBtn();
   _showView(location.hash.slice(1) || 'home');
   loadCustomerList();
   loadVehicles(); loadPolicies(); loadOverview();
@@ -3703,6 +3769,7 @@ function doLogout() {
   localStorage.removeItem(LS_NAME_KEY);
   document.getElementById('admin-panel').style.display = 'none';
   document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('dash-btn').style.display = 'none';
   document.getElementById('change-pw-btn').style.display = 'none';
   var sb = document.getElementById('sub-status-btn'); if (sb) sb.style.display = 'none';
   var sban = document.getElementById('sub-banner'); if (sban) sban.style.display = 'none';
@@ -6460,6 +6527,129 @@ function applyCustPlateFilter() {
     if (!msg) { msg = document.createElement('div'); msg.id = 'cb-plate-empty'; msg.className = 'cb-empty'; inp.parentNode.insertBefore(msg, inp.nextSibling); }
     msg.textContent = '查無此車牌的客戶';
   } else if (msg) { msg.remove(); }
+}
+
+// ═════════ 經營儀表板 ═════════
+function _renderDashBtn() {
+  var b = document.getElementById('dash-btn');
+  b.innerHTML = _svg('chartColumn') + '<span>' + _tt('dashboard') + '</span>';
+  b.style.display = ADMIN_TOKEN ? 'inline-flex' : 'none';
+}
+function _n(v) { return Number(v || 0).toLocaleString(); }
+function _money(v) {
+  v = Number(v || 0);
+  if (LANG === 'en') {
+    if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+    if (v >= 10000) return Math.round(v / 1000) + 'K';
+    return v.toLocaleString();
+  }
+  if (v >= 100000000) return (v / 100000000).toFixed(2) + '億';
+  if (v >= 10000) return (v / 10000).toFixed(v >= 1000000 ? 0 : 1) + '萬';
+  return v.toLocaleString();
+}
+function _kpi(label, val, sub, cls, go) {
+  return '<div class="kpi' + (cls ? ' ' + cls : '') + '"' + (go ? ' onclick="switchTab(' + "'" + go + "'" + ')"' : '') + '>'
+    + '<span>' + label + '</span><b>' + val + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>';
+}
+var _DASH_LBL = {
+  zh: { pol: {active: '有效', expiring: '即將到期', expired: '已到期', cancelled: '已取消'},
+        clm: {submitted: '已送件', reviewing: '審核中', investigating: '調查中', negotiating: '協商中', approved: '已核准', paying: '撥款中', closed: '已結案'},
+        quo: {pending: '待處理', in_progress: '處理中', quoted: '已回報', completed: '已結案', cancelled: '已取消'},
+        todo: {overdue: '已逾期', today: '今天', next_3d: '3 天內', next_7d: '7 天內', next_30d: '30 天內'} },
+  en: { pol: {active: 'Active', expiring: 'Expiring', expired: 'Expired', cancelled: 'Cancelled'},
+        clm: {submitted: 'Submitted', reviewing: 'Reviewing', investigating: 'Investigating', negotiating: 'Negotiating', approved: 'Approved', paying: 'Paying', closed: 'Closed'},
+        quo: {pending: 'Pending', in_progress: 'In progress', quoted: 'Quoted', completed: 'Done', cancelled: 'Cancelled'},
+        todo: {overdue: 'Overdue', today: 'Today', next_3d: '3 days', next_7d: '7 days', next_30d: '30 days'} }
+};
+function _chips(map, lbl) {
+  var keys = Object.keys(map || {});
+  if (!keys.length) return '<div class="dash-asof">' + (LANG === 'en' ? 'No data' : '目前沒有資料') + '</div>';
+  return '<div class="dchips">' + keys.map(function(k) { return '<span>' + esc(lbl[k] || k) + '<b>' + _n(map[k]) + '</b></span>'; }).join('') + '</div>';
+}
+async function loadDashboard() {
+  var box = document.getElementById('dash-body');
+  box.innerHTML = '<div class="dash-asof">' + (LANG === 'en' ? 'Loading...' : '載入中⋯') + '</div>';
+  var en = LANG === 'en';
+  var L = _DASH_LBL[en ? 'en' : 'zh'];
+  var d, tk = null;
+  try {
+    var rs = await Promise.all([
+      fetch(CONSOLE_API + '/dashboard', {headers: consoleHeaders(false)}).then(function(r) { return r.json(); }),
+      fetch(CONSOLE_API + '/agent/tasks', {headers: consoleHeaders(false)}).then(function(r) { return r.json(); }).catch(function() { return null; })
+    ]);
+    if (!rs[0] || !rs[0].success) throw new Error((rs[0] && (rs[0].message || rs[0].detail)) || 'error');
+    d = rs[0].data;
+    if (rs[1] && rs[1].success) tk = rs[1].data.counts || {};
+  } catch (e) {
+    box.innerHTML = '<div class="dash-asof">' + (en ? 'Failed: ' : '載入失敗：') + esc(e.message) + '</div>';
+    return;
+  }
+  var P = d.policies, C = d.customers, V = d.vehicles, CL = d.claims, A = d.accidents, Q = d.quotes;
+  var qOpen = (Q.status.pending || 0) + (Q.status.in_progress || 0);
+  var rate = P.renew_ended ? Math.round(P.renew_done * 100 / P.renew_ended) + '%' : '—';
+  var h = '<div class="dash-asof">' + (en ? 'As of ' : '資料日期 ') + esc(d.as_of) + '</div>';
+
+  h += '<div class="dash-kpis">'
+    + _kpi(en ? 'In-force premium' : '有效保費', '$' + _money(P.live_premium), (en ? 'Policies ' : '有效保單 ') + _n((P.status.active || 0) + (P.status.expiring || 0)), '', _isSuper() ? 'policies' : '')
+    + _kpi(en ? 'Premium this year' : '今年新保費', '$' + _money(P.premium_year), '', '', '')
+    + _kpi(en ? 'Premium this month' : '本月新保費', '$' + _money(P.premium_month), (en ? 'New ' : '新保單 ') + _n(P.new_month), '', '')
+    + _kpi(en ? 'Customers' : '客戶數', _n(C.total), (en ? 'New this month ' : '本月新增 ') + _n(C.new_month), '', '')
+    + _kpi(en ? 'Vehicles' : '車輛數', _n(V.total), (en ? 'LINE friends ' : 'LINE 好友 ') + _n(C.line_friend), '', _isSuper() ? 'vehicles' : '')
+    + _kpi(en ? 'Renewal rate' : '續保率', rate, (en ? 'Last 12 mo ' : '近 12 月 ') + _n(P.renew_done) + '/' + _n(P.renew_ended), P.renew_ended && P.renew_done * 100 / P.renew_ended >= 80 ? 'is-good' : '', '')
+    + _kpi(en ? 'Due in 30 days' : '30 天內到期', _n(P.due_30d), (en ? '60d ' : '60 天 ') + _n(P.due_60d) + (en ? ' · 90d ' : '・90 天 ') + _n(P.due_90d), P.due_30d ? 'is-warn' : '', 'todo')
+    + _kpi(en ? 'Inspection due' : '驗車到期', _n(V.inspection_30d), (en ? 'Overdue ' : '已逾期 ') + _n(V.inspection_overdue), V.inspection_overdue ? 'is-danger' : (V.inspection_30d ? 'is-warn' : ''), 'todo')
+    + _kpi(en ? 'Open claims' : '理賠處理中', _n(CL.open), (en ? 'Total ' : '累計 ') + _n(CL.total), CL.open ? 'is-warn' : '', _isSuper() ? 'claims' : '')
+    + _kpi(en ? 'Open accidents' : '事故未結', _n(A.open), (en ? 'This month ' : '本月 ') + _n(A.month), A.open ? 'is-warn' : '', _isSuper() ? 'accidents' : '')
+    + _kpi(en ? 'Open quotes' : '詢價待處理', _n(qOpen), (en ? 'Total ' : '累計 ') + _n(Q.total), qOpen ? 'is-warn' : '', 'quotes')
+    + _kpi(en ? 'Claims paid' : '理賠核准金額', '$' + _money(CL.approved), (en ? 'Claimed $' : '申請 $') + _money(CL.claimed), '', '')
+    + '</div>';
+
+  if (tk) {
+    var tc = {overdue: '#FFCDD2', today: '#FFE0B2', next_3d: '#FFF59D', next_7d: '#DCEDC8', next_30d: '#E3E9ED'};
+    h += '<div class="dash-card"><h3>' + (en ? 'To-dos' : '待辦提醒') + '</h3><div class="dash-todo">';
+    ['overdue', 'today', 'next_3d', 'next_7d', 'next_30d'].forEach(function(k) {
+      h += '<div style="background:' + tc[k] + '" onclick="switchTab(' + "'todo'" + ');switchTodoBucket(' + "'" + k + "'" + ')"><b>' + _n(tk[k]) + '</b><span>' + L.todo[k] + '</span></div>';
+    });
+    h += '</div></div>';
+  }
+
+  var mx = Math.max.apply(null, d.trend.map(function(t) { return t.premium; }).concat([1]));
+  var last = d.trend.length - 1, peak = -1;
+  d.trend.forEach(function(t, i) { if (t.premium === mx && peak < 0) peak = i; });
+  h += '<div class="dash-card"><h3>' + (en ? 'New premium, last 12 months' : '近 12 個月新保費') + '</h3><div class="dbars">';
+  d.trend.forEach(function(t, i) {
+    var pct = Math.round(t.premium * 100 / mx);
+    var lab = (t.premium && (i === peak || i === last)) ? '<em style="bottom:calc(' + pct + '% + 2px)">' + _money(t.premium) + '</em>' : '';
+    h += '<div class="dbar" title="' + t.month + '　$' + _n(t.premium) + '（' + t.count + (en ? ' policies' : ' 件') + '）">' + lab + '<i style="height:' + pct + '%"></i></div>';
+  });
+  h += '</div><div class="dbar-x">' + d.trend.map(function(t) { return '<span>' + Number(t.month.slice(5)) + (en ? '' : '月') + '</span>'; }).join('') + '</div></div>';
+
+  if (d.insurers.length) {
+    var im = Math.max.apply(null, d.insurers.map(function(x) { return x.premium; }).concat([1]));
+    h += '<div class="dash-card"><h3>' + (en ? 'In-force premium by insurer' : '各保險公司有效保費') + '</h3>';
+    d.insurers.forEach(function(x) {
+      h += '<div class="hrow" title="' + esc(x.name) + '　' + x.count + (en ? ' policies' : ' 件') + '"><span class="hn">' + esc(x.name) + '</span><div class="ht"><i style="width:' + Math.max(1, Math.round(x.premium * 100 / im)) + '%"></i></div><span class="hv">$' + _money(x.premium) + '</span></div>';
+    });
+    h += '</div>';
+  }
+
+  h += '<div class="dash-card"><h3>' + (en ? 'Policies by status' : '保單狀態') + '</h3>' + _chips(P.status, L.pol) + '</div>';
+  h += '<div class="dash-card"><h3>' + (en ? 'Claims by status' : '理賠進度') + '</h3>' + _chips(CL.status, L.clm) + '</div>';
+  h += '<div class="dash-card"><h3>' + (en ? 'Quote requests' : '詢價工單') + '</h3>' + _chips(Q.status, L.quo) + '</div>';
+
+  if (d.agents && d.agents.length) {
+    h += '<div class="dash-card"><h3>' + (en ? 'Agent performance' : '業務員業績') + '</h3><div class="agcards">';
+    d.agents.forEach(function(a) {
+      h += '<div class="agcard"><h4>' + esc(a.name) + (a.active ? '' : '<small>' + (en ? 'disabled' : '已停用') + '</small>') + '</h4>'
+        + '<div><span>' + (en ? 'In-force premium' : '有效保費') + '</span><b>$' + _money(a.premium) + '</b></div>'
+        + '<div><span>' + (en ? 'Customers' : '客戶') + '</span><b>' + _n(a.customers) + '</b></div>'
+        + '<div><span>' + (en ? 'Policies' : '有效保單') + '</span><b>' + _n(a.policies) + '</b></div>'
+        + '<div><span>' + (en ? 'Due in 30 days' : '30 天內到期') + '</span><b>' + _n(a.due_30d) + '</b></div>'
+        + '<div><span>' + (en ? 'Open quotes' : '詢價待處理') + '</span><b>' + _n(a.quotes_open) + '</b></div></div>';
+    });
+    h += '</div></div>';
+  }
+  box.innerHTML = h;
 }
 </script>
 </body>

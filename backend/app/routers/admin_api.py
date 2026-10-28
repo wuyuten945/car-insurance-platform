@@ -2278,3 +2278,158 @@ async def import_unified_csv(
         message=("試跑完成（未寫入 DB）" if dry_run else
                 ("匯入成功" if summary.get("committed") else f"匯入失敗：{len(summary['errors'])} 筆錯誤")),
     )
+
+
+# ── 經營儀表板：一次彙整客戶 / 車輛 / 保單 / 保費 / 理賠 / 事故 / 詢價 / 業務員 ──
+@router.get("/dashboard")
+async def business_dashboard(
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from datetime import date as _date
+    from collections import Counter, defaultdict
+    from datetime import timedelta as _td
+    from app.models.accident import Accident
+
+    today = _date.today()
+    accessible = await get_accessible_customer_ids(admin, db)
+
+    async def _rows(q, col):
+        if accessible is not None:
+            if not accessible:
+                return []
+            q = q.where(col.in_(accessible))
+        return list((await db.execute(q)).scalars().all())
+
+    def _d(dt):
+        return dt.date() if isinstance(dt, datetime) else dt
+
+    def _this_month(dt):
+        d = _d(dt)
+        return bool(d) and d.year == today.year and d.month == today.month
+
+    customers = await _rows(select(User), User.id)
+    vehicles = await _rows(select(UserVehicle), UserVehicle.user_id)
+    policies = await _rows(select(Policy), Policy.user_id)
+    claims = await _rows(select(Claim), Claim.user_id)
+    accidents = await _rows(select(Accident), Accident.user_id)
+    qq = select(QuoteRequest)
+    if admin.role != "super_admin":
+        qq = qq.where(QuoteRequest.assigned_to_admin_id == admin.id)
+    quotes = list((await db.execute(qq)).scalars().all())
+
+    live = [p for p in policies if p.status in ("active", "expiring")]
+    prem = lambda p: float(p.total_premium or 0)
+
+    def _due(days_max):
+        return sum(1 for p in live if p.end_date and 0 <= (p.end_date - today).days <= days_max)
+
+    # 近 12 個月新保單保費（依起保日）
+    months = []
+    y, m = today.year, today.month
+    for _ in range(12):
+        months.append((y, m))
+        m -= 1
+        if m == 0:
+            y, m = y - 1, 12
+    months.reverse()
+    by_month = defaultdict(float)
+    cnt_month = defaultdict(int)
+    for p in policies:
+        if p.start_date and p.status != "cancelled":
+            k = (p.start_date.year, p.start_date.month)
+            by_month[k] += prem(p)
+            cnt_month[k] += 1
+    trend = [{"month": f"{yy}-{mm:02d}", "premium": round(by_month[(yy, mm)], 0), "count": cnt_month[(yy, mm)]}
+             for yy, mm in months]
+
+    insurer = defaultdict(lambda: [0, 0.0])
+    for p in live:
+        k = p.insurer_name or "未填"
+        insurer[k][0] += 1
+        insurer[k][1] += prem(p)
+    insurers = sorted(({"name": k, "count": v[0], "premium": round(v[1], 0)} for k, v in insurer.items()),
+                      key=lambda x: -x["premium"])[:8]
+
+    # 續保率：過去 12 個月內到期的保單中，同車已有新保單接續者
+    by_vehicle = defaultdict(list)
+    for p in policies:
+        if p.vehicle_id:
+            by_vehicle[p.vehicle_id].append(p)
+    ended = renewed = 0
+    for p in policies:
+        if p.end_date and 0 < (today - p.end_date).days <= 365 and p.status != "cancelled":
+            ended += 1
+            if any(o is not p and o.start_date and o.start_date >= p.end_date - _td(days=60)
+                   for o in by_vehicle.get(p.vehicle_id, [])):
+                renewed += 1
+
+    open_claim = ("submitted", "reviewing", "investigating", "negotiating", "approved", "paying")
+    data = {
+        "as_of": str(today),
+        "customers": {
+            "total": len(customers),
+            "new_month": sum(1 for c in customers if _this_month(c.created_at)),
+            "line_friend": sum(1 for c in customers if c.is_line_friend),
+        },
+        "vehicles": {
+            "total": len(vehicles),
+            "inspection_30d": sum(1 for v in vehicles if v.registration_expiry and 0 <= (_d(v.registration_expiry) - today).days <= 30),
+            "inspection_overdue": sum(1 for v in vehicles if v.registration_expiry and (_d(v.registration_expiry) - today).days < 0),
+        },
+        "policies": {
+            "total": len(policies),
+            "status": dict(Counter(p.status for p in policies)),
+            "live_premium": round(sum(prem(p) for p in live), 0),
+            "premium_year": round(sum(prem(p) for p in policies if p.start_date and p.start_date.year == today.year and p.status != "cancelled"), 0),
+            "premium_month": round(by_month[(today.year, today.month)], 0),
+            "new_month": cnt_month[(today.year, today.month)],
+            "due_30d": _due(30),
+            "due_60d": _due(60),
+            "due_90d": _due(90),
+            "renew_ended": ended,
+            "renew_done": renewed,
+        },
+        "trend": trend,
+        "insurers": insurers,
+        "claims": {
+            "total": len(claims),
+            "open": sum(1 for c in claims if c.status in open_claim),
+            "status": dict(Counter(c.status for c in claims)),
+            "claimed": round(sum(float(c.claimed_amount or 0) for c in claims), 0),
+            "approved": round(sum(float(c.approved_amount or 0) for c in claims), 0),
+        },
+        "accidents": {
+            "total": len(accidents),
+            "open": sum(1 for a in accidents if a.status != "resolved"),
+            "month": sum(1 for a in accidents if _this_month(a.occurred_at)),
+        },
+        "quotes": {"total": len(quotes), "status": dict(Counter(q.status for q in quotes))},
+        "agents": [],
+    }
+
+    if admin.role == "super_admin":
+        agents = list((await db.execute(select(AdminUser).where(AdminUser.role == "agent"))).scalars().all())
+        links = list((await db.execute(select(AgentCustomer))).scalars().all())
+        cust_of = defaultdict(set)
+        for l in links:
+            cust_of[l.agent_id].add(l.customer_id)
+        pol_by_user = defaultdict(list)
+        for p in live:
+            pol_by_user[p.user_id].append(p)
+        q_open = Counter(q.assigned_to_admin_id for q in quotes if q.status in ("pending", "in_progress"))
+        for a in agents:
+            cs = cust_of.get(a.id, set())
+            ps = [p for u in cs for p in pol_by_user.get(u, [])]
+            data["agents"].append({
+                "name": a.display_name or a.username,
+                "active": bool(a.is_active),
+                "customers": len(cs),
+                "policies": len(ps),
+                "premium": round(sum(prem(p) for p in ps), 0),
+                "due_30d": sum(1 for p in ps if p.end_date and 0 <= (p.end_date - today).days <= 30),
+                "quotes_open": q_open.get(a.id, 0),
+            })
+        data["agents"].sort(key=lambda x: -x["premium"])
+
+    return APIResponse(data=data)
