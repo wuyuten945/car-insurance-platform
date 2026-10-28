@@ -151,9 +151,9 @@ select.tp-hidden { display: none !important; }
 
 
 /* ═════════ 經營儀表板 ═════════ */
-.vnav button.dash-btn { width: auto; padding: 0 12px; gap: 6px; background: #FFD54F; color: #3E2723; border: 0; font-size: 16px; font-weight: 800; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+.vnav button.dash-btn { width: auto; padding: 0 12px; gap: 6px; background: #BBDEFB; color: #0d2a4d; border: 0; font-size: 16px; font-weight: 800; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
 .vnav button.dash-btn svg { width: 20px; height: 20px; }
-.vnav button.dash-btn.is-on { background: #1565C0; color: #fff; }
+.vnav button.dash-btn.is-on { background: #64B5F6; color: #0d2a4d; box-shadow: inset 0 0 0 3px #0d47a1; }
 .vnav { flex-wrap: wrap; row-gap: 6px; }
 .vnav button { flex-shrink: 0; }
 .vnav-title span { white-space: nowrap; }
