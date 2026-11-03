@@ -78,3 +78,44 @@ async def test_agent_created_customer_is_theirs(client):
     # 建好就能直接幫他新增保單
     r = await client.post(f"{API}/customer/{cid}/policies", headers=_h(ag), json=_pol("X-3", None))
     assert r.status_code == 200, r.text
+
+
+@pytest.mark.asyncio
+async def test_link_check_lists_and_fixes(client):
+    sup, ag, a, b, va, vb = await _seed("3")
+    h = _h(sup)
+    # 舊資料：甲的保單掛到乙的車（直接寫 DB 模擬上線前存錯的）
+    today = date.today()
+    async with AsyncSessionLocal() as db:
+        p1 = Policy(user_id=a, vehicle_id=vb, insurer_name="富邦產險", policy_number="L-1", status="active",
+                    start_date=today, end_date=today + timedelta(days=365))
+        p2 = Policy(user_id=a, vehicle_id=vb, insurer_name="富邦產險", policy_number="L-2", status="active",
+                    start_date=today, end_date=today + timedelta(days=365))
+        ok = Policy(user_id=a, vehicle_id=va, insurer_name="富邦產險", policy_number="L-3", status="active",
+                    start_date=today, end_date=today + timedelta(days=365))
+        db.add_all([p1, p2, ok])
+        await db.commit()
+        p1id, p2id = p1.id, p2.id
+
+    rows = (await client.get(f"{API}/link-check", headers=h)).json()["data"]
+    mine = {r["policy_number"]: r for r in rows}
+    assert set(mine) >= {"L-1", "L-2"} and "L-3" not in mine
+    assert mine["L-1"]["customer_name"] == "甲" and mine["L-1"]["owner_name"] == "乙"
+    assert mine["L-1"]["vehicle_plate"] == "BBB-2222"
+
+    # 修法一：保單轉給車主 → 車輛連結保留
+    r = await client.post(f"{API}/policies/{p1id}/transfer", headers=h, json={"customer_id": b})
+    assert r.status_code == 200 and r.json()["data"]["vehicle_unlinked"] is None
+    # 修法二：解除車輛連結 → 保單留在原客戶
+    r = await client.put(f"{API}/policies/{p2id}", headers=h, json={"vehicle_id": None})
+    assert r.status_code == 200, r.text
+    rows = (await client.get(f"{API}/link-check", headers=h)).json()["data"]
+    assert not {"L-1", "L-2"} & {r["policy_number"] for r in rows}
+    async with AsyncSessionLocal() as db:
+        assert (await db.get(Policy, p1id)).user_id == b
+        p2 = await db.get(Policy, p2id)
+        assert p2.user_id == a and p2.vehicle_id is None
+
+    # 業務員只看得到自己客戶的保單
+    r = await client.get(f"{API}/link-check", headers=_h(ag))
+    assert r.status_code == 200 and r.json()["data"] == []

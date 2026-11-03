@@ -805,6 +805,46 @@ async def get_all_policies(
     return APIResponse(data=rows)
 
 
+@router.get("/link-check")
+async def policy_vehicle_link_check(
+    admin: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """找出保單與車輛（行照）不屬同一位客戶的資料"""
+    accessible = await get_accessible_customer_ids(admin, db)
+    q = (
+        select(Policy, UserVehicle)
+        .outerjoin(UserVehicle, UserVehicle.id == Policy.vehicle_id)
+        .where(Policy.vehicle_id.is_not(None))
+        .where((UserVehicle.id.is_(None)) | (UserVehicle.user_id != Policy.user_id))
+    )
+    if accessible is not None:
+        q = q.where(Policy.user_id.in_(accessible))
+    pairs = (await db.execute(q.order_by(Policy.start_date.desc()))).all()
+    uids = {p.user_id for p, _ in pairs} | {v.user_id for _, v in pairs if v}
+    names = {}
+    if uids:
+        for u in (await db.execute(select(User).where(User.id.in_(uids)))).scalars().all():
+            names[u.id] = u.name or u.phone or u.email or ""
+    rows = []
+    for p, v in pairs:
+        rows.append({
+            "policy_id": p.id,
+            "policy_number": p.policy_number,
+            "insurer_name": p.insurer_name,
+            "start_date": str(p.start_date),
+            "end_date": str(p.end_date),
+            "customer_id": p.user_id,
+            "customer_name": names.get(p.user_id, ""),
+            "vehicle_id": p.vehicle_id,
+            "vehicle_plate": v.plate_number if v else None,
+            "owner_id": v.user_id if v else None,
+            "owner_name": names.get(v.user_id, "") if v else None,
+            "owner_accessible": bool(v) and (accessible is None or v.user_id in accessible),
+        })
+    return APIResponse(data=rows)
+
+
 @router.get("/all/overview")
 async def get_overview(
     admin: AdminUser = Depends(get_current_admin),

@@ -64,6 +64,11 @@ tr:hover { background: #FAFAFA; }
 .cp-items .num { text-align: right; white-space: nowrap; }
 .cp-acts { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
 .cp-empty { text-align: center; color: #4b5563; font-size: 16px; padding: 24px 0; }
+#lc-btn { padding: 8px 16px; font-size: 14px; background: #FFE0B2; color: #4a2600; border: 2px solid #FFB74D; }
+#lc-btn.is-bad { background: #FFCDD2; color: #5c0b0b; border-color: #E57373; }
+#lc-count { margin-left: 6px; font-weight: 800; }
+.lc-ok { text-align: center; color: #1b5e20; font-size: 18px; font-weight: 700; padding: 28px 0; }
+.cp-card.lc-card { border-color: #EF9A9A; background: #FFF5F5; }
 @media (max-width: 640px) { .cp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cp-items { font-size: 13px; } }
 img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-top: 8px; border: 1px solid #ddd; }
 .item-row { display: flex; gap: 8px; align-items: end; margin-top: 8px; padding: 8px; background: #FAFAFA; border-radius: 8px; }
@@ -733,6 +738,16 @@ table.cardify tr.tr-empty td { justify-content: center; }
   <!-- Tab: Policies -->
   <div id="tab-policies" class="tab-content">
 
+    <!-- 保單車輛檢查彈窗 -->
+    <div id="lc-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9996;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px" onclick="if(event.target===this)closeLinkCheck()">
+      <div style="background:#fff;color:#1a1a1a;padding:22px 20px;border-radius:14px;max-width:760px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+        <button type="button" onclick="closeLinkCheck()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:30px;cursor:pointer;color:#555;line-height:1">×</button>
+        <h2 id="lc-title" style="margin:0 36px 12px 0;color:#0d2a4d">保單車輛檢查</h2>
+        <div id="lc-msg" class="msg"></div>
+        <div id="lc-body"></div>
+      </div>
+    </div>
+
     <!-- 客戶保單彈窗（點操作客戶標籤） -->
     <div id="cust-pol-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9996;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px" onclick="if(event.target===this)closeCustPolModal()">
       <div style="background:#fff;color:#1a1a1a;padding:22px 20px;border-radius:14px;max-width:760px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
@@ -932,6 +947,7 @@ table.cardify tr.tr-empty td { justify-content: center; }
         <div style="display:flex;gap:6px">
           <button class="btn success" onclick="openManualPolicyForm()" style="padding:8px 16px;font-size:14px" data-i18n="btn_add_new_policy_manual">+ 新增保單（手動）</button>
           <button class="btn" onclick="openPolicyUploadModal()" style="padding:8px 16px;font-size:14px;background:#0288D1" data-i18n="btn_add_new_policy_ocr">+ 新增保單（上傳辨識）</button>
+          <button type="button" class="btn lc-btn" id="lc-btn" onclick="openLinkCheck()">保單車輛檢查<span id="lc-count"></span></button>
         </div>
       </div>
       <p style="font-size:12px;color:#666;margin-bottom:8px" data-i18n="policy_list_hint">💡 點擊任一保單列可選取，<b>雙擊</b>查看承保項目明細</p>
@@ -1427,6 +1443,7 @@ function _showView(name) {
   window.scrollTo(0, 0);
   document.getElementById('dash-btn').classList.toggle('is-on', name === 'dashboard');
   if (name === 'dashboard') loadDashboard();
+  if (name === 'policies') _fetchLinkCheck().catch(function() {});
   if (name === 'agents') loadAgents();
   if (name === 'assign') loadAssignSelects();
   if (name === 'logs') loadLogs();
@@ -6559,6 +6576,70 @@ function applyCustPlateFilter() {
     if (!msg) { msg = document.createElement('div'); msg.id = 'cb-plate-empty'; msg.className = 'cb-empty'; inp.parentNode.insertBefore(msg, inp.nextSibling); }
     msg.textContent = '查無此車牌的客戶';
   } else if (msg) { msg.remove(); }
+}
+
+// ── 保單車輛檢查：保單與行照（車輛）不屬同一位客戶 ──
+async function _fetchLinkCheck() {
+  var r = await fetch(CONSOLE_API + '/link-check', {headers: consoleHeaders(false)});
+  var d = await r.json();
+  var rows = d.data || [];
+  window._lcRows = rows;
+  var btn = document.getElementById('lc-btn');
+  if (btn) {
+    btn.classList.toggle('is-bad', rows.length > 0);
+    document.getElementById('lc-count').textContent = rows.length ? '（' + rows.length + '）' : '';
+  }
+  return rows;
+}
+function _renderLinkCheck() {
+  var rows = window._lcRows || [];
+  var en = LANG === 'en';
+  document.getElementById('lc-title').textContent = (en ? 'Policy / vehicle check' : '保單車輛檢查') + '（' + rows.length + '）';
+  if (!rows.length) { document.getElementById('lc-body').innerHTML = '<div class="lc-ok">' + (en ? 'All policies match their vehicles' : '保單與車輛全部正確對應') + '</div>'; return; }
+  var h = '';
+  rows.forEach(function(x) {
+    var pid = esc(x.policy_id);
+    h += '<div class="cp-card lc-card">';
+    h += '<div class="cp-head"><b>' + esc(x.insurer_name || '-') + '　' + esc(x.policy_number || '') + '</b></div>';
+    h += '<div class="cp-grid">';
+    h += '<div><span>保單客戶</span><em>' + esc(x.customer_name || '-') + '</em></div>';
+    h += '<div><span>車牌</span><em>' + esc(x.vehicle_plate || '（車輛已不存在）') + '</em></div>';
+    h += '<div><span>車主</span><em>' + esc(x.owner_name || '-') + '</em></div>';
+    h += '</div>';
+    h += '<div class="cp-acts">';
+    if (x.owner_id && x.owner_accessible) {
+      h += '<button type="button" class="btn" style="background:#1565C0;color:#fff" onclick="lcFix(&quot;' + pid + '&quot;,&quot;owner&quot;)">保單轉給車主「' + esc(x.owner_name || '') + '」</button>';
+    }
+    h += '<button type="button" class="btn" style="background:#6D4C41;color:#fff" onclick="lcFix(&quot;' + pid + '&quot;,&quot;unlink&quot;)">解除車輛連結</button>';
+    h += '</div></div>';
+  });
+  document.getElementById('lc-body').innerHTML = h;
+}
+async function openLinkCheck() {
+  var m = document.getElementById('lc-msg'); if (m) { m.textContent = ''; m.className = 'msg'; }
+  document.getElementById('lc-body').innerHTML = '';
+  document.getElementById('lc-modal').style.display = 'flex';
+  try { await _fetchLinkCheck(); _renderLinkCheck(); }
+  catch (e) { showMsg('lc-msg', 'err', (LANG === 'en' ? 'Load failed: ' : '載入失敗：') + e.message); }
+}
+function closeLinkCheck() { document.getElementById('lc-modal').style.display = 'none'; }
+async function lcFix(pid, how) {
+  var x = (window._lcRows || []).find(function(r) { return r.policy_id === pid; });
+  if (!x) return;
+  var q = how === 'owner'
+    ? '把保單「' + x.policy_number + '」從「' + x.customer_name + '」轉給車主「' + x.owner_name + '」？'
+    : '解除保單「' + x.policy_number + '」與車輛「' + (x.vehicle_plate || '') + '」的連結？保單仍留在「' + x.customer_name + '」名下。';
+  if (!confirm(q)) return;
+  try {
+    var r = how === 'owner'
+      ? await fetch(CONSOLE_API + '/policies/' + pid + '/transfer', {method: 'POST', headers: consoleHeaders(true), body: JSON.stringify({customer_id: x.owner_id})})
+      : await fetch(CONSOLE_API + '/policies/' + pid, {method: 'PUT', headers: consoleHeaders(true), body: JSON.stringify({vehicle_id: null})});
+    var d = await r.json();
+    if (!d.success) { showMsg('lc-msg', 'err', '修正失敗：' + (d.detail || d.message)); return; }
+    showMsg('lc-msg', 'ok', '已修正：' + x.policy_number);
+    await _fetchLinkCheck(); _renderLinkCheck();
+    if (typeof loadPolicies === 'function') loadPolicies();
+  } catch (e) { showMsg('lc-msg', 'err', '修正失敗：' + e.message); }
 }
 
 // ── 保單管理：點操作客戶標籤 → 彈出該客戶的保單 ──
