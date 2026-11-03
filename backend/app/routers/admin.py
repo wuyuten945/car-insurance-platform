@@ -3620,6 +3620,7 @@ function _stopIdleTimer() {
 
 function _enterAdminUI(token, role, displayName) {
   // 共用：登入成功 / restore 時把 UI 切到「已登入」狀態
+  _wipePrivateUi();   // 上一個帳號留在畫面上的任何資料都不能帶進來
   ADMIN_TOKEN = token;
   TOKEN = token;
   ADMIN_ROLE = role;
@@ -3792,8 +3793,50 @@ async function doChangePassword() {
   } catch(e) { showMsg('cp-msg','err', t('msg_conn_failed') + ': ' + e.message); }
 }
 
+// ── 防個資殘留：換帳號 / 登出時，彈窗、表單、暫存全部清空 ──
+var _AUTH_INPUTS = {'login-user': 1, 'login-pass': 1, 'forgot-account': 1, 'reset-pass': 1, 'reset-pass2': 1};
+var _WIPE_TYPES = {'': 1, text: 1, tel: 1, email: 1, date: 1, time: 1, number: 1, search: 1, month: 1, file: 1, password: 1, url: 1};
+function _wipePrivateUi() {
+  document.querySelectorAll('div[id$="-modal"], #v-edit-form').forEach(function(m) {
+    if (getComputedStyle(m).position === 'fixed') m.style.display = 'none';
+  });
+  document.querySelectorAll('input, textarea').forEach(function(el) {
+    if (_AUTH_INPUTS[el.id]) return;
+    if (el.tagName === 'TEXTAREA' || _WIPE_TYPES[(el.getAttribute('type') || '').toLowerCase()]) el.value = '';
+  });
+  ['p-items', 'pe-items', 'cust-pol-body', 'lc-body', 'dash-body', 'qs-results', 'p-ocr-result', 'v-ocr-result'].forEach(function(id) {
+    var el = document.getElementById(id); if (el && id.indexOf('ocr-result') < 0) el.innerHTML = '';
+    if (el && id.indexOf('ocr-result') >= 0) { el.style.display = 'none'; var tb = el.querySelector('tbody'); if (tb) tb.innerHTML = ''; }
+  });
+  ['cc-pick', 'p-vehicle'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.innerHTML = '<option value="">—</option>';
+  });
+  document.querySelectorAll('select').forEach(function(sel) { if (sel._tp) sel._tp._q = ''; });
+  ['_pFormCid', '_pFormName', '_custPolUid', '_lcRows', '_editPolicyId', '_editPolicyUserId',
+   '_editPolicyCustomerNameOrig', '_editPolicyCustomerEmailOrig', '_editVid', '_editUserId',
+   '_editCustomerNameOrig', '_editCustomerEmailOrig', '_rowPolicyCid', '_rowPolicyName',
+   '_lastPolicyFilename', '_pendingPickAction', '_lastCustomers', '_lastVehicles', '_lastPolicies'].forEach(function(k) { window[k] = null; });
+  if (typeof _resetPolicyFormFields === 'function') { try { _resetPolicyFormFields(); } catch (e) {} }
+  if (typeof _numClearAllInputs === 'function') _numClearAllInputs();
+}
+// 瀏覽器「自動填入」會記住輸入過的姓名、身分證、電話，換人登入點欄位就會列出來 → 全部關掉
+function _noAutofill(root) {
+  var list = root.querySelectorAll ? root.querySelectorAll('input, textarea, form') : [];
+  var one = function(el) {
+    if (_AUTH_INPUTS[el.id]) return;
+    if (el.getAttribute('autocomplete') !== 'off') el.setAttribute('autocomplete', 'off');
+  };
+  if (root.matches && root.matches('input, textarea, form')) one(root);
+  Array.prototype.forEach.call(list, one);
+}
+_noAutofill(document);
+new MutationObserver(function(ms) {
+  ms.forEach(function(m) { m.addedNodes.forEach(function(n) { if (n.nodeType === 1) _noAutofill(n); }); });
+}).observe(document.body, {childList: true, subtree: true});
+
 function doLogout() {
   TOKEN = ''; ADMIN_TOKEN = ''; ADMIN_ROLE = '';
+  _wipePrivateUi();
   // 清 localStorage（明確登出才清，按上一頁不會清）
   localStorage.removeItem(LS_TOKEN_KEY);
   localStorage.removeItem(LS_ROLE_KEY);
@@ -5411,7 +5454,7 @@ function _doOpenManualPolicyFormForCurrent() {
   var msg = document.getElementById('p-msg');
   if (msg) { msg.textContent = ''; msg.className = 'msg'; }
   document.getElementById('p-form-modal').style.display = 'flex';
-  setTimeout(function(){ _recheckInsuredAlignment('p'); }, 0);
+  setTimeout(function(){ _resetPolicyFormFields(); _recheckInsuredAlignment('p'); }, 50);
 }
 
 // 「+ 新增保單（上傳辨識）」入口
