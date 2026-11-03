@@ -1234,10 +1234,20 @@ async def admin_transfer_policy(
     if old_uid == req.customer_id:
         return APIResponse(message="保單已屬於此客戶，無需轉移")
     policy.user_id = req.customer_id
+    unlinked = None
+    if policy.vehicle_id:
+        v = await db.get(UserVehicle, policy.vehicle_id)
+        if not v or v.user_id != req.customer_id:
+            unlinked = v.plate_number if v else ""
+            policy.vehicle_id = None
     await db.commit()
     await log_action(db, admin, "transfer", "policy", policy_id,
-                     detail=f"policy_number={policy.policy_number} {old_uid}→{req.customer_id}")
-    return APIResponse(message="保單要保人已變更")
+                     detail=f"policy_number={policy.policy_number} {old_uid}→{req.customer_id}"
+                            + (f" 解除車輛 {unlinked}" if unlinked is not None else ""))
+    return APIResponse(
+        data={"vehicle_unlinked": unlinked},
+        message="保單要保人已變更" + (f"（已解除與原車主車輛 {unlinked} 的連結）" if unlinked is not None else ""),
+    )
 
 
 class CreateCustomerRequest(BaseModel):
@@ -1269,6 +1279,9 @@ async def admin_create_customer(
             raise BadRequestError(f"Email 已被其他客戶使用：{email}")
     user = User(name=name, phone=phone, email=email)
     db.add(user)
+    if admin.role != "super_admin":
+        await db.flush()
+        db.add(AgentCustomer(agent_id=admin.id, customer_id=user.id, assigned_by=admin.id))
     await db.commit()
     await log_action(db, admin, "create", "customer", user.id, detail=f"name={name}")
     return APIResponse(data={

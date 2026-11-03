@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 from app.models.policy import Policy, PolicyItem, PaymentMethod, RenewalQuote
+from app.models.vehicle import UserVehicle
 from app.schemas.policy import ExclusionItem, PaymentMethodCreate, PolicyCreate, PolicyUpdate, PolicyItemCreate, PolicyItemUpdate
 from app.exceptions import NotFoundError, BadRequestError
 
@@ -138,9 +139,18 @@ class PolicyService:
 
     # ===== Policy CRUD =====
 
+    async def _check_vehicle_owner(self, user_id: str, vehicle_id: str | None) -> None:
+        """保單只能掛在同一位客戶名下的車輛（行照與保單不可跨客戶混接）"""
+        if not vehicle_id:
+            return
+        v = await self.db.get(UserVehicle, vehicle_id)
+        if not v or v.user_id != user_id:
+            raise BadRequestError("所選車輛不屬於此客戶，保單不能掛在別人的車上")
+
     async def create_policy(
         self, user_id: str, data: PolicyCreate, *, data_source: str = "agent"
     ) -> Policy:
+        await self._check_vehicle_owner(user_id, data.vehicle_id)
         # 檢查保單號碼是否重複(注意:這只是友善的早期檢查,真正的併發保護靠 unique
         # constraint + 下面的 IntegrityError catch — 兩個併發 request 同時走到這裡都
         # 會通過,但 DB unique 索引擋掉一個)
@@ -228,6 +238,9 @@ class PolicyService:
             )
             if existing.scalar_one_or_none():
                 raise BadRequestError(f"保單號碼 {update_data['policy_number']} 已存在")
+
+        if update_data.get("vehicle_id"):
+            await self._check_vehicle_owner(policy.user_id, update_data["vehicle_id"])
 
         # items 是 relationship，要單獨處理（整批 replace：先刪舊 → 再插新）
         items_payload = update_data.pop("items", None)

@@ -1638,12 +1638,8 @@ function _getCustomerNameForPolicy(prefix) {
     var el = document.getElementById('pe-customer-name');
     return (el && el.value || '').trim();
   } else {
-    // 手動新增（p）→ 取當前操作客戶下拉
-    var sel = document.getElementById('cur-customer');
-    if (sel && sel.selectedIndex >= 0) {
-      return (sel.options[sel.selectedIndex].text || '').split(' · ')[0].trim();
-    }
-    return '';
+    // 手動新增（p）→ 開表單時綁定的客戶
+    return window._pFormName || '';
   }
 }
 
@@ -4132,7 +4128,7 @@ function openCreateCustomerModal(pendingAction) {
   var pick = document.getElementById('cc-pick');
   if (src && pick) {
     pick.innerHTML = src.innerHTML;  // 直接複製 cur-customer 的 options
-    pick.value = src.value || '';
+    pick.value = '';   // 不預選上一位客戶：避免沿用到上一筆的人
   }
   window._pendingPickAction = (typeof pendingAction === 'function') ? pendingAction : null;
   document.getElementById('create-customer-modal').style.display = 'flex';
@@ -5386,11 +5382,9 @@ function _doOpenManualPolicyFormForCurrent() {
   if (!cid) return;
   closePolicyUploadModal();
   // 客戶名稱顯示
-  var sel = document.getElementById('cur-customer');
-  var custName = '';
-  if (sel && sel.selectedIndex >= 0) {
-    custName = (sel.options[sel.selectedIndex].text || '').split(' · ')[0].trim();
-  }
+  var custName = _custName(cid);
+  window._pFormCid = cid;
+  window._pFormName = custName;
   var lbl = document.getElementById('p-form-modal-customer');
   if (lbl) lbl.textContent = custName || '(未選擇)';
   // 載入此客戶的車輛清單到 p-vehicle
@@ -5439,7 +5433,7 @@ function _doOpenPolicyUploadModalForCurrent() {
 
 // 「+ 新增此客戶另一張保單」按鈕（modal 內）→ 不再彈 picker，直接重置表單繼續
 function addAnotherPolicySameCustomer() {
-  var cid = currentCustomerId();
+  var cid = window._pFormCid;
   if (!cid) {
     showMsg('p-msg','err', LANG === 'en' ? 'No customer context' : '找不到目前操作客戶');
     return;
@@ -5453,11 +5447,14 @@ function addAnotherPolicySameCustomer() {
 async function loadVehiclesForPolicySelect(cid) {
   var dd = document.getElementById('p-vehicle');
   if (!dd) return;
+  var seq = (window._pVehSeq || 0) + 1;
+  window._pVehSeq = seq;
   dd.innerHTML = '<option value="">' + (LANG==='en' ? 'Not specified' : '不指定') + '</option>';
   try {
     var r = await fetch(CONSOLE_API+'/customer/'+cid+'/vehicles', {headers: consoleHeaders(false)});
     var d = await r.json();
-    var vs = d.data || [];
+    if (seq !== window._pVehSeq || cid !== window._pFormCid) return;
+    var vs = (d.data || []).filter(function(v) { return !v.user_id || v.user_id === cid; });
     for (var i = 0; i < vs.length; i++) {
       var v = vs[i];
       // 此 endpoint 把車牌存成 v.plate（非 v.plate_number），先 plate 後 plate_number 兼容
@@ -5465,7 +5462,7 @@ async function loadVehiclesForPolicySelect(cid) {
       var brand = v.brand || '';
       var model = v.model || '';
       var label = plate + (brand || model ? ' — ' + (brand + ' ' + model).trim() : '');
-      dd.innerHTML += '<option value="' + v.id + '">' + label + '</option>';
+      dd.innerHTML += '<option value="' + esc(v.id) + '">' + esc(label) + '</option>';
     }
   } catch(e) { /* ignore */ }
 }
@@ -5588,16 +5585,29 @@ async function createPolicy() {
     });
     if (item.item_name) body.items.push(item);
   });
-  var cid = currentCustomerId();
+  var cid = window._pFormCid;
   if (!cid) { showMsg('p-msg','err', LANG==='en' ? 'No customer context' : '找不到操作客戶'); return; }
+  // 要保人／被保人填的是「另一位既有客戶」→ 擋下，不能存到目前客戶名下
+  var custName = window._pFormName || '';
+  var others = (window._lastCustomers || []).filter(function(c) { return c.id !== cid && (c.name || '').trim(); });
+  var who = [body.insured_name, body.policyholder_name].filter(function(n) { return n && n !== custName; });
+  for (var wi = 0; wi < who.length; wi++) {
+    if (others.some(function(c) { return c.name.trim() === who[wi]; })) {
+      showMsg('p-msg','err', '此保單會存到「' + custName + '」名下，但要保人／被保人「' + who[wi] + '」是另一位客戶。請關閉後重新按「新增保單」選「' + who[wi] + '」。');
+      return false;
+    }
+  }
   try {
     const r = await fetch(CONSOLE_API+'/customer/'+cid+'/policies', {method:'POST', headers:consoleHeaders(true), body:JSON.stringify(body)});
     const d = await r.json();
     if (d.success) {
-      showMsg('p-msg','ok', (LANG==='en' ? 'Policy created: ' : '保單建立成功：') + d.data.policy_number);
-      loadPolicies();
-      // 留在 modal、清空表單，方便接續按「+新增此客戶另一張保單」或關閉
+      // 存完就關閉表單：下一張保單一律重新選客戶，不會沿用這一位
       _resetPolicyFormFields();
+      document.getElementById('p-form-modal').style.display = 'none';
+      window._pFormCid = ''; window._pFormName = '';
+      var bm = document.getElementById('customer-bar-msg');
+      if (bm) bm.textContent = (LANG==='en' ? 'Policy created: ' : '保單建立成功：') + d.data.policy_number + '（' + custName + '）';
+      openCustPolModal(cid);
       return true;
     } else {
       showMsg('p-msg','err', (LANG==='en' ? 'Create failed: ' : '建立失敗：') + (d.detail||d.message));
@@ -6051,6 +6061,7 @@ async function savePolicyEdit() {
         return;
       }
       if (!transferMsg) transferMsg = '（已將要保人變更為「'+newName+'」）';
+      if (td.data && td.data.vehicle_unlinked != null) transferMsg += '（已解除與原車主車輛 ' + td.data.vehicle_unlinked + ' 的連結）';
       window._editPolicyUserId = targetCid;
       window._editPolicyCustomerNameOrig = newName;
     } catch(e) { showMsg('pe-msg','err','要保人轉移異常: '+e.message); return; }
