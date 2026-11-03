@@ -50,6 +50,21 @@ tr:hover { background: #FAFAFA; }
 .badge.active { background: #E8F5E9; color: #2E7D32; }
 .badge.expired { background: #FFEBEE; color: #C62828; }
 .badge.expiring { background: #FFF3E0; color: #E65100; }
+.cp-card { border: 2px solid #BBDEFB; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; background: #F5F9FF; color: #1a1a1a; }
+.cp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.cp-head b { font-size: 19px; color: #0d2a4d; }
+.cp-head .badge { font-size: 14px; padding: 3px 10px; }
+.cp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cp-grid div { background: #fff; border: 1px solid #dbe5f2; border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.cp-grid span { display: block; font-size: 13px; color: #4b5563; font-weight: 700; }
+.cp-grid em { display: block; font-style: normal; font-size: 16px; font-weight: 700; color: #1a1a1a; overflow-wrap: anywhere; }
+.cp-items { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 14px; background: #fff; }
+.cp-items th { background: #1565C0; color: #fff; padding: 6px 8px; text-align: left; }
+.cp-items td { padding: 6px 8px; border-top: 1px solid #e3e8f0; color: #1a1a1a; }
+.cp-items .num { text-align: right; white-space: nowrap; }
+.cp-acts { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+.cp-empty { text-align: center; color: #4b5563; font-size: 16px; padding: 24px 0; }
+@media (max-width: 640px) { .cp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cp-items { font-size: 13px; } }
 img.preview { max-width: 200px; max-height: 120px; border-radius: 8px; margin-top: 8px; border: 1px solid #ddd; }
 .item-row { display: flex; gap: 8px; align-items: end; margin-top: 8px; padding: 8px; background: #FAFAFA; border-radius: 8px; }
 .item-row input { flex: 1; }
@@ -717,6 +732,15 @@ table.cardify tr.tr-empty td { justify-content: center; }
 
   <!-- Tab: Policies -->
   <div id="tab-policies" class="tab-content">
+
+    <!-- 客戶保單彈窗（點操作客戶標籤） -->
+    <div id="cust-pol-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9996;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px" onclick="if(event.target===this)closeCustPolModal()">
+      <div style="background:#fff;color:#1a1a1a;padding:22px 20px;border-radius:14px;max-width:760px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+        <button type="button" onclick="closeCustPolModal()" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:30px;cursor:pointer;color:#555;line-height:1">×</button>
+        <h2 id="cust-pol-title" style="margin:0 36px 12px 0;color:#0d2a4d"></h2>
+        <div id="cust-pol-body"></div>
+      </div>
+    </div>
 
     <!-- ★★ 上傳保單 modal ★★ -->
     <div id="p-upload-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9997;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px">
@@ -5691,6 +5715,7 @@ async function loadPolicies() {
   const tb = document.getElementById('p-table');
   if (policies.length === 0) {
     tb.innerHTML = '<tr><td colspan="10" style="color:#999;text-align:center">尚無保單</td></tr>';
+    if (window._custPolUid) _renderCustPolModal();
     return;
   }
   var html = '';
@@ -5705,6 +5730,7 @@ async function loadPolicies() {
         + '</div>'
       : '<span style="color:#999">-</span>';
     var plate = p.vehicle_plate ? esc(p.vehicle_plate) : '<span style="color:#999">-</span>';
+    var cidEsc = esc(p.user_id||''), nameEsc = esc(p.customer_name||'');
     // 主列：點擊選取（高亮）、雙擊展開
     html += '<tr style="cursor:pointer" onclick="selectPolicyRow(this)" ondblclick="togglePolicyDetails(&quot;'+esc(p.id)+'&quot;)">';
     html += '<td>'+owner+'</td>';
@@ -5730,6 +5756,7 @@ async function loadPolicies() {
     html += '<tr id="pdetails-'+p.id+'" style="display:none"><td colspan="10" style="background:#f9f9f9;padding:14px"><div id="pdetails-content-'+p.id+'"></div></td></tr>';
   }
   tb.innerHTML = html;
+  if (window._custPolUid) _renderCustPolModal();
 }
 
 function selectPolicyRow(tr) {
@@ -6522,6 +6549,72 @@ function applyCustPlateFilter() {
     msg.textContent = '查無此車牌的客戶';
   } else if (msg) { msg.remove(); }
 }
+
+// ── 保單管理：點操作客戶標籤 → 彈出該客戶的保單 ──
+function _polStatus(p) {
+  if (p.status === 'active') return ['active', LANG === 'en' ? 'Active' : '有效'];
+  if (p.status === 'expired') return ['expired', LANG === 'en' ? 'Expired' : '已到期'];
+  return ['expiring', LANG === 'en' ? 'Expiring' : '即將到期'];
+}
+function _cpMoney(v) { return v ? '$' + Number(v).toLocaleString() : '-'; }
+function _renderCustPolModal() {
+  var uid = window._custPolUid;
+  if (!uid) return;
+  var en = LANG === 'en';
+  var list = (window._lastPolicies || []).filter(function(p) { return p.user_id === uid; });
+  document.getElementById('cust-pol-title').textContent = (_custName(uid) || '') + (en ? ' — Policies' : ' 的保單') + '（' + list.length + '）';
+  if (!list.length) { document.getElementById('cust-pol-body').innerHTML = '<div class="cp-empty">' + (en ? 'No policies' : '尚無保單') + '</div>'; return; }
+  var h = '';
+  list.forEach(function(p) {
+    var st = _polStatus(p);
+    h += '<div class="cp-card">';
+    h += '<div class="cp-head"><b>' + esc(p.insurer_name || '-') + '</b><span class="badge ' + st[0] + '">' + st[1] + '</span></div>';
+    h += '<div class="cp-grid">';
+    h += '<div><span>' + (en ? 'Policy No.' : '保單號碼') + '</span><em>' + esc(p.policy_number || '-') + '</em></div>';
+    h += '<div><span>' + (en ? 'Plate' : '車牌') + '</span><em>' + esc(p.vehicle_plate || '-') + '</em></div>';
+    h += '<div><span>' + (en ? 'Premium' : '保費') + '</span><em>' + _cpMoney(p.total_premium) + '</em></div>';
+    h += '<div><span>' + (en ? 'Start' : '起保') + '</span><em>' + esc((p.start_date || '-') + (p.start_time ? ' ' + p.start_time : '')) + '</em></div>';
+    h += '<div><span>' + (en ? 'End' : '到期') + '</span><em>' + esc((p.end_date || '-') + (p.end_time ? ' ' + p.end_time : '')) + '</em></div>';
+    h += '<div><span>' + (en ? 'Items' : '項目') + '</span><em>' + (p.items ? p.items.length : 0) + (en ? '' : ' 項') + '</em></div>';
+    h += '</div>';
+    var items = p.items || [];
+    if (items.length) {
+      h += '<table class="cp-items"><thead><tr><th>' + (en ? 'Coverage' : '險種') + '</th><th class="num">' + (en ? 'Premium' : '保費') + '</th><th class="num">' + (en ? 'Limit' : '保額') + '</th><th class="num">' + (en ? 'Deductible' : '自負額') + '</th></tr></thead><tbody>';
+      items.forEach(function(it) {
+        h += '<tr><td>' + esc(it.item_name || '-') + (it.description ? '<div style="font-size:12px;color:#4b5563">' + esc(it.description) + '</div>' : '') + '</td>'
+          + '<td class="num">' + _cpMoney(it.premium) + '</td><td class="num">' + _cpMoney(it.coverage_limit) + '</td><td class="num">' + _cpMoney(it.deductible) + '</td></tr>';
+      });
+      h += '</tbody></table>';
+    }
+    h += '<div class="cp-acts">'
+      + '<button type="button" class="btn" style="background:#1565C0;color:#fff" onclick="editPolicyFromList(&quot;' + esc(p.id) + '&quot;)">' + (en ? 'Edit' : '編輯') + '</button>'
+      + '<button type="button" class="btn danger" onclick="deletePolicyById(&quot;' + esc(p.id) + '&quot;,&quot;' + esc(p.policy_number) + '&quot;)">' + (en ? 'Delete' : '刪除') + '</button>'
+      + '</div>';
+    h += '</div>';
+  });
+  document.getElementById('cust-pol-body').innerHTML = h;
+}
+function openCustPolModal(uid) {
+  if (!uid) return;
+  window._custPolUid = uid;
+  _renderCustPolModal();
+  document.getElementById('cust-pol-modal').style.display = 'flex';
+  if (typeof loadPolicies === 'function') loadPolicies();   // 取最新，載完自動重繪
+}
+function closeCustPolModal() {
+  window._custPolUid = '';
+  document.getElementById('cust-pol-modal').style.display = 'none';
+}
+(function() {
+  var sel = document.getElementById('cur-customer');
+  if (!sel || !sel._tp) return;
+  sel._tp.addEventListener('click', function(e) {
+    var b = e.target.closest('.picktile');
+    if (!b || b.disabled) return;
+    if (!document.getElementById('tab-policies').classList.contains('active')) return;
+    openCustPolModal(b.getAttribute('data-v'));
+  });
+})();
 
 // ═════════ 經營儀表板 ═════════
 function _renderDashBtn() {
